@@ -20,5 +20,20 @@
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "jsonwebtoken": "^9.0.2"
-  }
+  },
+  "name": "sistemapsico",
+  "version": "1.0.0",
+  "description": "Plataforma multi-tenant de ayuda psicológica para instituciones educativas. Permite gestionar instituciones, usuarios (estudiantes, psicólogos, orientadores), aplicar quizzes de bienestar, agendar citas y dar seguimiento con roles, autenticación y notificaciones. Este repositorio es el punto de partida limpio (\"clean slate\") para la siguiente fase del sistema, con enfoque en escalabilidad, modularidad y evolución controlada.",
+  "main": "estructura.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moon1710/SistemaPsico.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/moon1710/SistemaPsico/issues"
+  },
+  "homepage": "https://github.com/moon1710/SistemaPsico#readme"
 }

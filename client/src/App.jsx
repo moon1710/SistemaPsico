@@ -17,6 +17,7 @@ import DashboardPage from "./pages/DashboardPage";
 
 // Constantes
 import { ROUTES } from "./utils/constants";
+import "./App.css";
 
 function App() {
   const { isLoading } = useAuth();
