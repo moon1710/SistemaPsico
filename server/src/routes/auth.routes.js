@@ -1,3 +1,5 @@
+//server/src/routes/auth.routes.js
+
 const express = require("express");
 const {
   login,

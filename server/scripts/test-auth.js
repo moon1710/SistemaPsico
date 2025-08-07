@@ -1,3 +1,4 @@
+//server/scripts/test-auth.js
 require("dotenv").config();
 const axios = require("axios");
 

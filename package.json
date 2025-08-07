@@ -10,10 +10,15 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\""
   },
   "devDependencies": {
-    "concurrently": "^7.0.0"
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^7.0.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.11",
     "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
     "jsonwebtoken": "^9.0.2"
   }
 }
