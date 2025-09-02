@@ -1,127 +1,39 @@
-const { body, param, query } = require("express-validator");
+const { body, param } = require("express-validator");
 
-/**
- * Validaciones para login
- */
+const allowedRoles = [
+  "ESTUDIANTE",
+  "PSICOLOGO",
+  "ORIENTADOR",
+  "ADMIN_INSTITUCION",
+  "SUPER_ADMIN_NACIONAL",
+];
+
 const loginValidation = [
-  body("email")
-    .isEmail()
-    .withMessage("Email debe tener un formato válido")
-    .normalizeEmail()
-    .isLength({ max: 100 })
-    .withMessage("Email debe tener máximo 100 caracteres"),
-
-  body("password")
-    .notEmpty()
-    .withMessage("Contraseña es requerida")
-    .isLength({ min: 1, max: 255 })
-    .withMessage("Contraseña inválida"),
-
-  body("institucionId")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("ID de institución debe ser un número entero positivo")
-    .toInt(),
+  body("email").isEmail().withMessage("Email inválido"),
+  body("password").notEmpty().withMessage("Password requerido"),
+  // institucionId opcional (si hay multi-institución con mismo email)
 ];
 
-/**
- * Validaciones para parámetros de institución
- */
 const institutionParamValidation = [
-  param("institucionId")
-    .isInt({ min: 1 })
-    .withMessage("ID de institución debe ser un número entero positivo")
-    .toInt(),
+  param("institucionId").notEmpty().withMessage("institucionId requerido"),
 ];
 
-/**
- * Validaciones para registro de usuario (usaremos después)
- */
-const userRegistrationValidation = [
-  body("institucionId")
-    .isInt({ min: 1 })
-    .withMessage("ID de institución es requerido y debe ser válido")
-    .toInt(),
-
-  body("carreraId")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("ID de carrera debe ser un número entero positivo")
-    .toInt(),
-
-  body("rol")
-    .isIn([
-      "SUPER_ADMIN_NACIONAL",
-      "SUPER_ADMIN_INSTITUCION",
-      "PSICOLOGO",
-      "ESTUDIANTE",
-    ])
-    .withMessage("Rol debe ser válido"),
-
-  body("nombre")
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage("Nombre debe tener entre 2 y 50 caracteres")
-    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/)
-    .withMessage("Nombre solo puede contener letras y espacios"),
-
+const registerValidation = [
+  body("nombre").trim().notEmpty().withMessage("nombre es requerido"),
   body("apellidoPaterno")
     .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage("Apellido paterno debe tener entre 2 y 50 caracteres")
-    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/)
-    .withMessage("Apellido paterno solo puede contener letras y espacios"),
-
-  body("apellidoMaterno")
-    .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage("Apellido materno debe tener máximo 50 caracteres")
-    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/)
-    .withMessage("Apellido materno solo puede contener letras y espacios"),
-
-  body("email")
-    .isEmail()
-    .withMessage("Email debe tener un formato válido")
-    .normalizeEmail()
-    .isLength({ max: 100 })
-    .withMessage("Email debe tener máximo 100 caracteres"),
-
+    .notEmpty()
+    .withMessage("apellidoPaterno es requerido"),
+  body("email").isEmail().withMessage("email inválido"),
   body("password")
-    .isLength({ min: 8, max: 128 })
-    .withMessage("Contraseña debe tener entre 8 y 128 caracteres")
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-    .withMessage(
-      "Contraseña debe contener al menos: 1 minúscula, 1 mayúscula, 1 número y 1 carácter especial"
-    ),
-];
-
-/**
- * Validación de paginación
- */
-const paginationValidation = [
-  query("page")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Página debe ser un número entero positivo")
-    .toInt(),
-
-  query("limit")
-    .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage("Límite debe ser entre 1 y 100")
-    .toInt(),
-
-  query("search")
-    .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage("Búsqueda debe tener máximo 100 caracteres"),
+    .isLength({ min: 8 })
+    .withMessage("password mínimo 8 caracteres"),
+  body("rol").isIn(allowedRoles).withMessage("rol inválido"),
+  body("institucionId").notEmpty().withMessage("institucionId es requerido"),
 ];
 
 module.exports = {
   loginValidation,
   institutionParamValidation,
-  userRegistrationValidation,
-  paginationValidation,
+  registerValidation,
 };

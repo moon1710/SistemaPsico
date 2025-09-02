@@ -17,9 +17,12 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
+    "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
-    "jsonwebtoken": "^9.0.2"
+    "dotenv": "^17.2.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.4"
   },
   "name": "sistemapsico",
   "version": "1.0.0",

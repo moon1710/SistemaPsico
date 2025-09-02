@@ -1,11 +1,10 @@
-//server/src/routes/auth.routes.js
-
 const express = require("express");
 const {
   login,
   logout,
   getProfile,
   verifyToken,
+  register,
 } = require("../controllers/auth.controller");
 
 const {
@@ -18,50 +17,18 @@ const {
 const {
   loginValidation,
   institutionParamValidation,
+  registerValidation,
 } = require("../validators/auth.validators");
 
 const router = express.Router();
 
-// ===============================================
-// RUTAS PÚBLICAS (Sin autenticación)
-// ===============================================
-
-/**
- * POST /api/auth/login
- * Autenticación de usuario
- */
+router.post("/register", registerValidation, register);
 router.post("/login", loginValidation, login);
-
-// ===============================================
-// RUTAS PROTEGIDAS (Requieren autenticación)
-// ===============================================
-
-/**
- * POST /api/auth/logout
- * Cerrar sesión del usuario autenticado
- */
 router.post("/logout", authenticateToken, logout);
-
-/**
- * GET /api/auth/profile
- * Obtener perfil del usuario autenticado
- */
 router.get("/profile", authenticateToken, getProfile);
-
-/**
- * GET /api/auth/verify
- * Verificar si el token actual es válido
- */
 router.get("/verify", authenticateToken, verifyToken);
 
-// ===============================================
-// RUTAS ADMINISTRATIVAS
-// ===============================================
-
-/**
- * GET /api/auth/test-roles/super-admin
- * Ruta de prueba para SUPER_ADMIN_NACIONAL
- */
+// Rutas de prueba de roles (si las usas)
 router.get("/test-roles/super-admin", requireSuperAdminNacional, (req, res) => {
   res.json({
     success: true,
@@ -70,10 +37,6 @@ router.get("/test-roles/super-admin", requireSuperAdminNacional, (req, res) => {
   });
 });
 
-/**
- * GET /api/auth/test-roles/institution-admin/:institucionId
- * Ruta de prueba para admins de institución
- */
 router.get(
   "/test-roles/institution-admin/:institucionId",
   institutionParamValidation,
@@ -88,15 +51,12 @@ router.get(
   }
 );
 
-/**
- * GET /api/auth/test-roles/psychologist
- * Ruta de prueba para psicólogos
- */
 router.get(
   "/test-roles/psychologist",
   authenticateToken,
   requireRoles([
     "PSICOLOGO",
+    "ADMIN_INSTITUCION",
     "SUPER_ADMIN_INSTITUCION",
     "SUPER_ADMIN_NACIONAL",
   ]),

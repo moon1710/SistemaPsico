@@ -1,9 +1,5 @@
 /* ==== LOGIN PAGE ==== */
 
-body{
-    overflow: hidden;
-}
-
 .login-root,
 .login-main {
   min-height: 100vh;
