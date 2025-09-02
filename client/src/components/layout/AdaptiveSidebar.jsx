@@ -166,16 +166,16 @@ const AdaptiveSidebar = ({ user, onLogout, isCollapsed, onToggle }) => {
   const menuItems = getMenuItems();
 
   // Función para obtener el color del rol
-  const getRoleColor = () => {
-    const colors = {
-      SUPER_ADMIN_NACIONAL: "from-purple-500 to-purple-700",
-      SUPER_ADMIN_INSTITUCION: "from-blue-500 to-blue-700",
-      PSICOLOGO: "from-green-500 to-green-700",
-      ESTUDIANTE: "from-orange-500 to-orange-700",
-      ORIENTADOR: "from-indigo-500 to-indigo-700",
-    };
-    return colors[user?.rol] || "from-gray-500 to-gray-700";
+const getRoleColor = () => {
+  const colors = {
+    SUPER_ADMIN_NACIONAL: "from-[#4c1d95] to-[#527ceb]", // morado profundo → azul confianza
+    ADMIN_INSTITUCION: "from-[#527ceb] to-[#3730a3]", // azul → morado institucional
+    PSICOLOGO: "from-[#cdb4db] to-[#527ceb]", // lavanda → azul → calmante/terapéutico
+    ESTUDIANTE: "from-[#527ceb] to-[#10cfbd]", // azul → turquesa → juvenil y fresco
+    ORIENTADOR: "from-[#3730a3] to-[#cdb4db]", // morado oscuro → lavanda → guía/acompañamiento
   };
+  return colors[user?.rol] || "from-gray-500 to-gray-700";
+};
 
   // Función para obtener el label del rol
   const getRoleLabel = () => {
