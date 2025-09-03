@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import AdaptiveSidebar from "./AdaptiveSidebar";
+import AdaptiveSidebar from "./AdaptiveSidebar"; // 👉 importa la carpeta, usará index.jsx
 import Header from "./Header";
 import { ROUTES } from "../../utils/constants";
 
 const Layout = ({ children }) => {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
-  const [collapsed, setCollapsed] = useState(true); // Contraído por defecto como tu diseño
+  const [collapsed, setCollapsed] = useState(true); // Contraído por defecto
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,7 +25,7 @@ const Layout = ({ children }) => {
     }
   };
 
-  // Loading screen
+  // Pantalla de carga
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -37,10 +37,10 @@ const Layout = ({ children }) => {
     );
   }
 
-  // Si no hay usuario autenticado, no renderizar nada
+  // Si no hay usuario autenticado
   if (!user) return null;
 
-  // Verificar si estamos en una página que no necesita layout (como login)
+  // Rutas sin layout
   const noLayoutRoutes = [ROUTES.LOGIN, "/"];
   const shouldShowLayout = !noLayoutRoutes.includes(location.pathname);
 
@@ -50,7 +50,7 @@ const Layout = ({ children }) => {
 
   return (
     <div className="flex min-h-screen bg-[#f7f7f7]">
-      {/* Sidebar adaptativo según rol */}
+      {/* Sidebar adaptativo */}
       <AdaptiveSidebar
         user={user}
         onLogout={handleLogout}
@@ -60,19 +60,16 @@ const Layout = ({ children }) => {
 
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col">
-        {/* Header opcional - puedes comentar si no lo quieres */}
         <Header
           onToggleSidebar={() => setCollapsed((prev) => !prev)}
           isSidebarOpen={!collapsed}
         />
 
-        {/* Main content */}
         <main
           className={`
-          flex-1 transition-all duration-500 ease-in-out
-          ${collapsed ? "lg:ml-0" : "lg:ml-0"}
-          p-6
-        `}
+            flex-1 transition-all duration-500 ease-in-out
+            p-6
+          `}
         >
           {children}
         </main>
