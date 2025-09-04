@@ -1,15 +1,59 @@
+// middleware/auth.js
 const jwt = require("jsonwebtoken");
 const { pool } = require("../db");
-const isInstitutionActive = (s) => ["ACTIVO", "ACTIVA", "ACTIVE"].includes(s);
+
+const isActive = (s) =>
+  ["ACTIVO", "ACTIVA", "ACTIVE"].includes(String(s || "").toUpperCase());
+
+/**
+ * Resuelve el institucionId objetivo a partir del request:
+ * Prioridad: params > header > query > body
+ */
+function resolveInstitutionId(req) {
+  const cand =
+    req.params?.institucionId ??
+    req.headers["x-institution-id"] ??    // inglés
+    req.headers["x-institucion-id"] ??    // alias español (por si acaso)
+    req.query?.institucionId ??
+    req.body?.institucionId ??
+    null;
+
+  if (cand == null) return null;
+
+  // Soporta arrays (por proxies), números o strings
+  const val = String(Array.isArray(cand) ? cand[0] : cand).trim();
+
+  // Evita valores vacíos o literales "null"/"undefined"
+  if (!val || val.toLowerCase() === "null" || val.toLowerCase() === "undefined") {
+    return null;
+  }
+
+  return val;
+}
+
+/**
+ * Devuelve la membresía del usuario para una institución dada
+ */
+function getMembershipForInstitution(user, institucionId) {
+  if (!user?.instituciones?.length || !institucionId) return null;
+  return (
+    user.instituciones.find(
+      (m) => String(m.institucionId) === String(institucionId)
+    ) || null
+  );
+}
 
 /**
  * Middleware principal de autenticación JWT
+ * - Carga usuario base
+ * - Carga membresías (usuario_instituciones) + nombre/status de institución
+ * - Arma req.user con { id, email, nombreCompleto, instituciones: [...] }
+ * - Mantiene compat con usuarios.rol para SUPER_ADMIN_NACIONAL si aún lo usas
  */
 const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
-
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -21,34 +65,29 @@ const authenticateToken = async (req, res, next) => {
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (jwtError) {
-      if (jwtError.name === "TokenExpiredError") {
-        return res
-          .status(401)
-          .json({
-            success: false,
-            message: "Token expirado",
-            code: "TOKEN_EXPIRED",
-          });
-      } else if (jwtError.name === "JsonWebTokenError") {
-        return res
-          .status(401)
-          .json({
-            success: false,
-            message: "Token inválido",
-            code: "TOKEN_INVALID",
-          });
+    } catch (e) {
+      if (e.name === "TokenExpiredError") {
+        return res.status(401).json({
+          success: false,
+          message: "Token expirado",
+          code: "TOKEN_EXPIRED",
+        });
       }
-      throw jwtError;
+      if (e.name === "JsonWebTokenError") {
+        return res.status(401).json({
+          success: false,
+          message: "Token inválido",
+          code: "TOKEN_INVALID",
+        });
+      }
+      throw e;
     }
 
+    // 1) Usuario base (sin rol/inst única)
     const [userRows] = await pool.execute(
-      `SELECT u.id, u.institucionId, u.nombre, u.apellidoPaterno, u.apellidoMaterno, 
-              u.nombreCompleto, u.email, u.rol, u.status, u.emailVerificado,
-              u.perfilCompletado, u.lastLogin,
-              i.nombre AS institucionNombre, i.status AS institucionStatus
+      `SELECT u.id, u.nombre, u.apellidoPaterno, u.apellidoMaterno, u.nombreCompleto, 
+              u.email, u.status, u.emailVerificado, u.perfilCompletado, u.lastLogin, u.rol as rolGlobal
        FROM usuarios u
-       LEFT JOIN instituciones i ON u.institucionId = i.id
        WHERE u.id = ? AND u.status = 'ACTIVO'`,
       [decoded.id]
     );
@@ -61,33 +100,58 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    const user = userRows[0];
+    const base = userRows[0];
 
-    // Institución activa (excepto SUPER_ADMIN_NACIONAL)
-    if (
-      user.rol !== "SUPER_ADMIN_NACIONAL" &&
-      !isInstitutionActive(user.institucionStatus)
-    ) {
+    // 2) Membresías por institución (ajusta nombres de tabla/columnas si difieren)
+    // ---- consulta de membresías (usa tu tabla real) ----
+    const [mRows] = await pool.execute(
+      `SELECT ui.institucionId,
+          ui.rolInstitucion AS rol,
+          ui.activo AS membershipActiva,
+          i.nombre AS institucionNombre,
+          i.status AS institucionStatus
+   FROM usuario_institucion ui
+   JOIN instituciones i ON i.id = ui.institucionId
+   WHERE ui.usuarioId = ?`,
+      [decoded.id]
+    );
+
+    // ---- mapeo consistente ----
+    const instituciones = (mRows || []).map((r) => ({
+      institucionId: String(r.institucionId),
+      institucionNombre: r.institucionNombre,
+      rol: r.rol, // viene del AS rol
+      institucionStatus: r.institucionStatus,
+      membershipStatus: r.membershipActiva ? "ACTIVO" : "INACTIVO",
+      isInstitucionActiva: isActive(r.institucionStatus),
+      isMembershipActiva: !!r.membershipActiva,
+    }));
+
+    // Si no hay membresías y TAMPOCO es super admin global -> acceso denegado
+    const isSuperAdminNacional =
+      String(base.rolGlobal || "") === "SUPER_ADMIN_NACIONAL";
+    if (!instituciones.length && !isSuperAdminNacional) {
       return res.status(403).json({
         success: false,
-        message: "Institución inactiva",
-        code: "INSTITUTION_INACTIVE",
+        message: "Usuario sin instituciones asignadas",
+        code: "NO_INSTITUTIONS",
       });
     }
 
     req.user = {
-      id: user.id,
-      institucionId: user.institucionId,
-      institucionNombre: user.institucionNombre,
-      nombre: user.nombre,
-      apellidoPaterno: user.apellidoPaterno,
-      apellidoMaterno: user.apellidoMaterno,
-      nombreCompleto: user.nombreCompleto,
-      email: user.email,
-      rol: user.rol,
-      status: user.status,
-      perfilCompletado: user.perfilCompletado,
-      lastLogin: user.lastLogin,
+      id: base.id,
+      nombre: base.nombre,
+      apellidoPaterno: base.apellidoPaterno,
+      apellidoMaterno: base.apellidoMaterno,
+      nombreCompleto: base.nombreCompleto,
+      email: base.email,
+      status: base.status,
+      emailVerificado: base.emailVerificado,
+      perfilCompletado: base.perfilCompletado,
+      lastLogin: base.lastLogin,
+      // compat: dejar rol global SOLO para SUPER_ADMIN_NACIONAL
+      rol: isSuperAdminNacional ? "SUPER_ADMIN_NACIONAL" : undefined,
+      instituciones,
     };
 
     next();
@@ -104,7 +168,12 @@ const authenticateToken = async (req, res, next) => {
 };
 
 /**
- * Middleware para verificar roles específicos
+ * Middleware GLOBAL por rol (¡ojo! no usa institución).
+ * Úsalo solo para rutas “nacionales” (ej. panel nacional).
+ * Acepta si el usuario:
+ *   a) tiene rol global requerido (p.ej. SUPER_ADMIN_NACIONAL), o
+ *   b) tiene CUALQUIER membresía con un rol permitido (si realmente quieres eso).
+ * Si quieres atarlo a institución, usa requireRolesWithInstitution.
  */
 const requireRoles = (allowedRoles) => {
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
@@ -120,40 +189,45 @@ const requireRoles = (allowedRoles) => {
         });
     }
 
-    if (!roles.includes(req.user.rol)) {
-      return res.status(403).json({
-        success: false,
-        message: "Permisos insuficientes",
-        code: "INSUFFICIENT_PERMISSIONS",
-        required: roles,
-        current: req.user.rol,
-      });
-    }
+    // a) rol global
+    if (req.user.rol && roles.includes(req.user.rol)) return next();
 
-    next();
+    // b) CUALQUIER membresía (si no quieres esto, comenta este bloque)
+    const hasAnyMembershipRole = (req.user.instituciones || []).some((m) =>
+      roles.includes(m.rol)
+    );
+    if (hasAnyMembershipRole) return next();
+
+    return res.status(403).json({
+      success: false,
+      message: "Permisos insuficientes",
+      code: "INSUFFICIENT_PERMISSIONS",
+      required: roles,
+      current: req.user.rol || null,
+    });
   };
 };
 
 /**
- * Middleware para verificar acceso a institución específica
- * Solo SUPER_ADMIN_NACIONAL puede acceder a cualquier institución
+ * Verifica que el usuario tenga acceso a una institución específica
+ * - SUPER_ADMIN_NACIONAL: acceso total
+ * - Si no, debe tener membresía activa en esa institución
+ * - La institución debe estar ACTIVA (si bloqueas acceso a inactivas)
  */
 const requireInstitutionAccess = (req, res, next) => {
-  const { institucionId } = req.params;
+  const institucionId = resolveInstitutionId(req);
   if (!institucionId) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "ID de institución requerido",
-        code: "INSTITUTION_ID_REQUIRED",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "ID de institución requerido",
+      code: "INSTITUTION_ID_REQUIRED",
+    });
   }
 
-  if (req.user.rol === "SUPER_ADMIN_NACIONAL") return next();
+  if (req.user?.rol === "SUPER_ADMIN_NACIONAL") return next();
 
-  // IDs son VARCHAR en sistema_educativo
-  if (req.user.institucionId !== institucionId) {
+  const membership = getMembershipForInstitution(req.user, institucionId);
+  if (!membership) {
     return res.status(403).json({
       success: false,
       message: "Sin acceso a esta institución",
@@ -161,45 +235,86 @@ const requireInstitutionAccess = (req, res, next) => {
     });
   }
 
+  // Opcional: exigir que institución y membresía estén activas
+  if (!membership.isInstitucionActiva) {
+    return res.status(403).json({
+      success: false,
+      message: "Institución inactiva",
+      code: "INSTITUTION_INACTIVE",
+    });
+  }
+  if (!membership.isMembershipActiva) {
+    return res.status(403).json({
+      success: false,
+      message: "Membresía inactiva en la institución",
+      code: "MEMBERSHIP_INACTIVE",
+    });
+  }
+
+  // Exponer en req para handlers posteriores
+  req.institucionId = institucionId; // deja disponible para handlers
+  req.membership = membership; // si quieres exponerlo
+
   next();
 };
 
 /**
- * Middleware combinado para roles con verificación de institución
+ * Requiere rol específico en la institución objetivo
+ * - SUPER_ADMIN_NACIONAL pasa directo
+ * - Si no, valida que su rol en ESA institución esté en allowedRoles
  */
 const requireRolesWithInstitution = (allowedRoles) => {
+  const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+
   return [
     authenticateToken,
-    requireRoles(allowedRoles),
     requireInstitutionAccess,
+    (req, res, next) => {
+      if (req.user?.rol === "SUPER_ADMIN_NACIONAL") return next();
+      const m =
+        req.membership ||
+        getMembershipForInstitution(req.user, resolveInstitutionId(req));
+      if (!m) {
+        return res.status(403).json({
+          success: false,
+          message: "Sin membresía en la institución objetivo",
+          code: "NO_MEMBERSHIP_FOR_INSTITUTION",
+        });
+      }
+      if (!roles.includes(m.rol)) {
+        return res.status(403).json({
+          success: false,
+          message: "Permisos insuficientes en la institución",
+          code: "INSUFFICIENT_INSTITUTION_PERMISSIONS",
+          required: roles,
+          current: m.rol,
+        });
+      }
+      next();
+    },
   ];
 };
 
-/** Solo SUPER_ADMIN_NACIONAL */
+/** Solo SUPER_ADMIN_NACIONAL (global) */
 const requireSuperAdminNacional = [
   authenticateToken,
   requireRoles("SUPER_ADMIN_NACIONAL"),
 ];
 
-/** Admin de institución (compat temporal con ambos nombres) */
-const requireInstitutionAdmin = (req, res, next) => {
-  return requireRolesWithInstitution([
-    "ADMIN_INSTITUCION",
-    "SUPER_ADMIN_INSTITUCION",
-    "SUPER_ADMIN_NACIONAL",
-  ])(req, res, next);
-};
+/** Admin de institución (permite SUPER_ADMIN_INSTITUCION, ADMIN_INSTITUCION y el nacional) */
+const requireInstitutionAdmin = requireRolesWithInstitution([
+  "ADMIN_INSTITUCION",
+  "SUPER_ADMIN_INSTITUCION",
+  "SUPER_ADMIN_NACIONAL", // por si tu membresía lo lleva como rol por inst (o por compat)
+]);
 
-/** Psicólogos (incluye admins) */
-const requirePsychologist = [
-  authenticateToken,
-  requireRoles([
-    "PSICOLOGO",
-    "ADMIN_INSTITUCION",
-    "SUPER_ADMIN_INSTITUCION",
-    "SUPER_ADMIN_NACIONAL",
-  ]),
-];
+/** Psicólogos (incluye admins y nacional) */
+const requirePsychologist = requireRolesWithInstitution([
+  "PSICOLOGO",
+  "ADMIN_INSTITUCION",
+  "SUPER_ADMIN_INSTITUCION",
+  "SUPER_ADMIN_NACIONAL",
+]);
 
 module.exports = {
   authenticateToken,
@@ -209,4 +324,7 @@ module.exports = {
   requireSuperAdminNacional,
   requireInstitutionAdmin,
   requirePsychologist,
+  // helpers por si los quieres usar en otros módulos:
+  resolveInstitutionId,
+  getMembershipForInstitution,
 };

@@ -1,289 +1,282 @@
-import React, { createContext, useContext, useReducer, useEffect } from "react";
-import authService from "../services/authService";
-import { MESSAGES } from "../utils/constants";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import authService from "../services/authService"; // <- ya lo usabas
+import { normalizeRole } from "../utils/roles";
 
-// Estados posibles
-const AUTH_STATES = {
-  IDLE: "idle",
-  LOADING: "loading",
-  AUTHENTICATED: "authenticated",
-  UNAUTHENTICATED: "unauthenticated",
-  ERROR: "error",
-};
+const ACTIVE_KEY = "activeInstitutionId:v1";
+const TOKEN_KEY = "authToken:v1";
 
-// Acciones del reducer
-const AUTH_ACTIONS = {
-  SET_LOADING: "SET_LOADING",
-  LOGIN_SUCCESS: "LOGIN_SUCCESS",
-  LOGIN_FAILURE: "LOGIN_FAILURE",
-  LOGOUT: "LOGOUT",
-  UPDATE_USER: "UPDATE_USER",
-  SET_ERROR: "SET_ERROR",
-  CLEAR_ERROR: "CLEAR_ERROR",
-};
-
-// Estado inicial
-const initialState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  isLoading: false,
-  error: null,
-  status: AUTH_STATES.IDLE,
-};
-
-// Reducer para manejar el estado de autenticación
-const authReducer = (state, action) => {
-  switch (action.type) {
-    case AUTH_ACTIONS.SET_LOADING:
-      return {
-        ...state,
-        isLoading: action.payload,
-        error: null,
-      };
-
-    case AUTH_ACTIONS.LOGIN_SUCCESS:
-      return {
-        ...state,
-        user: action.payload.user,
-        token: action.payload.token,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-        status: AUTH_STATES.AUTHENTICATED,
-      };
-
-    case AUTH_ACTIONS.LOGIN_FAILURE:
-      return {
-        ...state,
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: action.payload,
-        status: AUTH_STATES.UNAUTHENTICATED,
-      };
-
-    case AUTH_ACTIONS.LOGOUT:
-      return {
-        ...state,
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-        status: AUTH_STATES.UNAUTHENTICATED,
-      };
-
-    case AUTH_ACTIONS.UPDATE_USER:
-      return {
-        ...state,
-        user: { ...state.user, ...action.payload },
-        error: null,
-      };
-
-    case AUTH_ACTIONS.SET_ERROR:
-      return {
-        ...state,
-        error: action.payload,
-        isLoading: false,
-      };
-
-    case AUTH_ACTIONS.CLEAR_ERROR:
-      return {
-        ...state,
-        error: null,
-      };
-
-    default:
-      return state;
-  }
-};
-
-// Crear contexto
 const AuthContext = createContext();
 
-// Provider del contexto
-export const AuthProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, initialState);
+export function AuthProvider({ children }) {
+  // ---- estado base (compat con tu versión anterior) ----
+  const [user, setUserState] = useState(null);
+  const [token, setTokenState] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [status, setStatus] = useState("idle");
 
-  // Verificar autenticación al cargar la app
+  // ---- multi-institución ----
+  const [activeInstitutionId, setActiveInstitutionIdState] = useState(null);
+
+  // ---- helpers token ----
+  const setToken = (t) => {
+    setTokenState(t || null);
+    try {
+      if (t) localStorage.setItem(TOKEN_KEY, t);
+      else localStorage.removeItem(TOKEN_KEY);
+    } catch {}
+  };
+
+  // Carga inicial: token + usuario desde storage y verifica
   useEffect(() => {
-    const initializeAuth = async () => {
-      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
-
+    (async () => {
+      setIsLoading(true);
+      setStatus("loading");
       try {
-        const token = authService.getToken();
-        const user = authService.getCurrentUser();
+        const storedToken =
+          authService.getToken?.() || localStorage.getItem(TOKEN_KEY);
+        const storedUser = authService.getCurrentUser?.() || null;
 
-        if (token && user) {
-          // Verificar que el token sigue siendo válido
-          const verifyResult = await authService.verifyToken();
-
-          if (verifyResult.success) {
-            dispatch({
-              type: AUTH_ACTIONS.LOGIN_SUCCESS,
-              payload: { user, token },
-            });
+        if (storedToken && storedUser) {
+          // intenta verificar
+          const verify = await authService.verifyToken?.();
+          if (verify?.success) {
+            setToken(storedToken);
+            _setUserAndDefaultInstitution(storedUser);
+            setIsAuthenticated(true);
+            setStatus("authenticated");
           } else {
-            // Token inválido, limpiar storage
-            await authService.logout();
-            dispatch({ type: AUTH_ACTIONS.LOGOUT });
+            await authService.logout?.();
+            setToken(null);
+            _clearUserAndInstitution();
+            setIsAuthenticated(false);
+            setStatus("unauthenticated");
           }
         } else {
-          dispatch({ type: AUTH_ACTIONS.LOGOUT });
+          setToken(null);
+          _clearUserAndInstitution();
+          setIsAuthenticated(false);
+          setStatus("unauthenticated");
         }
-      } catch (error) {
-        console.error("Error inicializando autenticación:", error);
-        await authService.logout();
-        dispatch({ type: AUTH_ACTIONS.LOGOUT });
+      } catch (e) {
+        console.error("Auth init error:", e);
+        await authService.logout?.();
+        setToken(null);
+        _clearUserAndInstitution();
+        setIsAuthenticated(false);
+        setStatus("unauthenticated");
+      } finally {
+        setIsLoading(false);
       }
-
-      dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
-    };
-
-    initializeAuth();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Función de login
+  // Persistencia de institución activa
+  useEffect(() => {
+    const saved =
+      typeof window !== "undefined" ? localStorage.getItem(ACTIVE_KEY) : null;
+    if (saved) setActiveInstitutionIdState(saved);
+  }, []);
+
+  // Si cambia usuario, asegura institución activa válida
+  useEffect(() => {
+    if (!user?.instituciones?.length) return;
+    const exists = user.instituciones.some(
+      (i) => String(i.institucionId) === String(activeInstitutionId)
+    );
+    if (!exists) {
+      const firstId = String(user.instituciones[0].institucionId);
+      setActiveInstitutionIdState(firstId);
+      try {
+        localStorage.setItem(ACTIVE_KEY, firstId);
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // -- setters internos --
+  const _setUserAndDefaultInstitution = (u) => {
+    setUserState(u || null);
+    const firstId = u?.instituciones?.[0]?.institucionId;
+    if (firstId) {
+      setActiveInstitutionIdState(String(firstId));
+      try {
+        localStorage.setItem(ACTIVE_KEY, String(firstId));
+      } catch {}
+    }
+  };
+
+  const _clearUserAndInstitution = () => {
+    setUserState(null);
+    setActiveInstitutionIdState(null);
+    try {
+      localStorage.removeItem(ACTIVE_KEY);
+    } catch {}
+  };
+
+  // -- API pública para setUser (úsala tras login manual) --
+  const setUser = (u) => {
+    _setUserAndDefaultInstitution(u);
+    setIsAuthenticated(!!u);
+  };
+
+  const setActiveInstitutionId = (id) => {
+    const v = String(id);
+    setActiveInstitutionIdState(v);
+    try {
+      localStorage.setItem(ACTIVE_KEY, v);
+    } catch {}
+  };
+
+  // Derivados
+  const activeInstitution = useMemo(() => {
+    if (!user?.instituciones?.length) return null;
+    return (
+      user.instituciones.find(
+        (i) => String(i.institucionId) === String(activeInstitutionId)
+      ) || user.instituciones[0]
+    );
+  }, [user, activeInstitutionId]);
+
+  const activeRole = useMemo(
+    () => normalizeRole(activeInstitution?.rol),
+    [activeInstitution]
+  );
+
+  // ---- Métodos opcionales (compat): login/logout/updateProfile) ----
   const login = async (credentials) => {
-    dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
-
+    setIsLoading(true);
+    setError(null);
     try {
-      const result = await authService.login(credentials);
-
-      if (result.success) {
-        dispatch({
-          type: AUTH_ACTIONS.LOGIN_SUCCESS,
-          payload: {
-            user: result.data.user,
-            token: result.data.token,
-          },
-        });
-
-        return { success: true, message: MESSAGES.LOGIN_SUCCESS };
-      } else {
-        dispatch({
-          type: AUTH_ACTIONS.LOGIN_FAILURE,
-          payload: result.error,
-        });
-
-        return { success: false, error: result.error };
+      const res = await authService.login(credentials);
+      if (res?.success) {
+        const u = res.data?.user;
+        const t = res.data?.accessToken || res.data?.token; // soporta ambos
+        if (u) _setUserAndDefaultInstitution(u);
+        if (t) setToken(t);
+        setIsAuthenticated(true);
+        setStatus("authenticated");
+        return { success: true };
       }
-    } catch (error) {
-      const errorMessage = error.message || MESSAGES.NETWORK_ERROR;
-
-      dispatch({
-        type: AUTH_ACTIONS.LOGIN_FAILURE,
-        payload: errorMessage,
-      });
-
-      return { success: false, error: errorMessage };
+      setIsAuthenticated(false);
+      setStatus("unauthenticated");
+      setError(res?.error || "Credenciales inválidas");
+      return { success: false, error: res?.error || "Credenciales inválidas" };
+    } catch (e) {
+      console.error("login error:", e);
+      setIsAuthenticated(false);
+      setStatus("unauthenticated");
+      setError(e?.message || "Error de red");
+      return { success: false, error: e?.message || "Error de red" };
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Función de logout
   const logout = async () => {
-    dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
-
+    setIsLoading(true);
     try {
-      await authService.logout();
-      dispatch({ type: AUTH_ACTIONS.LOGOUT });
-
-      return { success: true, message: MESSAGES.LOGOUT_SUCCESS };
-    } catch (error) {
-      console.error("Error en logout:", error);
-      // Aunque falle el logout en el servidor, limpiamos el estado local
-      dispatch({ type: AUTH_ACTIONS.LOGOUT });
-
-      return { success: true, message: MESSAGES.LOGOUT_SUCCESS };
+      await authService.logout?.();
+    } catch (e) {
+      console.warn("logout (server) falló, limpiando local igual");
+    } finally {
+      setToken(null);
+      _clearUserAndInstitution();
+      setIsAuthenticated(false);
+      setStatus("unauthenticated");
+      setIsLoading(false);
     }
   };
 
-  // Función para actualizar perfil
   const updateProfile = async () => {
     try {
-      const result = await authService.getProfile();
-
-      if (result.success) {
-        dispatch({
-          type: AUTH_ACTIONS.UPDATE_USER,
-          payload: result.data,
-        });
-
-        return { success: true, data: result.data };
-      } else {
-        dispatch({
-          type: AUTH_ACTIONS.SET_ERROR,
-          payload: result.error,
-        });
-
-        return { success: false, error: result.error };
+      const res = await authService.getProfile?.();
+      if (res?.success && res.data) {
+        // merge suave
+        const merged = { ...(user || {}), ...(res.data || {}) };
+        _setUserAndDefaultInstitution(merged);
+        return { success: true, data: res.data };
       }
-    } catch (error) {
-      const errorMessage = error.message || MESSAGES.NETWORK_ERROR;
-
-      dispatch({
-        type: AUTH_ACTIONS.SET_ERROR,
-        payload: errorMessage,
-      });
-
-      return { success: false, error: errorMessage };
+      return {
+        success: false,
+        error: res?.error || "No se pudo actualizar perfil",
+      };
+    } catch (e) {
+      return { success: false, error: e?.message || "Error de red" };
     }
   };
 
-  // Funciones de utilidad
+  // ---- Utils (compat) ----
   const hasRole = (role) => {
-    return state.user?.rol === role;
+    const r = normalizeRole(role);
+    // por rol activo
+    if (normalizeRole(activeRole) === r) return true;
+    // o por cualquiera de sus membresías
+    return (user?.instituciones || []).some((m) => normalizeRole(m.rol) === r);
   };
 
-  const hasAnyRole = (roles) => {
-    return roles.includes(state.user?.rol);
+  const hasAnyRole = (roles = []) => {
+    const set = new Set(roles.map(normalizeRole));
+    if (set.has(normalizeRole(activeRole))) return true;
+    return (user?.instituciones || []).some((m) =>
+      set.has(normalizeRole(m.rol))
+    );
   };
 
   const canAccessInstitution = (institucionId) => {
-    // Super Admin Nacional puede acceder a todo
-    if (state.user?.rol === "SUPER_ADMIN_NACIONAL") {
-      return true;
-    }
-
-    // Otros usuarios solo a su institución
-    return state.user?.institucionId === parseInt(institucionId);
+    // Si usas super admin nacional global en algún lugar:
+    if (hasRole("SUPER_ADMIN_NACIONAL")) return true;
+    return (user?.instituciones || []).some(
+      (m) => String(m.institucionId) === String(institucionId)
+    );
   };
 
-  const clearError = () => {
-    dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
-  };
+  const clearError = () => setError(null);
 
-  // Valor del contexto
   const value = {
-    // Estado
-    ...state,
+    // estado
+    user,
+    token,
+    isAuthenticated,
+    isLoading,
+    error,
+    status,
 
-    // Acciones
+    // multi-institución
+    activeInstitution,
+    activeInstitutionId,
+    activeRole,
+
+    // setters
+    setUser,
+    setToken,
+    setActiveInstitutionId,
+
+    // acciones (compat)
     login,
     logout,
     updateProfile,
     clearError,
 
-    // Utilidades
+    // utils (compat)
     hasRole,
     hasAnyRole,
     canAccessInstitution,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}
 
-// Hook personalizado para usar el contexto
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
-  }
-
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth debe usarse dentro de AuthProvider");
+  return ctx;
 };
-
-export default AuthContext;

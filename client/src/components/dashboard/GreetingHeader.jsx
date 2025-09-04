@@ -1,50 +1,41 @@
+"use client";
 import React from "react";
+import { useAuth } from "../../contexts/AuthContext"; // ajusta ruta si cambia
+import { getRoleColor, normalizeRole } from "../../utils/roles";
 
-const getRoleColor = (role) => {
-  const colors = {
-    SUPER_ADMIN_NACIONAL: "from-purple-500 to-purple-700",
-    SUPER_ADMIN_INSTITUCION: "from-blue-500 to-blue-700",
-    PSICOLOGO: "from-green-500 to-green-700",
-    ESTUDIANTE: "from-orange-500 to-orange-700",
-    ORIENTADOR: "from-indigo-500 to-indigo-700",
-  };
-  return colors[role] || "from-gray-500 to-gray-700";
+const ROLE_LABEL = {
+  SUPER_ADMIN_NACIONAL: "Sistema Nacional",
+  SUPER_ADMIN_INSTITUCION: "Administrador/a de Institución",
+  ADMIN_INSTITUCION: "Administrador/a de Institución",
+  PSICOLOGO: "Psicólogo/a",
+  TUTOR: "Tutor/a",
+  ESTUDIANTE: "Estudiante",
 };
 
-const GreetingHeader = ({ user }) => {
+export default function GreetingHeader() {
+  const { user, activeInstitution, activeRole } = useAuth();
+  const roleKey = normalizeRole(activeRole);
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Buenos días" : hour < 18 ? "Buenas tardes" : "Buenas noches";
-
-  const roleLabel =
-    user?.rol === "SUPER_ADMIN_NACIONAL"
-      ? "Sistema Nacional"
-      : user?.rol === "SUPER_ADMIN_INSTITUCION"
-      ? "Administrador de Institución"
-      : user?.rol === "PSICOLOGO"
-      ? "Psicólogo"
-      : user?.rol === "ESTUDIANTE"
-      ? "Estudiante"
-      : user?.rol === "ORIENTADOR"
-      ? "Orientador"
-      : "Usuario";
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {greeting}, {user?.nombre}
+            {greeting}, {user?.nombre || "Usuario"}
           </h1>
           <p className="text-gray-600 mt-1">
-            {user?.institucionNombre ? `${user.institucionNombre} • ` : ""}
-            {roleLabel}
+            {activeInstitution?.institucionNombre
+              ? `${activeInstitution.institucionNombre} • `
+              : ""}
+            {ROLE_LABEL[roleKey] || "Usuario"}
           </p>
         </div>
-
         <div
           className={`w-16 h-16 rounded-full bg-gradient-to-br ${getRoleColor(
-            user?.rol
+            roleKey
           )} flex items-center justify-center shadow-lg`}
         >
           <span className="text-white text-xl font-bold">
@@ -54,6 +45,4 @@ const GreetingHeader = ({ user }) => {
       </div>
     </div>
   );
-};
-
-export default GreetingHeader;
+}

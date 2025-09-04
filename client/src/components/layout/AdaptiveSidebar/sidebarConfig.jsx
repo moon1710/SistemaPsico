@@ -15,13 +15,14 @@ import {
   BarChart3,
   TrendingUp,
 } from "lucide-react";
-import { ROUTES } from "../../utils/constants";
+import { ROUTES } from "../../../utils/constants";
 
 export const baseItems = [
   { href: ROUTES.DASHBOARD, icon: Home, label: "Dashboard", roles: ["all"] },
 ];
 
 export const roleSpecificItems = [
+  // ===== Nacional =====
   {
     href: ROUTES.INSTITUCIONES,
     icon: Building,
@@ -34,54 +35,96 @@ export const roleSpecificItems = [
     label: "Estadísticas Globales",
     roles: ["SUPER_ADMIN_NACIONAL"],
   },
+
+  // ===== Admin institución (incluye super-admin institución y nacional) =====
   {
     href: ROUTES.USUARIOS,
     icon: Users,
     label: "Gestión de Usuarios",
-    roles: ["SUPER_ADMIN_INSTITUCION", "SUPER_ADMIN_NACIONAL"],
+    roles: [
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
   },
   {
     href: ROUTES.PSICOLOGOS,
     icon: Brain,
     label: "Psicólogos",
-    roles: ["SUPER_ADMIN_INSTITUCION", "SUPER_ADMIN_NACIONAL"],
+    roles: [
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
   },
   {
     href: ROUTES.ESTUDIANTES,
     icon: GraduationCap,
     label: "Estudiantes",
-    roles: ["SUPER_ADMIN_INSTITUCION", "SUPER_ADMIN_NACIONAL"],
+    roles: [
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
   },
   {
     href: ROUTES.MODULOS,
     icon: Settings,
     label: "Módulos Sistema",
-    roles: ["SUPER_ADMIN_INSTITUCION", "SUPER_ADMIN_NACIONAL"],
+    roles: [
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
   },
+
+  // ===== Psicología =====
   {
     href: ROUTES.QUIZ_APLICAR,
     icon: ClipboardList,
     label: "Aplicar Quiz",
-    roles: ["PSICOLOGO", "SUPER_ADMIN_INSTITUCION", "SUPER_ADMIN_NACIONAL"],
+    roles: [
+      "PSICOLOGO",
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
   },
   {
     href: ROUTES.CANALIZACIONES,
     icon: Heart,
     label: "Canalizaciones",
-    roles: ["PSICOLOGO", "SUPER_ADMIN_INSTITUCION", "SUPER_ADMIN_NACIONAL"],
+    roles: [
+      "PSICOLOGO",
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
   },
   {
     href: ROUTES.CITAS,
     icon: Calendar,
     label: "Gestión de Citas",
-    roles: ["PSICOLOGO", "SUPER_ADMIN_INSTITUCION", "SUPER_ADMIN_NACIONAL"],
+    roles: [
+      "PSICOLOGO",
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
   },
   {
     href: ROUTES.SESIONES,
     icon: MessageSquare,
     label: "Notas de Sesión",
-    roles: ["PSICOLOGO", "SUPER_ADMIN_INSTITUCION", "SUPER_ADMIN_NACIONAL"],
+    roles: [
+      "PSICOLOGO",
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
   },
+
+  // ===== Estudiante =====
   {
     href: ROUTES.QUIZ_CONTESTAR,
     icon: FileText,
@@ -100,21 +143,33 @@ export const roleSpecificItems = [
     label: "Recomendaciones",
     roles: ["ESTUDIANTE"],
   },
+
+  // ===== Orientación/Tutor =====
   {
     href: "/orientacion",
     icon: UserPlus,
     label: "Orientación",
-    roles: ["ORIENTADOR", "SUPER_ADMIN_INSTITUCION", "SUPER_ADMIN_NACIONAL"],
+    roles: [
+      "ORIENTADOR",
+      "TUTOR",
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
   },
+
+  // ===== Reportes =====
   {
     href: "/reportes",
     icon: BarChart3,
     label: "Reportes",
     roles: [
       "PSICOLOGO",
+      "ADMIN_INSTITUCION",
       "SUPER_ADMIN_INSTITUCION",
       "SUPER_ADMIN_NACIONAL",
       "ORIENTADOR",
+      "TUTOR",
     ],
   },
 ];

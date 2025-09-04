@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { User, ChevronDown, LogOut, Bell } from "lucide-react";
-import { ROUTES } from "../../utils/constants";
+import { ROUTES } from "../../../utils/constants";
 import { getRoleColor, getRoleLabel } from "./sidebarUtils";
+
+// 👇 usa el contexto para rol/inst. activa
+import { useAuth } from "../../../contexts/AuthContext";
 
 const SidebarUser = ({ user, onLogout, isCollapsed }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { activeRole, activeInstitution } = useAuth();
 
   const toggleUserMenu = () => setShowUserMenu(!showUserMenu);
 
@@ -21,7 +25,7 @@ const SidebarUser = ({ user, onLogout, isCollapsed }) => {
           <div
             className={`flex items-center justify-center w-10 h-10 rounded-full shadow-lg 
               transition-all duration-300 group-hover:scale-105
-              bg-gradient-to-br ${getRoleColor(user?.rol)}`}
+              bg-gradient-to-br ${getRoleColor(activeRole)}`}
           >
             <User className="h-5 w-5 text-[#f7f7f7]" />
           </div>
@@ -34,8 +38,9 @@ const SidebarUser = ({ user, onLogout, isCollapsed }) => {
               <p className="text-sm font-medium text-[#f7f7f7] truncate">
                 {user?.nombreCompleto}
               </p>
-              <p className="text-xs text-[#7c777a]">
-                {getRoleLabel(user?.rol)}
+              <p className="text-xs text-[#7c777a] truncate">
+                {activeInstitution?.institucionNombre || "—"} •{" "}
+                {getRoleLabel(activeRole)}
               </p>
               {user?.email && (
                 <p className="text-xs text-[#7c777a] truncate">{user.email}</p>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import AdaptiveSidebar from "./AdaptiveSidebar"; // 👉 importa la carpeta, usará index.jsx
+import AdaptiveSidebar from "./AdaptiveSidebar/index"; // 👉 importa la carpeta, usará index.jsx
 import Header from "./Header";
 import { ROUTES } from "../../utils/constants";
 
