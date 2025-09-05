@@ -309,12 +309,20 @@ const requireInstitutionAdmin = requireRolesWithInstitution([
 ]);
 
 /** Psicólogos (incluye admins y nacional) */
-const requirePsychologist = requireRolesWithInstitution([
-  "PSICOLOGO",
-  "ADMIN_INSTITUCION",
-  "SUPER_ADMIN_INSTITUCION",
-  "SUPER_ADMIN_NACIONAL",
-]);
+function requirePsychologist(req, res, next) {
+  const rolesPermitidos = [
+    "PSICOLOGO",
+    "ORIENTADOR",
+    "ADMIN_INSTITUCION",
+    "SUPER_ADMIN_NACIONAL",
+  ];
+  if (!req.user || !rolesPermitidos.includes(req.user.rol)) {
+    return res
+      .status(403)
+      .json({ success: false, message: "Acceso no autorizado" });
+  }
+  next();
+}
 
 module.exports = {
   authenticateToken,

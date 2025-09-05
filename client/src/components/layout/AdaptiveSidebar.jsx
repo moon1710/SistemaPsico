@@ -113,7 +113,7 @@ const AdaptiveSidebar = ({ user, onLogout, isCollapsed, onToggle }) => {
       {
         href: ROUTES.QUIZ_CONTESTAR,
         icon: FileText,
-        label: "Contestar Quiz",
+        label: "Contestar Quizzes",
         roles: ["ESTUDIANTE"],
       },
       {

@@ -2,17 +2,17 @@ import React from "react";
 import { useAuth } from "../contexts/AuthContext";
 import GreetingHeader from "../components/dashboard/GreetingHeader";
 import RoleRenderer from "../components/dashboard/RoleRenderer";
-import WhoamI from "../components/debug/WhoamI"
+// import WhoamI from "../components/debug/WhoamI"
 
 const DashboardPage = () => {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-6">
-      <GreetingHeader user={user} />
-      <WhoamI />
-      <RoleRenderer rol={user?.rol} />
-    </div>
+      <div className="space-y-6">
+        <GreetingHeader user={user} />
+        {/* <WhoamI /> */}
+        <RoleRenderer rol={user?.rol} />
+      </div>
   );
 };
 
