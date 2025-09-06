@@ -1,16 +1,21 @@
-import React from "react";
 import { useAuth } from "../contexts/AuthContext";
 import GreetingHeader from "../components/dashboard/GreetingHeader";
 import RoleRenderer from "../components/dashboard/RoleRenderer";
-import WhoamI from "../components/debug/WhoamI"
+import OnboardingModal from "../components/onboarding/OnboardingModal";
 
 const DashboardPage = () => {
-  const { user } = useAuth();
+  const user = useAuth();
 
   return (
     <div className="space-y-6">
       <GreetingHeader user={user} />
-      <WhoamI />
+
+      {/* Debug */}
+      {/* <WhoAmI /> */}
+
+      {/* Mostrar Onboarding si perfilCompletado === 0 */}
+      {user?.perfilCompletado === 0 && <OnboardingModal user={user} />}
+
       <RoleRenderer rol={user?.rol} />
     </div>
   );

@@ -27,5 +27,7 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+const usuariosRouter = require("./routes/usuarios");
+app.use("/api/usuarios", usuariosRouter);
 
 startServer();

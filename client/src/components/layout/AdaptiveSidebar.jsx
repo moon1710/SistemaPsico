@@ -189,34 +189,34 @@ const getRoleColor = () => {
     return labels[user?.rol] || user?.rol;
   };
 
-  // Componente MenuItem
+  // Componente MenuItem, cambie los iconos y texto de gris a Blanco para ser mas notorios
   const MenuItem = ({ href, icon: Icon, label, isCollapsed }) => {
     const isActive = location.pathname === href;
 
     return (
       <div className="relative group">
         <Link
-          to={href}
-          className={`
-            group relative flex items-center px-4 py-3 text-sm font-medium rounded-xl
-            transition-all duration-300 ease-out
-            ${
-              isActive
-                ? "bg-[#2b333c] text-[#f7f7f7] shadow-lg"
-                : "text-[#7c777a] hover:bg-[#2b333c]/50 hover:text-[#f0f0f0]"
-            }
-            ${isCollapsed ? "justify-center px-3" : ""}
-          `}
-        >
-          <Icon
-            className={`
-              ${isCollapsed ? "h-6 w-6" : "h-5 w-5 mr-3"} 
-              transition-transform duration-200
-              ${isActive ? "" : "group-hover:scale-110"}
-            `}
-          />
-          {!isCollapsed && <span className="relative">{label}</span>}
-        </Link>
+      to={href}
+      className={`
+        flex items-center px-4 py-3 text-sm font-medium rounded-xl
+        transition-all duration-300
+        ${
+          isActive
+            ? "bg-[#2b333c] text-white shadow-lg" // activo con texto blanco
+            : "text-white hover:bg-[#2b333c]/50 hover:text-[#f0f0f0]" // inactivo con texto blanco
+        }
+        ${isCollapsed ? "justify-center px-3" : ""}
+      `}
+    >
+      <Icon
+        className={`
+          ${isCollapsed ? "h-6 w-6" : "h-5 w-5 mr-3"}
+          transition-transform duration-200
+          ${isActive ? "" : "group-hover:scale-110"}
+        `}
+      />
+      {!isCollapsed && <span>{label}</span>}
+    </Link>
 
         {/* Tooltip para cuando está contraída */}
         {isCollapsed && (
@@ -254,10 +254,10 @@ const getRoleColor = () => {
         `}
         onClick={onToggle}
       />
-
+      {/* cambie el color de la barra de un solido marino a un degradado entre morado y azul marino */}
       <div
         className={`
-          sticky top-0 h-screen bg-[#21252d]
+          bg-gradient-to-b from-purple-800 via-purple-400 to-blue-700
           border-r border-[#2b333c]/50
           transition-all duration-500 ease-in-out flex flex-col
           ${isCollapsed ? "w-20" : "w-64"}
@@ -276,7 +276,7 @@ const getRoleColor = () => {
 
           <button
             onClick={onToggle}
-            className="p-2 rounded-lg text-[#7c777a] hover:bg-[#2b333c]/50 hover:text-[#f7f7f7] 
+            className="p-2 rounded-lg text-white hover:bg-[#2b333c]/50 hover:text-cyan-300
                      transition-all duration-300 hover:scale-110"
             title={isCollapsed ? "Expandir sidebar" : "Contraer sidebar"}
           >
@@ -338,30 +338,31 @@ const getRoleColor = () => {
             )}
           </div>
 
-          {/* Menú desplegable del usuario */}
+          {/* Menú desplegable del usuario CAMBIE LOS COLORES DEL TEXTO y el hover*/}
           {showUserMenu && !isCollapsed && (
             <div className="mt-2 space-y-1 animate-in slide-in-from-top-2 duration-300">
               <Link
                 to={ROUTES.PROFILE}
-                className="flex items-center px-3 py-2 text-sm text-[#7c777a] hover:text-[#f7f7f7] 
-                         hover:bg-[#2b333c]/50 rounded-lg transition-all duration-200"
+                className="flex items-center px-3 py-2 text-sm text-gray-100 hover:text-white 
+           hover:bg-white/10 rounded-lg transition-all duration-200"
               >
                 <User className="h-4 w-4 mr-2 flex-shrink-0" />
                 Mi Perfil
               </Link>
               <Link
                 to="/notificaciones"
-                className="flex items-center px-3 py-2 text-sm text-[#7c777a] hover:text-[#f7f7f7] 
-                         hover:bg-[#2b333c]/50 rounded-lg transition-all duration-200"
+                className="flex items-center px-3 py-2 text-sm text-gray-100 hover:text-white 
+           hover:bg-white/10 rounded-lg transition-all duration-200"
               >
                 <Bell className="h-4 w-4 mr-2 flex-shrink-0" />
                 Notificaciones
               </Link>
               <button
                 onClick={onLogout}
-                className="flex items-center w-full px-3 py-2 text-sm text-[#ef4444] 
-                         hover:text-[#f87171] hover:bg-[#ef4444]/10 
-                         rounded-lg transition-all duration-200"
+                className="flex items-center w-full px-3 py-2 text-sm 
+           text-gray-100 hover:text-red-500 
+           hover:bg-red-500/20 
+           rounded-lg transition-all duration-200"
               >
                 <LogOut className="h-4 w-4 mr-2 flex-shrink-0" />
                 Cerrar Sesión
@@ -386,17 +387,17 @@ const getRoleColor = () => {
         {/* Footer */}
         <div className="p-4 border-t border-[#2b333c]/30 mt-auto">
           {!isCollapsed ? (
-            <div className="text-xs text-[#7c777a] text-center space-y-2">
-              <p className="font-medium text-[#f7f7f7]">
-                ¿Necesitas ayuda o soporte?
-              </p>
-              <Link
-                to="/soporte"
-                className="text-[#10cfbd] hover:underline transition-colors hover:text-[#10cfbd]/80"
-              >
-                Contáctanos
-              </Link>
-            </div>
+            <div className="text-xs text-center space-y-2">
+  <p className="font-semibold text-white">
+    ¿Necesitas ayuda o soporte?
+  </p>
+  <Link
+    to="/soporte"
+    className="text-white hover:text-cyan-200 hover:underline transition-colors"
+  >
+    Contáctanos
+  </Link>
+</div>
           ) : (
             <div className="flex justify-center">
               <div
