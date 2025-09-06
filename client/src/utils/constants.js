@@ -37,6 +37,12 @@ export const ROUTES = {
   LOGIN: "/login",
   DASHBOARD: "/dashboard",
   PROFILE: "/profile",
+  HELP: "/help",
+  ABOUTUS: "/aboutUs",
+  TERMINOS: "/terminos",
+  PRIVACIDAD: "/privacidad",
+  DOCUMENTACION: "/docs",
+  CONFINDENCIALIDAD: "/confidencialidad",
 
   // Super Admin Nacional
   INSTITUCIONES: "/instituciones",

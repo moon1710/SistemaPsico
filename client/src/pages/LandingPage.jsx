@@ -209,18 +209,6 @@ const LandingPage = () => {
               </p>
             </div>
             <div>
-              <h4
-                className="footer-title"
-                style={{ color: "#fff", fontWeight: 600, fontSize: "1.05rem" }}
-              >
-                Plataforma
-              </h4>
-              <ul className="footer-links">
-                <li>Dashboard</li>
-                <li>Evaluaciones</li>
-                <li>Canalizaciones</li>
-                <li>Reportes</li>
-              </ul>
             </div>
             <div>
               <h4

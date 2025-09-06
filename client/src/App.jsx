@@ -2,27 +2,30 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 
-// Layout
 import Layout from "./components/layout/Layout";
+import PublicLayout from "./components/layout/PublicLayout";
 
-// Rutas protegidas
 import ProtectedRoute, {
   PublicOnlyRoute,
 } from "./components/auth/ProtectedRoute";
 
-// Páginas
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 
-// Constantes
+import AboutUsPage from "./pages/AboutUsPage";
+import HelpPage from "./pages/HelpPage";
+import DocsPage from "./pages/DocsPage";
+import TerminosPage from "./pages/TerminosPage";
+import PrivacidadPage from "./pages/PrivacidadPage";
+import ConfidencialidadPage from "./pages/ConfidencialidadPage";
+
 import { ROUTES } from "./utils/constants";
 import "./App.css";
 
 function App() {
   const { isLoading } = useAuth();
 
-  // Mostrar loading global mientras se inicializa la autenticación
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -36,16 +39,15 @@ function App() {
 
   return (
     <Routes>
-      {/* Rutas públicas (sin layout) */}
+      {/* Públicas solo para NO autenticados */}
       <Route
-        path="/" // Changed from {ROUTES.LANDING} to a hardcoded path
+        path="/"
         element={
           <PublicOnlyRoute>
             <LandingPage />
           </PublicOnlyRoute>
         }
       />
-
       <Route
         path={ROUTES.LOGIN}
         element={
@@ -55,7 +57,66 @@ function App() {
         }
       />
 
-      {/* Rutas protegidas (con layout) */}
+      {/* Públicas ABIERTAS */}
+      <Route
+        path={ROUTES.ABOUTUS}
+        element={
+          <PublicLayout>
+            <AboutUsPage />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path={ROUTES.HELP}
+        element={
+          <PublicLayout>
+            <HelpPage />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path={ROUTES.TERMINOS}
+        element={
+          <PublicLayout>
+            <TerminosPage />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path={ROUTES.PRIVACIDAD}
+        element={
+          <PublicLayout>
+            <PrivacidadPage />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path={ROUTES.DOCUMENTACION}
+        element={
+          <PublicLayout>
+            <DocsPage />
+          </PublicLayout>
+        }
+      />
+      <Route
+        path={ROUTES.CONFINDENCIALIDAD}
+        element={
+          <PublicLayout>
+            <ConfidencialidadPage />
+          </PublicLayout>
+        }
+      />
+      {/* Alias opcional correcto */}
+      <Route
+        path={ROUTES.CONFIDENCIALIDAD_ALIAS}
+        element={
+          <PublicLayout>
+            <ConfidencialidadPage />
+          </PublicLayout>
+        }
+      />
+
+      {/* Protegidas */}
       <Route
         path={ROUTES.DASHBOARD}
         element={
@@ -66,25 +127,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-
-      {/* Si necesitas una página para el layout sin contenido específico,
-        puedes usar esta estructura.
-        <Route
-          path="/ejemplo-layout"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">Página de ejemplo</h1>
-                  <p className="text-gray-600 mt-2">
-                    Esta es una página de ejemplo para probar el layout.
-                  </p>
-                </div>
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-      */}
     </Routes>
   );
 }
