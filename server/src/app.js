@@ -6,6 +6,7 @@ console.log("app.js: Iniciando configuración...");
 
 // Importar rutas
 const authRoutes = require("./routes/auth.routes");
+const quizzesRoutes = require("./routes/quizzes.routes");
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.get("/health", (req, res) => {
 
 // Rutas de autenticación
 app.use("/api/auth", authRoutes);
+app.use("/api/quizzes", quizzesRoutes);
 
 console.log("app.js: Rutas configuradas");
 

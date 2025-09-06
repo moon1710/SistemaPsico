@@ -2,6 +2,7 @@ import { useAuth } from "../contexts/AuthContext";
 import GreetingHeader from "../components/dashboard/GreetingHeader";
 import RoleRenderer from "../components/dashboard/RoleRenderer";
 import OnboardingModal from "../components/onboarding/OnboardingModal";
+// import WhoamI from "../components/debug/WhoamI"
 
 const DashboardPage = () => {
   const user = useAuth();
