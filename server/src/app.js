@@ -1,16 +1,13 @@
+// app.js (servidor Express)
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-console.log("app.js: Iniciando configuración...");
-
-// Importar rutas
 const authRoutes = require("./routes/auth.routes");
 const quizzesRoutes = require("./routes/quizzes.routes");
 
 const app = express();
 
-// Configuración de CORS básica y segura
 const corsOptions = {
   origin: [
     process.env.FRONTEND_URL || "http://localhost:5173",
@@ -20,24 +17,41 @@ const corsOptions = {
   ],
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "x-institution-id", // ⬅️ necesario para tus requests
+    "x-institucion-id", // ⬅️ alias que usas en el middleware
+    "Origin",
+    "Accept",
+  ],
 };
 
-// Middlewares básicos
 app.use(cors(corsOptions));
+// Maneja explícitamente preflight por si acaso
+app.options("*", cors(corsOptions));
+
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
-// Middleware de logging para desarrollo
 if (process.env.NODE_ENV !== "production") {
   app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    // Log útil para depurar preflight
+    if (req.method === "OPTIONS") {
+      console.log("Preflight from:", req.headers.origin);
+      console.log("Req-Method:", req.headers["access-control-request-method"]);
+      console.log(
+        "Req-Headers:",
+        req.headers["access-control-request-headers"]
+      );
+    }
     next();
   });
 }
 
-// Headers de seguridad básica
 app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "DENY");
@@ -45,11 +59,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// ===============================================
-// RUTAS
-// ===============================================
-
-// Ruta de health check
 app.get("/health", (req, res) => {
   res.json({
     success: true,
@@ -59,17 +68,9 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Rutas de autenticación
 app.use("/api/auth", authRoutes);
 app.use("/api/quizzes", quizzesRoutes);
 
-console.log("app.js: Rutas configuradas");
-
-// ===============================================
-// MANEJO DE ERRORES
-// ===============================================
-
-// 404 - Ruta no encontrada
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -78,27 +79,21 @@ app.use((req, res) => {
   });
 });
 
-// Error handler global
 app.use((error, req, res, next) => {
   console.error("Error no capturado:", error.message);
-
-  // Error de CORS
   if (error.message === "No permitido por CORS") {
-    return res.status(403).json({
-      success: false,
-      message: "Acceso bloqueado por CORS",
-    });
+    return res
+      .status(403)
+      .json({ success: false, message: "Acceso bloqueado por CORS" });
   }
-
-  // Error de JSON malformado
   if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
-    return res.status(400).json({
-      success: false,
-      message: "JSON inválido en el cuerpo de la petición",
-    });
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: "JSON inválido en el cuerpo de la petición",
+      });
   }
-
-  // Error genérico
   res.status(500).json({
     success: false,
     message: "Error interno del servidor",
@@ -106,5 +101,4 @@ app.use((error, req, res, next) => {
   });
 });
 
-console.log("app.js: Configuración completada");
 module.exports = app;

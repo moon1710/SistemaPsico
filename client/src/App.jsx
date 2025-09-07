@@ -13,12 +13,19 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 
+//Paginas de Info
 import AboutUsPage from "./pages/AboutUsPage";
 import HelpPage from "./pages/HelpPage";
 import DocsPage from "./pages/DocsPage";
 import TerminosPage from "./pages/TerminosPage";
 import PrivacidadPage from "./pages/PrivacidadPage";
 import ConfidencialidadPage from "./pages/ConfidencialidadPage";
+
+//QuizzesPages
+import PublicQuizzesPage from "./pages/quizzes/PublicQuizzesPage";
+import TakeQuizPage from "./pages/quizzes/TakeQuizPage";
+import MyResultsPage from "./pages/quizzes/MyResultsPage";
+import AdminResultsPage from "./pages/quizzes/AdminResultsPage";
 
 import { ROUTES } from "./utils/constants";
 import "./App.css";
@@ -115,6 +122,59 @@ function App() {
           </PublicLayout>
         }
       />
+
+      {/* Quizzes (protegidas) */}
+      <Route
+        path={ROUTES.QUIZ_CONTESTAR}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <PublicQuizzesPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.QUIZ_CONTESTAR_DETALLE}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <TakeQuizPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.MIS_RESULTADOS}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <MyResultsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.QUIZ_RESULTADOS_ADMIN}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <AdminResultsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      {/* Si ocupas analytics:
+<Route
+  path={ROUTES.QUIZ_ANALYTICS_ADMIN}
+  element={
+    <ProtectedRoute>
+      <Layout>
+        <AnalyticsPage />
+      </Layout>
+    </ProtectedRoute>
+  }
+/> */}
 
       {/* Protegidas */}
       <Route

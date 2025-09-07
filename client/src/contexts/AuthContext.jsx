@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import authService from "../services/authService"; // <- ya lo usabas
 import { normalizeRole } from "../utils/roles";
-
+import { API_CONFIG, STORAGE_KEYS, AUTH_ENDPOINTS } from "../utils/constants";
 const ACTIVE_KEY = "activeInstitutionId:v1";
 const TOKEN_KEY = "authToken:v1";
 
@@ -181,20 +181,22 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = async () => {
-    setIsLoading(true);
-    try {
-      await authService.logout?.();
-    } catch (e) {
-      console.warn("logout (server) falló, limpiando local igual");
-    } finally {
-      setToken(null);
-      _clearUserAndInstitution();
-      setIsAuthenticated(false);
-      setStatus("unauthenticated");
-      setIsLoading(false);
+async function logout() {
+  try {
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    if (token) {
+      await fetch(`${API_CONFIG.API_BASE}${AUTH_ENDPOINTS.LOGOUT}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {}); // si el backend no responde, no nos detenemos
     }
-  };
+  } finally {
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+    // setUser(null); setIsAuthenticated(false); lo que uses
+  }
+  return { success: true };
+}
 
   const updateProfile = async () => {
     try {

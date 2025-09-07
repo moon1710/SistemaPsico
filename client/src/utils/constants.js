@@ -1,9 +1,13 @@
 //client/src/utils/constants.js
 
 // Configuración de la API
+const BASE_URL = (
+  import.meta.env.VITE_API_URL || "http://localhost:4000"
+).replace(/\/$/, "");
+
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || "http://localhost:4000",
-  API_BASE: import.meta.env.VITE_API_URL || "http://localhost:4000/api",
+  BASE_URL,
+  API_BASE: `${BASE_URL}/api`,
   TIMEOUT: 10000,
 };
 
@@ -64,6 +68,12 @@ export const ROUTES = {
   QUIZ_CONTESTAR: "/quiz/contestar",
   MIS_CITAS: "/mis-citas",
   RECOMENDACIONES: "/recomendaciones",
+
+  // Quizzes
+  QUIZ_CONTESTAR_DETALLE: "/quiz/contestar/:quizId",
+  MIS_RESULTADOS: "/quiz/mis-resultados",
+  QUIZ_RESULTADOS_ADMIN: "/quizzes/resultados", // para psicólogo/orientador/admin
+  QUIZ_ANALYTICS_ADMIN: "/quizzes/analytics", // opcional
 };
 
 // Mensajes de la aplicación
