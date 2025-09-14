@@ -63,7 +63,7 @@ body {
   position: absolute;
   inset: 0;
   background: 
-    linear-gradient(125deg, rgba(118, 110, 228, 0.05) 30%, rgba(201, 150, 224, 0.45) 100%),
+    linear-gradient(125deg, rgba(118, 110, 228, 0.05) 30%, rgba(150, 151, 224, 0.45) 100%),
     url('./assets/bg.png') center center / cover no-repeat fixed;
   z-index: 1;
   opacity: 1;

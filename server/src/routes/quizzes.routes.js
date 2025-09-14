@@ -126,89 +126,98 @@ router.get(
     "SUPER_ADMIN_NACIONAL",
   ]),
   async (req, res) => {
+    const institucionId = req.institucionId; // lo setea el guard
+    const {
+      codigo = null,
+      severidad = null,
+      page = 1,
+      pageSize = 20,
+      debug = 0,
+    } = req.query;
+
+    // ✅ JS puro (sin "as any") y saneo de números
+    let pageNum = parseInt(page, 10);
+    if (!Number.isFinite(pageNum) || pageNum < 1) pageNum = 1;
+
+    let limit = parseInt(pageSize, 10);
+    if (!Number.isFinite(limit) || limit < 1) limit = 20;
+    if (limit > 200) limit = 200; // tope sano
+
+    const offset = (pageNum - 1) * limit;
+
+    // WHERE + params del WHERE (institución siempre + filtros opcionales)
+    const whereParts = ["rq.institucionId = ?"];
+    const params = [String(institucionId)];
+
+    if (codigo) {
+      whereParts.push("q.codigo = ?");
+      params.push(String(codigo));
+    }
+    if (severidad) {
+      whereParts.push("rq.severidad = ?");
+      params.push(String(severidad));
+    }
+    const whereSQL = `WHERE ${whereParts.join(" AND ")}`;
+
+    // FROM base reutilizable
+    const baseFrom = `
+      FROM respuestas_quiz rq
+      JOIN quizzes  q ON q.id = rq.quizId
+      JOIN usuarios u ON u.id = rq.usuarioId
+      ${whereSQL}
+    `;
+
+    // ⚠️ Interpolamos LIMIT/OFFSET ya saneados (evita HY000)
+    const dataSql = `
+      SELECT
+        rq.id,
+        rq.fechaEnvio,
+        rq.puntajeTotal,
+        rq.severidad,
+        q.id AS quizId,
+        q.titulo,
+        q.codigo,
+        q.\`version\` AS version,
+        u.id AS estudianteId,
+        COALESCE(u.nombreCompleto, u.nombre) AS estudianteNombre
+      ${baseFrom}
+      ORDER BY rq.fechaEnvio DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const countSql = `
+      SELECT COUNT(*) AS total
+      ${baseFrom}
+    `;
+
     try {
-      // lo setea requireInstitutionAccess dentro del guard
-      const institucionId = req.institucionId;
-      const {
-        codigo = null,
-        severidad = null,
-        page = 1,
-        pageSize = 20,
-        debug = 0,
-      } = req.query;
-
-      const limit = Math.max(1, Number(pageSize) || 20);
-      const offset = Math.max(0, (Number(page) - 1 || 0) * limit);
-
-      const whereParts = ["rq.institucionId = ?"]; // 👈 SIEMPRE filtra por rq.institucionId
-      const params = [String(institucionId)];
-
-      if (codigo) {
-        whereParts.push("q.codigo = ?");
-        params.push(String(codigo));
-      }
-      if (severidad) {
-        whereParts.push("rq.severidad = ?");
-        params.push(String(severidad));
-      }
-
-      const whereSQL = `WHERE ${whereParts.join(" AND ")}`;
-
-      // backticks en `version` para evitar conflicto con palabra reservada
-      const sql = `
-        SELECT
-          rq.id,
-          rq.fechaEnvio,
-          rq.puntajeTotal,
-          rq.severidad,
-          q.id AS quizId,
-          q.titulo,
-          q.codigo,
-          q.\`version\` AS version,
-          u.id AS estudianteId,
-          u.nombre AS estudianteNombre
-        FROM respuestas_quiz rq
-        JOIN quizzes  q ON q.id = rq.quizId
-        JOIN usuarios u ON u.id = rq.usuarioId
-        ${whereSQL}
-        ORDER BY rq.fechaEnvio DESC
-        LIMIT ? OFFSET ?`;
-
-      const countSql = `
-        SELECT COUNT(*) AS total
-        FROM respuestas_quiz rq
-        JOIN quizzes q ON q.id = rq.quizId
-        ${whereSQL}`;
-
-      // COUNT (mismos params del WHERE, sin límite/offset)
+      // COUNT (usa SOLO params del WHERE)
       const [countRows] = await pool.execute(countSql, params);
       const total = Number(countRows?.[0]?.total || 0);
 
-      // DATA
-      const [rows] = await pool.execute(sql, [...params, limit, offset]);
+      // DATA (mismos params del WHERE)
+      const [rows] = await pool.execute(dataSql, params);
 
-      // Modo debug opcional: ?debug=1 para ver SQL/params desde el cliente
       if (String(debug) === "1") {
         return res.json({
           success: true,
-          debug: {
-            whereSQL,
-            sql: sql.replace(/\s+/g, " ").trim(),
-            params: [...params, limit, offset],
-            countSql: countSql.replace(/\s+/g, " ").trim(),
-            countParams: params,
-          },
           total,
-          page: Number(page) || 1,
+          page: pageNum,
           pageSize: limit,
           data: rows,
+          debug: {
+            whereSQL,
+            params,
+            countSql: countSql.replace(/\s+/g, " ").trim(),
+            dataSql: dataSql.replace(/\s+/g, " ").trim(),
+          },
         });
       }
 
       return res.json({
         success: true,
         total,
-        page: Number(page) || 1,
+        page: pageNum,
         pageSize: limit,
         data: rows,
       });
@@ -218,8 +227,29 @@ router.get(
         errno: err?.errno,
         sqlState: err?.sqlState,
         message: err?.message,
-        sql: err?.sql?.slice?.(0, 300),
+        sql: err?.sql,
       });
+
+      if (String(debug) === "1") {
+        return res.status(500).json({
+          success: false,
+          message: "Error interno",
+          error: {
+            code: err?.code,
+            errno: err?.errno,
+            sqlState: err?.sqlState,
+            message: err?.message,
+            sql: err?.sql,
+          },
+          debug: {
+            whereSQL,
+            params,
+            countSql: countSql.replace(/\s+/g, " ").trim(),
+            dataSql: dataSql.replace(/\s+/g, " ").trim(),
+          },
+        });
+      }
+
       return res
         .status(500)
         .json({ success: false, message: "Error interno del servidor" });

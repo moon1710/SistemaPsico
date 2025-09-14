@@ -18,16 +18,12 @@ const Layout = ({ children }) => {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-const handleLogout = async () => {
-  try {
+  const handleLogout = async () => {
     const result = await logout();
-    // aunque no devuelva nada, igual seguimos
-  } catch (e) {
-    console.error("logout falló", e);
-  } finally {
-    navigate(ROUTES.LOGIN);
-  }
-};
+    if (result.success) {
+      navigate(ROUTES.LOGIN);
+    }
+  };
 
   // Pantalla de carga
   if (isLoading) {
