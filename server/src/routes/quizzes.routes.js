@@ -1,15 +1,23 @@
 // src/routes/quizzes.routes.js
 const express = require("express");
-const { pool } = require("../db"); // Asegúrate de que '../db' exporta el pool de MySQL (mysql2/promise)
+const { pool } = require("../db"); // Debe exportar pool de mysql2/promise
 const {
   authenticateToken,
   resolveInstitutionId,
   getMembershipForInstitution,
   requireRolesWithInstitution,
-} = require("../middlewares/auth.middleware"); // Ajusta la ruta si tu middleware está en otro directorio
+} = require("../middlewares/auth.middleware");
 const { randomUUID } = require("crypto");
 
 const router = express.Router();
+
+/* ----------------------------- Config de acceso ----------------------------- */
+/**
+ * QUIZ_ACCESS_MODE:
+ *  - 'GLOBAL': cualquier usuario autenticado puede acceder a quizzes ACTIVOS (ignora 'publico')
+ *  - 'PUBLIC_FLAG': solo quizzes con publico=1 y activo=1 (tu comportamiento original)
+ */
+const QUIZ_ACCESS_MODE = process.env.QUIZ_ACCESS_MODE || "GLOBAL";
 
 /* ------------------------- Helpers de cálculo de severidad ------------------------- */
 /**
@@ -18,44 +26,123 @@ const router = express.Router();
  */
 function mapSeveridad(codigo, score) {
   if (String(codigo).toUpperCase() === "BAI") {
-    // Categorías para BAI (0–63)
+    // BAI (0–63)
     if (score <= 7) return "MINIMA";
     if (score <= 15) return "LEVE";
     if (score <= 25) return "MODERADA";
     return "SEVERA";
   }
-  // Categorías para BDI-II (0–63)
+  // BDI-II (0–63)
   if (score <= 13) return "MINIMA";
   if (score <= 19) return "LEVE";
   if (score <= 28) return "MODERADA";
   return "SEVERA";
 }
 
+/* ----------------------------- Notificaciones a tutores ----------------------------- */
+
+const ALERT_MIN_SEVERITY = "MODERADA"; // Cambia a 'SEVERA' si quieres solo lo más alto
+const SEVERITY_ORDER = ["MINIMA", "LEVE", "MODERADA", "SEVERA"];
+const sevAtLeast = (cur, min) =>
+  SEVERITY_ORDER.indexOf(String(cur)) >= SEVERITY_ORDER.indexOf(String(min));
+
+// Busca tutores asignados explícitamente; si no hay, cae a ORIENTADOR/PSICOLOGO de la institución
+async function findAssignedTutors(institucionId, alumnoId) {
+  // Opción A: mapeo explícito tutores_alumnos (si existe en tu DB)
+  try {
+    const [rows] = await pool.execute(
+      `SELECT ta.tutorId, u.email, COALESCE(u.nombreCompleto, u.nombre) AS tutorNombre
+         FROM tutores_alumnos ta
+         LEFT JOIN usuarios u ON u.id = ta.tutorId
+        WHERE ta.institucionId = ? AND ta.alumnoId = ? AND ta.activo = 1`,
+      [institucionId, alumnoId]
+    );
+    if (rows.length) return rows;
+  } catch (_) {
+    // Si la tabla no existe, caemos a B
+  }
+
+  // Opción B: fallback a todos los orientadores/psicólogos de la institución
+  const [rows2] = await pool.execute(
+    `SELECT ui.usuarioId AS tutorId,
+            u.email,
+            COALESCE(u.nombreCompleto, u.nombre) AS tutorNombre
+       FROM usuario_institucion ui
+       JOIN usuarios u ON u.id = ui.usuarioId
+      WHERE ui.institucionId = ?
+        AND ui.rolInstitucion IN ('ORIENTADOR','PSICOLOGO')
+        AND ui.activo = 1`,
+    [institucionId]
+  );
+  return rows2;
+}
+
+async function queueTutorNotifications({
+  institucionId,
+  alumnoId,
+  quizId,
+  attemptId,
+  puntajeTotal,
+  severidad,
+}) {
+  if (!sevAtLeast(severidad, ALERT_MIN_SEVERITY)) return;
+
+  const tutors = await findAssignedTutors(institucionId, alumnoId);
+  if (!tutors.length) return;
+
+  const notifTitle = `Alerta ${severidad} en cuestionario`;
+  const notifBody = `Se registró un resultado ${severidad} (puntaje ${puntajeTotal}). Respuesta: ${attemptId}. Revise para canalizar.`;
+
+  for (const t of tutors) {
+    await pool.execute(
+      `INSERT INTO notificaciones (id, usuarioId, tipo, titulo, mensaje, leida, importante, datos, fechaEnvio)
+       VALUES (?, ?, 'URGENTE', ?, ?, 0, 1, JSON_OBJECT(
+         'respuestaId', ?, 'alumnoId', ?, 'quizId', ?, 'severidad', ?, 'puntaje', ?
+       ), NOW())`,
+      [
+        randomUUID(),
+        t.tutorId,
+        notifTitle,
+        notifBody,
+        attemptId,
+        alumnoId,
+        quizId,
+        severidad,
+        puntajeTotal,
+      ]
+    );
+
+    // Si luego quieres emails, crea también una fila en email_outbox aquí.
+  }
+}
+
+/* ------------------------------ Acceso a un quiz ------------------------------ */
 /**
  * Verifica si el usuario autenticado tiene acceso al quiz especificado (por ID).
- * - Quizzes públicos y activos: accesibles para cualquier usuario autenticado.
- * - Quizzes no públicos: solo accesibles por SUPER_ADMIN_NACIONAL (por ejemplo, para fines de administración).
- * - (En caso de implementar quizzes privados por institución, aquí se validaría la pertenencia a la institución dueña del quiz).
+ * GLOBAL: todos los autenticados a quizzes activos.
+ * PUBLIC_FLAG: solo publico=1 y activo=1 (super admin nacional ve todos).
  */
 async function ensureQuizAccessForUser(quizId, user) {
   const [rows] = await pool.execute(
-    `SELECT q.id, q.institucionId, q.titulo, q.codigo, q.version, q.activo, q.publico
-     FROM quizzes q
-     WHERE q.id = ?`,
+    `SELECT q.id, q.institucionId, q.titulo, q.codigo, q.version, q.descripcion, q.activo, q.publico
+       FROM quizzes q
+      WHERE q.id = ?`,
     [quizId]
   );
   if (!rows.length) return null;
   const quiz = rows[0];
 
-  // Si el quiz es público y está activo, cualquier usuario autenticado puede acceder
-  if (quiz.publico === 1 && quiz.activo === 1) {
-    return quiz;
+  // Super admin nacional puede ver todo
+  if (user?.rol === "SUPER_ADMIN_NACIONAL") return quiz;
+
+  if (QUIZ_ACCESS_MODE === "GLOBAL") {
+    // Acceso global: cualquier usuario autenticado puede abrir quizzes ACTIVOS
+    if (quiz.activo === 1) return quiz;
+    return null;
   }
-  // Acceso para súper administradores nacionales aunque el quiz no sea público/activo
-  if (user?.rol === "SUPER_ADMIN_NACIONAL") {
-    return quiz;
-  }
-  // Si quisieras manejar quizzes privados por institución, validar aquí (ej: user.institucionId === quiz.institucionId)
+
+  // Modo PUBLIC_FLAG (original): solo público y activo
+  if (quiz.publico === 1 && quiz.activo === 1) return quiz;
   return null;
 }
 
@@ -63,16 +150,20 @@ async function ensureQuizAccessForUser(quizId, user) {
 
 /**
  * GET /api/quizzes/public
- * Lista todos los quizzes públicos y activos disponibles globalmente.
- * (Requiere token JWT válido para verificar rol e institución del usuario, aunque todos los usuarios autenticados pueden ver estos quizzes).
+ * Lista de quizzes disponibles según el modo de acceso.
+ * GLOBAL: todos los activos
+ * PUBLIC_FLAG: solo publico=1 y activo=1
  */
 router.get("/public", authenticateToken, async (req, res) => {
   try {
+    const where = ["q.activo = 1"];
+    if (QUIZ_ACCESS_MODE === "PUBLIC_FLAG") where.push("q.publico = 1");
+
     const [rows] = await pool.execute(
       `SELECT q.id, q.titulo, q.descripcion, q.codigo, q.version
-       FROM quizzes q
-       WHERE q.activo = 1 AND q.publico = 1
-       ORDER BY q.codigo, q.version DESC`
+         FROM quizzes q
+        WHERE ${where.join(" AND ")}
+        ORDER BY q.codigo, q.version DESC`
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
@@ -82,20 +173,20 @@ router.get("/public", authenticateToken, async (req, res) => {
       .json({ success: false, message: "Error interno del servidor" });
   }
 });
+
 /**
  * GET /api/quizzes/me/results
- * Obtiene todos los resultados (intentos enviados) del usuario autenticado (estudiante).
- * Devuelve la lista de intentos con información básica del quiz y la puntuación obtenida.
+ * Resultados del usuario autenticado (estudiante).
  */
 router.get("/me/results", authenticateToken, async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT rq.id, rq.quizId, q.titulo, q.codigo, q.version,
               rq.puntajeTotal, rq.severidad, rq.fechaEnvio
-       FROM respuestas_quiz rq
-       JOIN quizzes q ON q.id = rq.quizId
-       WHERE rq.usuarioId = ?
-       ORDER BY rq.fechaEnvio DESC`,
+         FROM respuestas_quiz rq
+         JOIN quizzes q ON q.id = rq.quizId
+        WHERE rq.usuarioId = ?
+        ORDER BY rq.fechaEnvio DESC`,
       [req.user.id]
     );
     return res.json({ success: true, data: rows });
@@ -106,15 +197,10 @@ router.get("/me/results", authenticateToken, async (req, res) => {
       .json({ success: false, message: "Error interno del servidor" });
   }
 });
+
 /**
  * GET /api/quizzes/resultados
- * Listado de resultados de quizzes (intentos) para personal autorizado (psicólogos, orientadores, administradores).
- * Parámetros query opcionales para filtrar:
- *   - institucionId: filtra los resultados de alumnos de esa institución (requerido para roles que no sean superadmin).
- *   - codigo: filtra por código de cuestionario (p.ej., "BAI" o "BDI2").
- *   - severidad: filtra por nivel de severidad (MINIMA, LEVE, MODERADA, SEVERA).
- *   - page, pageSize: para paginación (valores por defecto 1 y 20).
- * Requiere estar autenticado y tener rol de PSICOLOGO, ORIENTADOR, ADMIN_INSTITUCION o SUPER_ADMIN_NACIONAL.
+ * Listado de intentos para personal autorizado de la institución.
  */
 router.get(
   "/resultados",
@@ -135,17 +221,15 @@ router.get(
       debug = 0,
     } = req.query;
 
-    // ✅ JS puro (sin "as any") y saneo de números
     let pageNum = parseInt(page, 10);
     if (!Number.isFinite(pageNum) || pageNum < 1) pageNum = 1;
 
     let limit = parseInt(pageSize, 10);
     if (!Number.isFinite(limit) || limit < 1) limit = 20;
-    if (limit > 200) limit = 200; // tope sano
+    if (limit > 200) limit = 200;
 
     const offset = (pageNum - 1) * limit;
 
-    // WHERE + params del WHERE (institución siempre + filtros opcionales)
     const whereParts = ["rq.institucionId = ?"];
     const params = [String(institucionId)];
 
@@ -159,7 +243,6 @@ router.get(
     }
     const whereSQL = `WHERE ${whereParts.join(" AND ")}`;
 
-    // FROM base reutilizable
     const baseFrom = `
       FROM respuestas_quiz rq
       JOIN quizzes  q ON q.id = rq.quizId
@@ -167,7 +250,6 @@ router.get(
       ${whereSQL}
     `;
 
-    // ⚠️ Interpolamos LIMIT/OFFSET ya saneados (evita HY000)
     const dataSql = `
       SELECT
         rq.id,
@@ -191,11 +273,9 @@ router.get(
     `;
 
     try {
-      // COUNT (usa SOLO params del WHERE)
       const [countRows] = await pool.execute(countSql, params);
       const total = Number(countRows?.[0]?.total || 0);
 
-      // DATA (mismos params del WHERE)
       const [rows] = await pool.execute(dataSql, params);
 
       if (String(debug) === "1") {
@@ -269,22 +349,27 @@ router.get(
   async (req, res) => {
     try {
       const institucionId = req.institucionId; // lo setea el guard
-      const {
-        codigo = null,
-        desde = null, // ISO (ej. 2025-09-01)
-        hasta = null, // ISO (ej. 2025-09-30)
-      } = req.query;
+      const { codigo = null, desde = null, hasta = null } = req.query;
 
       const where = ["rq.institucionId = ?"];
       const params = [String(institucionId)];
 
-      if (codigo) { where.push("q.codigo = ?"); params.push(String(codigo)); }
-      if (desde)  { where.push("rq.fechaEnvio >= ?"); params.push(new Date(desde)); }
-      if (hasta)  { where.push("rq.fechaEnvio <= ?"); params.push(new Date(hasta)); }
+      if (codigo) {
+        where.push("q.codigo = ?");
+        params.push(String(codigo));
+      }
+      // TZ-safe: comparar sobre DATE()
+      if (desde) {
+        where.push("DATE(rq.fechaEnvio) >= ?");
+        params.push(String(desde).slice(0, 10));
+      }
+      if (hasta) {
+        where.push("DATE(rq.fechaEnvio) <= ?");
+        params.push(String(hasta).slice(0, 10));
+      }
 
       const WHERE = `WHERE ${where.join(" AND ")}`;
 
-      // Resumen
       const [summary] = await pool.execute(
         `SELECT
            COUNT(*)             AS total,
@@ -294,36 +379,41 @@ router.get(
            MAX(rq.fechaEnvio)   AS ultimaMuestra
          FROM respuestas_quiz rq
          JOIN quizzes q ON q.id = rq.quizId
-         ${WHERE}`, params);
+         ${WHERE}`,
+        params
+      );
 
-      // Distribución por severidad
       const [bySeverity] = await pool.execute(
         `SELECT rq.severidad, COUNT(*) AS total
-         FROM respuestas_quiz rq
-         JOIN quizzes q ON q.id = rq.quizId
-         ${WHERE}
-         GROUP BY rq.severidad
-         ORDER BY FIELD(rq.severidad,'MINIMA','LEVE','MODERADA','SEVERA')`, params);
+           FROM respuestas_quiz rq
+           JOIN quizzes q ON q.id = rq.quizId
+           ${WHERE}
+          GROUP BY rq.severidad
+          ORDER BY FIELD(rq.severidad,'MINIMA','LEVE','MODERADA','SEVERA')`,
+        params
+      );
 
-      // Tendencia diaria (últimos 30 días si no mandas rango)
       const [trend] = await pool.execute(
         `SELECT DATE(rq.fechaEnvio) AS fecha, COUNT(*) AS total
-         FROM respuestas_quiz rq
-         JOIN quizzes q ON q.id = rq.quizId
-         ${WHERE}
-         GROUP BY DATE(rq.fechaEnvio)
-         ORDER BY fecha ASC
-         LIMIT 180`, params);
+           FROM respuestas_quiz rq
+           JOIN quizzes q ON q.id = rq.quizId
+           ${WHERE}
+          GROUP BY DATE(rq.fechaEnvio)
+          ORDER BY fecha ASC
+          LIMIT 180`,
+        params
+      );
 
-      // Por instrumento (código+versión)
       const [byQuiz] = await pool.execute(
         `SELECT q.codigo, q.\`version\` AS version,
                 COUNT(*) AS total, AVG(rq.puntajeTotal) AS promedio
-         FROM respuestas_quiz rq
-         JOIN quizzes q ON q.id = rq.quizId
-         ${WHERE}
-         GROUP BY q.codigo, q.\`version\`
-         ORDER BY q.codigo, q.\`version\`` , params);
+           FROM respuestas_quiz rq
+           JOIN quizzes q ON q.id = rq.quizId
+           ${WHERE}
+          GROUP BY q.codigo, q.\`version\`
+          ORDER BY q.codigo, q.\`version\``,
+        params
+      );
 
       return res.json({
         success: true,
@@ -340,10 +430,9 @@ router.get(
   }
 );
 
-
 /**
  * GET /api/quizzes/:quizId
- * Devuelve los metadatos del quiz especificado (si el usuario tiene acceso) junto con su lista de preguntas.
+ * Devuelve los metadatos del quiz junto con su lista de preguntas.
  */
 router.get("/:quizId", authenticateToken, async (req, res) => {
   try {
@@ -355,12 +444,11 @@ router.get("/:quizId", authenticateToken, async (req, res) => {
         code: "QUIZ_NOT_FOUND",
       });
     }
-    // Obtener preguntas del quiz
     const [preguntas] = await pool.execute(
       `SELECT p.id, p.orden, p.texto, p.tipo, p.opciones, p.obligatoria
-       FROM preguntas p
-       WHERE p.quizId = ?
-       ORDER BY p.orden ASC`,
+         FROM preguntas p
+        WHERE p.quizId = ?
+        ORDER BY p.orden ASC`,
       [quiz.id]
     );
     return res.json({
@@ -373,7 +461,7 @@ router.get("/:quizId", authenticateToken, async (req, res) => {
           version: quiz.version,
           descripcion: quiz.descripcion,
         },
-        preguntas: preguntas,
+        preguntas,
       },
     });
   } catch (err) {
@@ -386,11 +474,8 @@ router.get("/:quizId", authenticateToken, async (req, res) => {
 
 /**
  * POST /api/quizzes/:quizId/submit
- * Guarda un intento de quiz (las respuestas de un usuario) en la base de datos.
- * Body esperado: { respuestas: [{ preguntaId, valor } ...], consentimientoAceptado?: boolean, tiempoInicio?: ISOString }
- * - Calcula el puntaje total sumando los valores (0–3) de cada respuesta.
- * - Determina la severidad según el puntaje total y el código del quiz (BAI o BDI-II).
- * - Guarda el registro en la tabla respuestas_quiz (con JSON de respuestas, puntajeTotal, severidad, etc).
+ * Guarda un intento de quiz (respuestas de un usuario).
+ * Body: { respuestas: [{ preguntaId, valor }...], consentimientoAceptado?: boolean, tiempoInicio?: ISOString }
  */
 router.post("/:quizId/submit", authenticateToken, async (req, res) => {
   try {
@@ -406,8 +491,6 @@ router.post("/:quizId/submit", authenticateToken, async (req, res) => {
     const { respuestas = [], consentimientoAceptado, tiempoInicio } = req.body;
 
     // --------------------- Selección de institución del intento ---------------------
-    // 1) Prioriza header/query/body (resolveInstitutionId ya lo hace)
-    // 2) Si no viene, usa membresía activa; si no, la primera membresía disponible
     let instId =
       resolveInstitutionId(req) ||
       (req.user.instituciones || []).find((m) => m.isMembershipActiva)
@@ -434,14 +517,11 @@ router.post("/:quizId/submit", authenticateToken, async (req, res) => {
     }
 
     // --------------------- Validación de preguntas y valores ---------------------
-    // Trae las preguntas válidas del quiz para validar IDs y contar
-    const [qRows] = await pool.execute(
-      `SELECT p.id FROM preguntas p WHERE p.quizId = ?`,
+    const [qMeta] = await pool.execute(
+      `SELECT p.id, p.obligatoria FROM preguntas p WHERE p.quizId = ?`,
       [quiz.id]
     );
-    const validIds = new Set(qRows.map((r) => r.id));
-
-    if (!qRows.length) {
+    if (!qMeta.length) {
       return res.status(400).json({
         success: false,
         message: "El quiz no tiene preguntas configuradas",
@@ -449,22 +529,53 @@ router.post("/:quizId/submit", authenticateToken, async (req, res) => {
       });
     }
 
-    // Valida formato y rango de valores
+    const MAX_ITEMS = 200;
+    if (!Array.isArray(respuestas) || respuestas.length > MAX_ITEMS) {
+      return res.status(400).json({
+        success: false,
+        code: "PAYLOAD_TOO_LARGE",
+        message: "Demasiadas respuestas",
+      });
+    }
+
+    const validIds = new Set(qMeta.map((r) => r.id));
+    const seen = new Set();
     const invalidItems = [];
+
     for (const r of respuestas) {
       const pid = r?.preguntaId;
       const val = Number(r?.valor);
+      if (seen.has(pid))
+        invalidItems.push({ preguntaId: pid, error: "DUPLICATE" });
+      seen.add(pid);
       if (!validIds.has(pid) || !Number.isInteger(val) || val < 0 || val > 3) {
-        invalidItems.push({ preguntaId: pid, valor: r?.valor });
+        invalidItems.push({
+          preguntaId: pid,
+          valor: r?.valor,
+          error: "INVALID",
+        });
       }
     }
     if (invalidItems.length) {
       return res.status(400).json({
         success: false,
         message:
-          "Respuestas inválidas o fuera de rango (0..3) o preguntaId no pertenece al quiz",
+          "Respuestas inválidas/duplicadas o fuera de rango (0..3) o preguntaId no pertenece al quiz",
         code: "INVALID_ANSWERS",
-        detail: invalidItems.slice(0, 10), // preview de errores
+        detail: invalidItems.slice(0, 20),
+      });
+    }
+
+    const requiredMissing = qMeta
+      .filter((r) => r.obligatoria === 1 && !seen.has(r.id))
+      .map((r) => r.id);
+
+    if (requiredMissing.length) {
+      return res.status(400).json({
+        success: false,
+        code: "MISSING_REQUIRED",
+        message: "Faltan preguntas obligatorias",
+        detail: requiredMissing.slice(0, 50),
       });
     }
 
@@ -480,16 +591,16 @@ router.post("/:quizId/submit", authenticateToken, async (req, res) => {
       items: respuestas,
     });
     const inicio = tiempoInicio ? new Date(tiempoInicio) : null;
-    const fin = new Date(); // momento de envío
+    const fin = new Date();
 
     await pool.execute(
       `INSERT INTO respuestas_quiz
-       (id, usuarioId, institucionId, quizId, respuestas, puntajeTotal, severidad, completado, tiempoInicio, tiempoFin)
+         (id, usuarioId, institucionId, quizId, respuestas, puntajeTotal, severidad, completado, tiempoInicio, tiempoFin)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         attemptId,
         req.user.id,
-        instId, // 👈 etiqueta institución del alumno en el momento del intento
+        instId,
         quiz.id,
         respuestasJSON,
         score,
@@ -499,6 +610,16 @@ router.post("/:quizId/submit", authenticateToken, async (req, res) => {
         fin,
       ]
     );
+
+    // --------------------- Notificar tutores si es alto ---------------------
+    await queueTutorNotifications({
+      institucionId: instId,
+      alumnoId: req.user.id,
+      quizId: quiz.id,
+      attemptId,
+      puntajeTotal: score,
+      severidad,
+    });
 
     return res.status(201).json({
       success: true,
@@ -523,6 +644,5 @@ router.post("/:quizId/submit", authenticateToken, async (req, res) => {
       .json({ success: false, message: "Error interno del servidor" });
   }
 });
-
 
 module.exports = router;
