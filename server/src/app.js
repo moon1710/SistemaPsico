@@ -6,6 +6,7 @@ require("dotenv").config();
 const authRoutes = require("./routes/auth.routes");
 const quizzesRoutes = require("./routes/quizzes.routes");
 const citasRoutes = require("./routes/citas.routes");
+const onboardingRoutes = require("./routes/onboarding.routes");
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/quizzes", quizzesRoutes);
 app.use("/api/citas", citasRoutes);
+app.use("/api/onboarding", onboardingRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

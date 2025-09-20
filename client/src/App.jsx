@@ -2,6 +2,10 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 
+// Importar el provider y componentes del onboarding
+import { OnboardingProvider } from "./contexts/OnboardingContext";
+import OnboardingModal from "./components/onboarding/OnboardingModal";
+
 import Layout from "./components/layout/Layout";
 import PublicLayout from "./components/layout/PublicLayout";
 
@@ -47,7 +51,10 @@ function App() {
   }
 
   return (
-    <Routes>
+    <OnboardingProvider>
+      {/* Modal de Onboarding - Se mostrará automáticamente cuando sea la primera vez */}
+      <OnboardingModal />
+      <Routes>
       {/* Públicas solo para NO autenticados */}
       <Route
         path="/"
@@ -188,7 +195,8 @@ function App() {
           </ProtectedRoute>
         }
       />
-    </Routes>
+      </Routes>
+    </OnboardingProvider>
   );
 }
 

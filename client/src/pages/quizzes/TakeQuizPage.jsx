@@ -9,10 +9,9 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
+import { motion, AnimatePresence } from "framer-motion";
 
-/* =========================
-   PALETA (tus colores originales)
-   ========================= */
+/* =============== PALETA (tus colores) =============== */
 const QUIZ_THEMES = {
   BAI: {
     name: "Ansiedad",
@@ -51,9 +50,7 @@ const QUIZ_THEMES = {
   },
 };
 
-/* =========================
-   UTILS
-   ========================= */
+/* =============== UTILS =============== */
 function parseOpciones(opciones) {
   if (!opciones) {
     return [
@@ -82,98 +79,147 @@ function parseOpciones(opciones) {
   }
 }
 
-/* =========================
-   COMPONENTES UI
-   ========================= */
+/* =============== ANIM VARIANTS =============== */
+const fadeSlide = {
+  initial: { opacity: 0, y: 10, filter: "blur(4px)" },
+  in: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.35, ease: "easeOut" },
+  },
+  out: {
+    opacity: 0,
+    y: -10,
+    filter: "blur(4px)",
+    transition: { duration: 0.25, ease: "easeIn" },
+  },
+};
 
-// Tira superior numerada (clickeable)
-const StepStrip = ({ total, current, answeredMap, onJump, theme }) => {
+const grow = {
+  initial: { opacity: 0, scale: 0.98 },
+  in: { opacity: 1, scale: 1, transition: { duration: 0.25 } },
+};
+
+const springy = {
+  whileHover: { y: -2, boxShadow: "0 8px 20px rgba(0,0,0,.06)" },
+  whileTap: { scale: 0.98 },
+};
+
+/* =============== PROGRESS RING (opcional) =============== */
+const ProgressRing = ({
+  value = 0,
+  size = 38,
+  stroke = 4,
+  color = "#6366F1",
+}) => {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const dash = c - (value / 100) * c;
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1">
-      {Array.from({ length: total }).map((_, i) => {
-        const answered = answeredMap[i];
-        const isCurrent = i === current;
-        return (
-          <button
-            key={i}
-            onClick={() => onJump(i)}
-            className={[
-              "min-w-8 h-8 px-2 rounded-full text-xs font-semibold transition border",
-              isCurrent
-                ? "text-white shadow"
-                : "text-gray-600 hover:text-gray-900 bg-white",
-            ].join(" ")}
-            style={{
-              background: isCurrent
-                ? theme.primary
-                : answered
-                ? theme.secondary
-                : "#ffffff",
-              borderColor: isCurrent ? theme.primary : "#e5e7eb",
-              color: isCurrent ? "#fff" : answered ? theme.accent : undefined,
-            }}
-            aria-label={`Ir a la pregunta ${i + 1}`}
-          >
-            {i + 1}
-          </button>
-        );
-      })}
-    </div>
+    <svg width={size} height={size}>
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        stroke="#E5E7EB"
+        strokeWidth={stroke}
+        fill="none"
+      />
+      <motion.circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        stroke={color}
+        strokeWidth={stroke}
+        fill="none"
+        strokeLinecap="round"
+        initial={{ strokeDasharray: c, strokeDashoffset: c }}
+        animate={{ strokeDashoffset: dash }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      />
+    </svg>
   );
 };
 
-// Opción tipo “pill” vertical (como tus screens)
-const OptionPill = ({ selected, label, description, onSelect, theme }) => {
-  return (
-    <button
-      onClick={onSelect}
-      className={[
-        "w-full flex items-center gap-3 rounded-full px-4 py-3 border-2 transition text-left",
-        "focus:outline-none focus:ring-2",
-        selected ? "shadow-lg" : "hover:border-gray-300 hover:bg-gray-50",
-      ].join(" ")}
+/* =============== UI: Tira numerada =============== */
+const StepStrip = ({ total, current, answeredMap, onJump, theme }) => (
+  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+    {Array.from({ length: total }).map((_, i) => {
+      const answered = answeredMap[i];
+      const isCurrent = i === current;
+      return (
+        <motion.button
+          key={i}
+          onClick={() => onJump(i)}
+          className="min-w-8 h-8 px-2 rounded-full text-xs font-semibold transition border focus:outline-none"
+          style={{
+            background: isCurrent
+              ? theme.primary
+              : answered
+              ? theme.secondary
+              : "#ffffff",
+            borderColor: isCurrent ? theme.primary : "#e5e7eb",
+            color: isCurrent ? "#fff" : answered ? theme.accent : "#374151",
+          }}
+          {...springy}
+          aria-label={`Ir a la pregunta ${i + 1}`}
+          layout
+        >
+          {i + 1}
+        </motion.button>
+      );
+    })}
+  </div>
+);
+
+/* =============== UI: Opción tipo pill =============== */
+const OptionPill = ({ selected, label, description, onSelect, theme }) => (
+  <motion.button
+    onClick={onSelect}
+    className="w-full flex items-center gap-3 rounded-full px-4 py-3 border-2 text-left focus:outline-none focus:ring-2"
+    style={{
+      borderColor: selected ? theme.primary : "#e5e7eb",
+      background: selected ? theme.primary : "#ffffff",
+      color: selected ? "#ffffff" : "#111827",
+    }}
+    {...springy}
+    layout
+  >
+    <span
+      className="inline-flex items-center justify-center w-5 h-5 rounded-full border-2"
       style={{
-        borderColor: selected ? theme.primary : "#e5e7eb",
-        background: selected ? theme.primary : "#ffffff",
-        color: selected ? "#ffffff" : "#111827",
+        borderColor: selected ? "#fff" : "#9ca3af",
+        background: selected ? "#fff" : "transparent",
       }}
     >
-      {/* radio a la izquierda */}
-      <span
-        className="inline-flex items-center justify-center w-5 h-5 rounded-full border-2"
-        style={{
-          borderColor: selected ? "#fff" : "#9ca3af",
-          background: selected ? "#fff" : "transparent",
-          color: selected ? theme.primary : "#9ca3af",
-        }}
-      >
-        {selected ? (
-          <span
-            className="w-2.5 h-2.5 rounded-full"
-            style={{ background: theme.primary }}
-          />
-        ) : null}
-      </span>
+      {selected ? (
+        <span
+          className="w-2.5 h-2.5 rounded-full"
+          style={{ background: theme.primary }}
+        />
+      ) : null}
+    </span>
 
-      <div className="flex-1">
-        <div className="text-sm font-semibold leading-none">{label}</div>
-        {description && (
-          <div
-            className="text-xs mt-1"
-            style={{ color: selected ? "#f3f4f6" : "#4b5563" }}
-          >
-            {description}
-          </div>
-        )}
-      </div>
-
-      {selected && (
-        <CheckCircleIcon className="w-5 h-5" style={{ color: "#fff" }} />
+    <div className="flex-1">
+      <div className="text-sm font-semibold leading-none">{label}</div>
+      {description && (
+        <div
+          className="text-xs mt-1"
+          style={{ color: selected ? "#f3f4f6" : "#4b5563" }}
+        >
+          {description}
+        </div>
       )}
-    </button>
-  );
-};
+    </div>
 
+    {selected && (
+      <CheckCircleIcon className="w-5 h-5" style={{ color: "#fff" }} />
+    )}
+  </motion.button>
+);
+
+/* =============== SLIDE =============== */
 function QuestionSlide({
   question,
   value,
@@ -184,40 +230,55 @@ function QuestionSlide({
   onAutoAdvance,
   answeredMap,
   onJump,
+  showRing = false, // <- activa ring si quieres timer visual
+  ringValue = 0, // 0..100
 }) {
   const options = parseOpciones(question.opciones);
 
   const handleOptionSelect = (questionId, optionValue) => {
     onChange(questionId, optionValue);
-    setTimeout(onAutoAdvance, 350);
+    setTimeout(onAutoAdvance, 320);
   };
 
   return (
-    <div
+    <motion.div
       className="flex flex-col h-screen bg-gray-50"
       style={{ fontFamily: "Montserrat, sans-serif" }}
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={fadeSlide}
     >
       {/* Header */}
       <div className="bg-white/90 backdrop-blur border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                Evaluación {theme.name}
-              </h1>
-              <p className="text-xs text-gray-500">
-                Pregunta {questionNumber} de {totalQuestions}
-              </p>
+            <div className="flex items-center gap-3">
+              {showRing && (
+                <ProgressRing value={ringValue} color={theme.primary} />
+              )}
+              <div>
+                <h1 className="text-lg font-semibold text-gray-900">
+                  Evaluación {theme.name}
+                </h1>
+                <p className="text-xs text-gray-500">
+                  Pregunta {questionNumber} de {totalQuestions}
+                </p>
+              </div>
             </div>
             <div className="text-right">
-              <div className="text-sm font-semibold text-gray-900">
+              <motion.div
+                className="text-sm font-semibold text-gray-900"
+                key={questionNumber}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
                 {Math.round((questionNumber / totalQuestions) * 100)}%
-              </div>
+              </motion.div>
               <div className="text-xs text-gray-500">Completado</div>
             </div>
           </div>
 
-          {/* tira numerada */}
           <div className="mt-3">
             <StepStrip
               total={totalQuestions}
@@ -227,17 +288,35 @@ function QuestionSlide({
               theme={theme}
             />
           </div>
+
+          {/* barra progreso animada */}
+          <div className="w-full bg-gray-200 rounded-full h-2 mt-3 overflow-hidden">
+            <motion.div
+              className={`h-2 rounded-full bg-gradient-to-r ${theme.gradient}`}
+              initial={{ width: 0 }}
+              animate={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
+              transition={{ duration: 0.45, ease: "easeInOut" }}
+            />
+          </div>
         </div>
       </div>
 
       {/* Contenido */}
       <div className="flex-1 flex items-start justify-center px-6 py-8">
-        <div className="w-full max-w-2xl">
+        <motion.div
+          className="w-full max-w-2xl"
+          variants={grow}
+          initial="initial"
+          animate="in"
+        >
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <div className="text-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 leading-relaxed">
+              <motion.h2
+                className="text-xl font-semibold text-gray-900 leading-relaxed"
+                layout
+              >
                 {question.texto}
-              </h2>
+              </motion.h2>
               {question.obligatoria && (
                 <span className="inline-block mt-3 px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
                   Obligatoria
@@ -245,8 +324,7 @@ function QuestionSlide({
               )}
             </div>
 
-            {/* Lista vertical como en el screenshot */}
-            <div className="space-y-3">
+            <motion.div className="space-y-3" layout>
               {options.map((o) => (
                 <OptionPill
                   key={o.value}
@@ -259,44 +337,49 @@ function QuestionSlide({
                   theme={theme}
                 />
               ))}
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Footer simple con contador legible */}
+      {/* Footer */}
       <div className="bg-white/90 backdrop-blur border-t border-gray-200 px-6 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <button
+          <motion.button
             onClick={() => window.history.back()}
             className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900"
+            {...springy}
           >
             <ChevronLeftIcon className="w-4 h-4" />
             <span className="text-sm font-medium">Anterior</span>
-          </button>
+          </motion.button>
 
-          <div className="text-sm font-semibold text-gray-900">
+          <motion.div
+            className="text-sm font-semibold text-gray-900"
+            key={questionNumber}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             {questionNumber}{" "}
             <span className="text-gray-500">/ {totalQuestions}</span>
-          </div>
+          </motion.div>
 
-          <button
+          <motion.button
             onClick={onAutoAdvance}
             className="flex items-center gap-2 px-4 py-2 rounded-full text-white"
             style={{ background: theme.primary }}
+            {...springy}
           >
             <span className="text-sm font-medium">Siguiente</span>
             <ChevronRightIcon className="w-4 h-4" />
-          </button>
+          </motion.button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-/* =========================
-   PÁGINA
-   ========================= */
+/* =============== PAGE =============== */
 export default function TakeQuizPage() {
   const { quizId } = useParams();
   const navigate = useNavigate();
@@ -313,7 +396,6 @@ export default function TakeQuizPage() {
   const [showingConsent, setShowingConsent] = React.useState(true);
 
   const startedAtRef = React.useRef(new Date().toISOString());
-
   const [institutionId, setInstitutionId] = React.useState(
     user?.instituciones?.find((m) => m.isMembershipActiva)?.institucionId ||
       user?.instituciones?.[0]?.institucionId ||
@@ -344,12 +426,10 @@ export default function TakeQuizPage() {
 
   const setAnswer = (pid, value) =>
     setRespuestas((prev) => ({ ...prev, [pid]: value }));
-
   const unansweredRequired = React.useMemo(
     () => preguntas.filter((p) => p.obligatoria && respuestas[p.id] == null),
     [preguntas, respuestas]
   );
-
   const answeredCount = React.useMemo(
     () => preguntas.filter((p) => respuestas[p.id] != null).length,
     [preguntas, respuestas]
@@ -358,16 +438,12 @@ export default function TakeQuizPage() {
   const canSubmit = consent && unansweredRequired.length === 0 && !submitting;
   const currentQuestion = preguntas[currentSlide];
 
-  const handleAutoAdvance = () => {
-    setCurrentSlide((prev) => (prev < preguntas.length - 1 ? prev + 1 : prev));
-  };
-  const jumpTo = (idx) => {
-    if (idx >= 0 && idx < preguntas.length) setCurrentSlide(idx);
-  };
+  const handleAutoAdvance = () =>
+    setCurrentSlide((p) => (p < preguntas.length - 1 ? p + 1 : p));
+  const jumpTo = (idx) =>
+    idx >= 0 && idx < preguntas.length && setCurrentSlide(idx);
 
-  const handleStartQuiz = () => {
-    if (consent) setShowingConsent(false);
-  };
+  const handleStartQuiz = () => consent && setShowingConsent(false);
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -396,7 +472,7 @@ export default function TakeQuizPage() {
     }
   };
 
-  // atajos
+  // Atajos
   React.useEffect(() => {
     const handleKey = (e) => {
       if (showingConsent || !currentQuestion) return;
@@ -405,18 +481,16 @@ export default function TakeQuizPage() {
         setAnswer(currentQuestion.id, v);
         setTimeout(handleAutoAdvance, 200);
       }
-      if (e.key === "ArrowLeft" && currentSlide > 0) {
+      if (e.key === "ArrowLeft" && currentSlide > 0)
         setCurrentSlide((p) => p - 1);
-      }
-      if (e.key === "ArrowRight" && currentSlide < preguntas.length - 1) {
+      if (e.key === "ArrowRight" && currentSlide < preguntas.length - 1)
         setCurrentSlide((p) => p + 1);
-      }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [currentSlide, currentQuestion, showingConsent, preguntas.length]);
 
-  // loading / error / not found
+  /* ======= Estados básicos ======= */
   if (loading) {
     return (
       <div
@@ -470,116 +544,213 @@ export default function TakeQuizPage() {
     );
   }
 
-  // consentimiento (mantiene tu look)
+  // Consentimiento (igual que tenías, con un pelín de animación)
   if (showingConsent) {
     return (
-      <div
+      <motion.div
         className="min-h-screen flex items-center justify-center bg-gray-50 p-6"
         style={{ fontFamily: "Montserrat, sans-serif" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
       >
-        <div className="w-full max-w-lg">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-            <div className="text-center mb-6">
-              <div
-                className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-white font-bold text-xl shadow"
-                style={{ backgroundColor: theme.primary }}
-              >
-                {quiz.codigo}
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900 mb-2">
-                {quiz.titulo}
-              </h1>
-              <p className="text-sm text-gray-600">
-                Evaluación de {theme.name}
+        <motion.div
+          className="w-full max-w-lg bg-white rounded-2xl shadow-sm border border-gray-200 p-8"
+          variants={grow}
+          initial="initial"
+          animate="in"
+        >
+          <div className="text-center mb-6">
+            <div
+              className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-white font-bold text-xl shadow"
+              style={{ backgroundColor: theme.primary }}
+            >
+              {quiz.codigo}
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              {quiz.titulo}
+            </h1>
+            <p className="text-sm text-gray-600">Evaluación de {theme.name}</p>
+          </div>
+
+          {quiz.descripcion && (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {quiz.descripcion}
               </p>
             </div>
+          )}
 
-            {quiz.descripcion && (
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {quiz.descripcion}
-                </p>
-              </div>
-            )}
-
-            {!!user?.instituciones?.length && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Institución
-                </label>
-                <select
-                  value={institutionId}
-                  onChange={(e) => setInstitutionId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  {user.instituciones.map((m) => (
-                    <option key={m.institucionId} value={m.institucionId}>
-                      {m.institucionNombre || m.institucionId}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
+          {!!user?.instituciones?.length && (
             <div className="mb-6">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
-                />
-                <div className="text-sm text-gray-700 leading-relaxed">
-                  <span className="font-medium text-gray-900">
-                    Consentimiento Informado.
-                  </span>{" "}
-                  Acepto participar voluntariamente en esta evaluación. La
-                  información será tratada confidencialmente y utilizada para
-                  fines académicos y de bienestar estudiantil.
-                </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Institución
               </label>
+              <select
+                value={institutionId}
+                onChange={(e) => setInstitutionId(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                {user.instituciones.map((m) => (
+                  <option key={m.institucionId} value={m.institucionId}>
+                    {m.institucionNombre || m.institucionId}
+                  </option>
+                ))}
+              </select>
             </div>
+          )}
 
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
-              <span>
-                <strong>{answeredCount}</strong> / {preguntas.length}{" "}
-                respondidas
-              </span>
-              <span>~{Math.ceil(preguntas.length * 0.5)} min</span>
-            </div>
-
-            <button
-              onClick={handleStartQuiz}
-              disabled={!consent}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
-                consent
-                  ? `bg-gradient-to-r ${theme.gradient} text-white hover:shadow-lg`
-                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              Iniciar Evaluación
-            </button>
+          <div className="mb-6">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+              />
+              <div className="text-sm text-gray-700 leading-relaxed">
+                <span className="font-medium text-gray-900">
+                  Consentimiento Informado.
+                </span>{" "}
+                Acepto participar voluntariamente en esta evaluación. La
+                información será tratada confidencialmente y utilizada para
+                fines académicos y de bienestar estudiantil.
+              </div>
+            </label>
           </div>
-        </div>
-      </div>
+
+          <div className="flex items-center justify-between text-sm text-gray-600 mb-3">
+            <span>
+              <strong>
+                {preguntas.filter((p) => respuestas[p.id] != null).length}
+              </strong>{" "}
+              / {preguntas.length} respondidas
+            </span>
+            <span>~{Math.ceil(preguntas.length * 0.5)} min</span>
+          </div>
+
+          <motion.button
+            onClick={handleStartQuiz}
+            disabled={!consent}
+            className={`w-full py-3 px-4 rounded-lg font-medium transition-all ${
+              consent
+                ? `bg-gradient-to-r ${theme.gradient} text-white hover:shadow-lg`
+                : "bg-gray-200 text-gray-500 cursor-not-allowed"
+            }`}
+            {...springy}
+          >
+            Iniciar Evaluación
+          </motion.button>
+        </motion.div>
+      </motion.div>
     );
   }
 
-  // pregunta
+  // Pregunta actual con transiciones entre slides
   if (currentQuestion) {
     const answeredMap = preguntas.map((p) => respuestas[p.id] != null);
     return (
-      <QuestionSlide
-        question={currentQuestion}
-        value={respuestas[currentQuestion.id]}
-        onChange={setAnswer}
-        theme={theme}
-        questionNumber={currentSlide + 1}
-        totalQuestions={preguntas.length}
-        onAutoAdvance={handleAutoAdvance}
-        answeredMap={answeredMap}
-        onJump={(i) => setCurrentSlide(i)}
-      />
+      <AnimatePresence mode="wait">
+        <QuestionSlide
+          key={currentQuestion.id}
+          question={currentQuestion}
+          value={respuestas[currentQuestion.id]}
+          onChange={setAnswer}
+          theme={theme}
+          questionNumber={currentSlide + 1}
+          totalQuestions={preguntas.length}
+          onAutoAdvance={
+            currentSlide < preguntas.length - 1
+              ? () => setCurrentSlide((p) => p + 1)
+              : () => {}
+          }
+          answeredMap={answeredMap}
+          onJump={(i) => setCurrentSlide(i)}
+          // Ring opcional (ejemplo: desactivado por defecto)
+          showRing={false}
+          ringValue={Math.round(((currentSlide + 1) / preguntas.length) * 100)}
+        />
+
+        {/* Barra flotante de acciones + Finalizar */}
+        <div className="fixed bottom-3 inset-x-0 px-4 pointer-events-none">
+          <motion.div
+            className="pointer-events-auto max-w-3xl mx-auto rounded-xl bg-white shadow-lg border border-gray-200 px-3 py-2 flex items-center justify-between"
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+          >
+            <motion.button
+              onClick={() => setCurrentSlide((p) => Math.max(0, p - 1))}
+              className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg hover:bg-gray-50"
+              {...springy}
+            >
+              <ChevronLeftIcon className="w-4 h-4" />
+              Anterior
+            </motion.button>
+
+            <div className="text-sm">
+              <span className="font-semibold">
+                {preguntas.filter((p) => respuestas[p.id] != null).length}
+              </span>
+              <span className="text-gray-500"> / {preguntas.length}</span>
+            </div>
+
+            {currentSlide < preguntas.length - 1 ? (
+              <motion.button
+                onClick={() =>
+                  setCurrentSlide((p) => Math.min(p + 1, preguntas.length - 1))
+                }
+                className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg text-white"
+                style={{ background: theme.primary }}
+                {...springy}
+              >
+                Siguiente
+                <ChevronRightIcon className="w-4 h-4" />
+              </motion.button>
+            ) : (
+              <motion.button
+                onClick={async () => {
+                  const unansweredRequired = preguntas.filter(
+                    (p) => p.obligatoria && respuestas[p.id] == null
+                  );
+                  const canSubmit =
+                    consent && unansweredRequired.length === 0 && !submitting;
+                  if (!canSubmit) return;
+                  try {
+                    setSubmitting(true);
+                    const payload = {
+                      quizId,
+                      respuestas: preguntas.map((p) => ({
+                        preguntaId: p.id,
+                        valor: Number(respuestas[p.id] ?? 0),
+                      })),
+                      consentimientoAceptado: consent,
+                      tiempoInicio: startedAtRef.current,
+                      institutionId: institutionId || undefined,
+                    };
+                    const { data } = await quizzesApi.submitQuiz(payload);
+                    alert(
+                      `¡Evaluación completada!\n\nPuntaje: ${data.puntajeTotal}\nNivel: ${data.severidad}`
+                    );
+                    navigate(ROUTES.MIS_RESULTADOS);
+                  } catch (e) {
+                    alert(
+                      e?.data?.message ||
+                        e.message ||
+                        "Error al enviar respuestas"
+                    );
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                className="text-sm px-3 py-1.5 rounded-lg text-white"
+                style={{ background: "#10B981" }}
+                {...springy}
+              >
+                Finalizar
+              </motion.button>
+            )}
+          </motion.div>
+        </div>
+      </AnimatePresence>
     );
   }
 
