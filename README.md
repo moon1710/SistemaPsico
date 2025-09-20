@@ -12,9 +12,8 @@ Es un monorepo con dos partes principales:
 
 1. Backend (en la carpeta `src/`)
    - Archivo `.env` con variables de entorno: conexión a base de datos, JWT, puerto, etc. No debe comitearse.
-   - Carpeta `prisma/` con el archivo `schema.prisma` (modelos como Institucion, Usuario, Quiz, Cita) y `migrations/` (historial de cambios). Puede haber un `seed.js` para datos iniciales.
    - Carpeta `src/` que contiene:
-     - `index.js` para arrancar Express y PrismaClient.
+     - `index.js` para arrancar Vite.
      - `routes/` con subdivisiones como `auth.routes.js`, `institucion.routes.js`, `usuario.routes.js`, `quiz.routes.js`, `cita.routes.js`.
      - `controllers/` para la lógica de negocio.
      - `services/` para integraciones externas (correo, WhatsApp, notificaciones).

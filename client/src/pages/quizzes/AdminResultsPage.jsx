@@ -8,13 +8,15 @@ const SEVS = ["MINIMA", "LEVE", "MODERADA", "SEVERA"];
 const ADMIN_ROLES = new Set([
   USER_ROLES.PSICOLOGO,
   USER_ROLES.ORIENTADOR,
+  USER_ROLES.ADMIN_INSTITUCION,
   USER_ROLES.SUPER_ADMIN_INSTITUCION,
   USER_ROLES.SUPER_ADMIN_NACIONAL,
 ]);
 
 export default function AdminResultsPage() {
   const { user } = useAuth();
-  const canAccess = ADMIN_ROLES.has(user?.rol);
+  const canAccess = ADMIN_ROLES.has(user?.rol) ||
+    user?.instituciones?.some(i => ADMIN_ROLES.has(i.rol));
 
   const [institutionId, setInstitutionId] = React.useState(
     user?.instituciones?.find((m) => m.isMembershipActiva)?.institucionId ||

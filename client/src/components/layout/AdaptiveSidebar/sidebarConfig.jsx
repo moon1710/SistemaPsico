@@ -85,6 +85,31 @@ export const roleSpecificItems = [
     label: "Aplicar Quiz",
     roles: [
       "PSICOLOGO",
+      "ORIENTADOR",
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
+  },
+  {
+    href: ROUTES.QUIZ_RESULTADOS_ADMIN,
+    icon: FileText,
+    label: "Resultados de Quiz",
+    roles: [
+      "PSICOLOGO",
+      "ORIENTADOR",
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
+  },
+  {
+    href: ROUTES.QUIZ_ANALYTICS_ADMIN,
+    icon: TrendingUp,
+    label: "Análisis Estadístico",
+    roles: [
+      "PSICOLOGO",
+      "ORIENTADOR",
       "ADMIN_INSTITUCION",
       "SUPER_ADMIN_INSTITUCION",
       "SUPER_ADMIN_NACIONAL",
@@ -96,6 +121,7 @@ export const roleSpecificItems = [
     label: "Canalizaciones",
     roles: [
       "PSICOLOGO",
+      "ORIENTADOR",
       "ADMIN_INSTITUCION",
       "SUPER_ADMIN_INSTITUCION",
       "SUPER_ADMIN_NACIONAL",
@@ -107,6 +133,7 @@ export const roleSpecificItems = [
     label: "Gestión de Citas",
     roles: [
       "PSICOLOGO",
+      "ORIENTADOR",
       "ADMIN_INSTITUCION",
       "SUPER_ADMIN_INSTITUCION",
       "SUPER_ADMIN_NACIONAL",
@@ -118,6 +145,7 @@ export const roleSpecificItems = [
     label: "Notas de Sesión",
     roles: [
       "PSICOLOGO",
+      "ORIENTADOR",
       "ADMIN_INSTITUCION",
       "SUPER_ADMIN_INSTITUCION",
       "SUPER_ADMIN_NACIONAL",
@@ -128,7 +156,13 @@ export const roleSpecificItems = [
   {
     href: ROUTES.QUIZ_CONTESTAR,
     icon: FileText,
-    label: "Contestar Quiz",
+    label: "Evaluaciones",
+    roles: ["ESTUDIANTE"],
+  },
+  {
+    href: ROUTES.MIS_RESULTADOS,
+    icon: BarChart3,
+    label: "Mis Resultados",
     roles: ["ESTUDIANTE"],
   },
   {

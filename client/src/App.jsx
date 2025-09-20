@@ -7,6 +7,7 @@ import PublicLayout from "./components/layout/PublicLayout";
 
 import ProtectedRoute, {
   PublicOnlyRoute,
+  PsychologyStaffRoute,
 } from "./components/auth/ProtectedRoute";
 
 import LandingPage from "./pages/LandingPage";
@@ -26,6 +27,7 @@ import PublicQuizzesPage from "./pages/quizzes/PublicQuizzesPage";
 import TakeQuizPage from "./pages/quizzes/TakeQuizPage";
 import MyResultsPage from "./pages/quizzes/MyResultsPage";
 import AdminResultsPage from "./pages/quizzes/AdminResultsPage";
+import AnalyticsPage from "./pages/quizzes/AnalyticsPage";
 
 import { ROUTES } from "./utils/constants";
 import "./App.css";
@@ -157,24 +159,23 @@ function App() {
       <Route
         path={ROUTES.QUIZ_RESULTADOS_ADMIN}
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requiredRoles={['PSICOLOGO', 'ORIENTADOR', 'ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
             <Layout>
               <AdminResultsPage />
             </Layout>
           </ProtectedRoute>
         }
       />
-      {/* Si ocupas analytics:
-<Route
-  path={ROUTES.QUIZ_ANALYTICS_ADMIN}
-  element={
-    <ProtectedRoute>
-      <Layout>
-        <AnalyticsPage />
-      </Layout>
-    </ProtectedRoute>
-  }
-/> */}
+      <Route
+        path={ROUTES.QUIZ_ANALYTICS_ADMIN}
+        element={
+          <ProtectedRoute requiredRoles={['PSICOLOGO', 'ORIENTADOR', 'ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
+            <Layout>
+              <AnalyticsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Protegidas */}
       <Route

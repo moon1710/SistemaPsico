@@ -1,7 +1,6 @@
 import { useAuth } from "../contexts/AuthContext";
 import GreetingHeader from "../components/dashboard/GreetingHeader";
 import RoleRenderer from "../components/dashboard/RoleRenderer";
-import OnboardingModal from "../components/onboarding/OnboardingModal";
 // import WhoamI from "../components/debug/WhoamI"
 
 const DashboardPage = () => {
@@ -13,10 +12,6 @@ const DashboardPage = () => {
 
       {/* Debug */}
       {/* <WhoAmI /> */}
-
-      {/* Mostrar Onboarding si perfilCompletado === 0 */}
-      {user?.perfilCompletado === 0 && <OnboardingModal user={user} />}
-
       <RoleRenderer rol={user?.rol} />
     </div>
   );
