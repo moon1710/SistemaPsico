@@ -9,8 +9,12 @@ const { validationResult } = require("express-validator");
 const completeProfile = async (req, res) => {
   const conn = await pool.getConnection();
   try {
+    console.log('🔥 [ONBOARDING] Iniciando completeProfile para userId:', req.user?.id);
+    console.log('🔥 [ONBOARDING] Datos recibidos en req.body:', JSON.stringify(req.body, null, 2));
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ [ONBOARDING] Errores de validación:', errors.array());
       return res.status(400).json({
         success: false,
         message: "Datos de entrada inválidos",
@@ -20,6 +24,8 @@ const completeProfile = async (req, res) => {
 
     const userId = req.user.id;
     const userRole = req.user?.instituciones?.[0]?.rol || "ESTUDIANTE";
+    console.log('📋 [ONBOARDING] Usuario ID:', userId, 'Rol:', userRole);
+    console.log('👤 [ONBOARDING] req.user completo:', JSON.stringify(req.user, null, 2));
 
     // Campos básicos que aplican a todos los roles
     const {
@@ -61,11 +67,20 @@ const completeProfile = async (req, res) => {
       telefonoEmergencia,
     } = req.body;
 
+    // Verificar estado actual del usuario antes de actualizar
+    const [currentUserRows] = await conn.execute(
+      'SELECT perfilCompletado, matricula, telefono FROM usuarios WHERE id = ?',
+      [userId]
+    );
+    console.log('🔍 [ONBOARDING] Estado actual del usuario ANTES del update:', currentUserRows[0]);
+
     await conn.beginTransaction();
+    console.log('🔄 [ONBOARDING] Transacción iniciada');
 
     // Construir la query dinámicamente según el rol
     let updateFields = [];
     let updateValues = [];
+    console.log('🏗️ [ONBOARDING] Construyendo query dinámica...');
 
     // Campos básicos para todos
     if (telefono) {
@@ -212,20 +227,43 @@ const completeProfile = async (req, res) => {
     }
 
     // Siempre marcar perfil como completado
+    console.log('🔧 [ONBOARDING] Agregando perfilCompletado = 1 a updateFields');
     updateFields.push("perfilCompletado = 1");
     updateFields.push("updatedAt = NOW(3)");
 
     // Agregar el userId al final para el WHERE
     updateValues.push(userId);
 
+    console.log('🔍 [ONBOARDING] Campos a actualizar:', updateFields);
+    console.log('🔍 [ONBOARDING] Valores a insertar:', updateValues);
+
     if (updateFields.length > 0) {
       const updateQuery = `UPDATE usuarios SET ${updateFields.join(
         ", "
       )} WHERE id = ?`;
-      await conn.execute(updateQuery, updateValues);
+
+      console.log('📝 [ONBOARDING] Query SQL:', updateQuery);
+      console.log('📝 [ONBOARDING] Parámetros:', updateValues);
+
+      const result = await conn.execute(updateQuery, updateValues);
+      console.log('✅ [ONBOARDING] Resultado de la actualización:', result[0]);
+      console.log('✅ [ONBOARDING] Filas afectadas:', result[0].affectedRows);
+      console.log('✅ [ONBOARDING] Changed rows:', result[0].changedRows);
+    } else {
+      console.log('⚠️ [ONBOARDING] No hay campos para actualizar');
     }
 
     await conn.commit();
+    console.log('💾 [ONBOARDING] Transacción confirmada (commit)');
+
+    // Verificar que los datos se guardaron correctamente
+    const [verificationRows] = await conn.execute(
+      'SELECT perfilCompletado, matricula, telefono, fechaNacimiento FROM usuarios WHERE id = ?',
+      [userId]
+    );
+    console.log('🔍 [ONBOARDING] Verificación post-commit:', verificationRows[0]);
+
+    console.log('🎉 [ONBOARDING] Perfil completado exitosamente para userId:', userId);
 
     res.json({
       success: true,
@@ -238,12 +276,16 @@ const completeProfile = async (req, res) => {
   } catch (error) {
     try {
       await conn.rollback();
-    } catch {}
+      console.log('🔄 [ONBOARDING] Rollback ejecutado debido a error');
+    } catch (rollbackError) {
+      console.error('❌ [ONBOARDING] Error al hacer rollback:', rollbackError);
+    }
 
-    console.error(
-      "Error completando perfil:",
-      error?.sqlMessage || error?.message || error
-    );
+    console.error('❌ [ONBOARDING] Error completando perfil:', {
+      userId: req.user?.id || 'unknown',
+      error: error?.sqlMessage || error?.message || error,
+      stack: error?.stack
+    });
 
     res.status(500).json({
       success: false,
@@ -359,7 +401,7 @@ const resetOnboarding = async (req, res) => {
 
     // Marcar perfil como incompleto
     await conn.execute(
-      `UPDATE usuarios 
+      `UPDATE usuarios
        SET perfilCompletado = 0, updatedAt = NOW(3)
        WHERE id = ?`,
       [userId]
@@ -389,9 +431,70 @@ const resetOnboarding = async (req, res) => {
   }
 };
 
+/**
+ * Test directo para actualizar perfilCompletado (para debugging)
+ */
+const testUpdatePerfil = async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const userId = req.user.id;
+
+    console.log('🧪 [TEST] Probando UPDATE directo para userId:', userId);
+
+    // Verificar estado actual
+    const [before] = await pool.execute(
+      'SELECT perfilCompletado, matricula, telefono FROM usuarios WHERE id = ?',
+      [userId]
+    );
+    console.log('🧪 [TEST] Estado ANTES del test:', before[0]);
+
+    await conn.beginTransaction();
+
+    // UPDATE directo y simple
+    const result = await conn.execute(
+      'UPDATE usuarios SET perfilCompletado = 1 WHERE id = ?',
+      [userId]
+    );
+    console.log('🧪 [TEST] Resultado del UPDATE:', result[0]);
+
+    await conn.commit();
+
+    // Verificar estado después
+    const [after] = await pool.execute(
+      'SELECT perfilCompletado, matricula, telefono FROM usuarios WHERE id = ?',
+      [userId]
+    );
+    console.log('🧪 [TEST] Estado DESPUÉS del test:', after[0]);
+
+    res.json({
+      success: true,
+      message: "Test completado",
+      data: {
+        before: before[0],
+        after: after[0],
+        affectedRows: result[0].affectedRows
+      },
+    });
+  } catch (error) {
+    try {
+      await conn.rollback();
+    } catch {}
+
+    console.error('🧪 [TEST] Error en test:', error);
+    res.status(500).json({
+      success: false,
+      message: "Error en test",
+      error: error.message
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   completeProfile,
   completeOnboarding,
   getProfileData,
   resetOnboarding,
+  testUpdatePerfil,
 };

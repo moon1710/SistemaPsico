@@ -5,6 +5,7 @@ const {
   completeOnboarding,
   getProfileData,
   resetOnboarding,
+  testUpdatePerfil,
 } = require("../controllers/onboarding.controller");
 
 const { authenticateToken } = require("../middlewares/auth.middleware");
@@ -26,5 +27,8 @@ router.get("/profile", getProfileData);
 
 // POST /api/onboarding/reset - Reiniciar onboarding (para testing)
 router.post("/reset", resetOnboarding);
+
+// POST /api/onboarding/test-update - Test directo para actualizar perfilCompletado
+router.post("/test-update", testUpdatePerfil);
 
 module.exports = router;
