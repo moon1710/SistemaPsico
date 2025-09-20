@@ -209,7 +209,7 @@ export default function AnalyticsPage() {
               <div className="bg-white rounded-xl p-6 shadow-sm border">
                 <div className="flex items-center">
                   <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <TrendingUpIcon className="h-6 w-6 text-yellow-600" />
+                    <ArrowTrendingUpIcon className="h-6 w-6 text-yellow-600" />
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Puntaje Promedio</p>
