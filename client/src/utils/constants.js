@@ -46,7 +46,7 @@ export const ROUTES = {
   TERMINOS: "/terminos",
   PRIVACIDAD: "/privacidad",
   DOCUMENTACION: "/docs",
-  CONFINDENCIALIDAD: "/confidencialidad",
+  CONFIDENCIALIDAD: "/confidencialidad",
 
   // Super Admin Nacional
   INSTITUCIONES: "/instituciones",
@@ -61,12 +61,10 @@ export const ROUTES = {
   // Psicólogo
   QUIZ_APLICAR: "/quiz/aplicar",
   CANALIZACIONES: "/canalizaciones",
-  CITAS: "/citas",
   SESIONES: "/sesiones",
 
   // Estudiante
   QUIZ_CONTESTAR: "/quiz/contestar",
-  MIS_CITAS: "/mis-citas",
   RECOMENDACIONES: "/recomendaciones",
 
   // Quizzes
@@ -74,6 +72,20 @@ export const ROUTES = {
   MIS_RESULTADOS: "/quiz/mis-resultados",
   QUIZ_RESULTADOS_ADMIN: "/quizzes/resultados", // para psicólogo/orientador/admin
   QUIZ_ANALYTICS_ADMIN: "/quizzes/analytics", // opcional
+
+  CITAS_PAGE: "/citas",
+  MIS_CITAS: "/mis-citas",
+
+  CITAS: {
+    OPEN_REQUESTS: "/citas/requests/open",
+    MINE: "/citas/mine",
+    SLOTS: "/citas/slots",
+    CLAIM: (id) => `/citas/${id}/claim`,
+    RELEASE: (id) => `/citas/${id}/release`,
+    SCHEDULE: (id) => `/citas/${id}/schedule`,
+    BOOK_SLOT: (slotId) => `/citas/slots/${slotId}/book`,
+    STATUS: (id) => `/citas/${id}/status`,
+  },
 };
 
 // Mensajes de la aplicación

@@ -27,6 +27,10 @@ import TakeQuizPage from "./pages/quizzes/TakeQuizPage";
 import MyResultsPage from "./pages/quizzes/MyResultsPage";
 import AdminResultsPage from "./pages/quizzes/AdminResultsPage";
 
+//citas
+import CitasPage from "./pages/citas/CitasPage";
+import MyAppointmentsStudent from "./pages/citas/MyAppointmentsStudent";
+
 import { ROUTES } from "./utils/constants";
 import "./App.css";
 
@@ -63,7 +67,6 @@ function App() {
           </PublicOnlyRoute>
         }
       />
-
       {/* Públicas ABIERTAS */}
       <Route
         path={ROUTES.ABOUTUS}
@@ -106,23 +109,13 @@ function App() {
         }
       />
       <Route
-        path={ROUTES.CONFINDENCIALIDAD}
+        path={ROUTES.CONFIDENCIALIDAD}
         element={
           <PublicLayout>
             <ConfidencialidadPage />
           </PublicLayout>
         }
       />
-      {/* Alias opcional correcto */}
-      <Route
-        path={ROUTES.CONFIDENCIALIDAD_ALIAS}
-        element={
-          <PublicLayout>
-            <ConfidencialidadPage />
-          </PublicLayout>
-        }
-      />
-
       {/* Quizzes (protegidas) */}
       <Route
         path={ROUTES.QUIZ_CONTESTAR}
@@ -164,18 +157,26 @@ function App() {
           </ProtectedRoute>
         }
       />
-      {/* Si ocupas analytics:
-<Route
-  path={ROUTES.QUIZ_ANALYTICS_ADMIN}
-  element={
-    <ProtectedRoute>
-      <Layout>
-        <AnalyticsPage />
-      </Layout>
-    </ProtectedRoute>
-  }
-/> */}
-
+      <Route
+        path={ROUTES.CITAS_PAGE}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <CitasPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.MIS_CITAS}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <MyAppointmentsStudent />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
       {/* Protegidas */}
       <Route
         path={ROUTES.DASHBOARD}
