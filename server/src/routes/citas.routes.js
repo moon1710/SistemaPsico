@@ -360,4 +360,139 @@ router.post(
   }
 );
 
+/* ----------------- Disponibilidad ----------------- */
+
+// Obtener disponibilidad del psicólogo actual
+router.get(
+  "/disponibilidad",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      // Verificar que el usuario tenga rol de psicólogo en alguna institución
+      const userRoles = req.user.instituciones?.map(inst => inst.rol) || [];
+      if (!userRoles.includes('PSICOLOGO') && !userRoles.includes('ORIENTADOR')) {
+        return res.status(403).json({
+          success: false,
+          message: "Solo psicólogos y orientadores pueden gestionar disponibilidad"
+        });
+      }
+
+      const psicologoId = req.user.id;
+
+      const [disponibilidad] = await pool.execute(
+        `SELECT * FROM disponibilidad_psicologo
+         WHERE psicologoId = ? AND activo = 1
+         ORDER BY FIELD(diaSemana, 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'), horaInicio`,
+        [psicologoId]
+      );
+
+      res.json({
+        success: true,
+        data: disponibilidad,
+      });
+    } catch (error) {
+      console.error("Error obteniendo disponibilidad:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+      });
+    }
+  }
+);
+
+// Actualizar disponibilidad del psicólogo
+router.put(
+  "/disponibilidad",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      // Verificar que el usuario tenga rol de psicólogo en alguna institución
+      const userRoles = req.user.instituciones?.map(inst => inst.rol) || [];
+      if (!userRoles.includes('PSICOLOGO') && !userRoles.includes('ORIENTADOR')) {
+        return res.status(403).json({
+          success: false,
+          message: "Solo psicólogos y orientadores pueden gestionar disponibilidad"
+        });
+      }
+
+      const psicologoId = req.user.id;
+      const { horarios = {}, configuracion = {} } = req.body;
+
+      console.log('🔥 [DISPONIBILIDAD] Actualizando para psicólogo:', psicologoId);
+      console.log('📅 [DISPONIBILIDAD] Horarios recibidos:', JSON.stringify(horarios, null, 2));
+      console.log('⚙️ [DISPONIBILIDAD] Configuración recibida:', JSON.stringify(configuracion, null, 2));
+
+      // Convertir horarios del frontend al formato que esperamos
+      const disponibilidad = [];
+      for (const [diaSemana, horario] of Object.entries(horarios)) {
+        // Verificar que horario no sea null/undefined y tenga las propiedades necesarias
+        if (horario && horario.activo && horario.horaInicio && horario.horaFin) {
+          disponibilidad.push({
+            diaSemana,
+            horaInicio: horario.horaInicio,
+            horaFin: horario.horaFin,
+            activo: true
+          });
+        }
+      }
+
+      console.log('🔄 [DISPONIBILIDAD] Disponibilidad convertida:', JSON.stringify(disponibilidad, null, 2));
+
+      // Iniciar transacción
+      const conn = await pool.getConnection();
+      await conn.beginTransaction();
+
+      try {
+        // Desactivar toda la disponibilidad existente
+        await conn.execute(
+          `UPDATE disponibilidad_psicologo SET activo = 0 WHERE psicologoId = ?`,
+          [psicologoId]
+        );
+
+        console.log('✅ [DISPONIBILIDAD] Disponibilidad anterior desactivada');
+
+        // Insertar nueva disponibilidad
+        for (const item of disponibilidad) {
+          const { diaSemana, horaInicio, horaFin, activo = true } = item;
+
+          if (!diaSemana || !horaInicio || !horaFin) {
+            console.log('⚠️ [DISPONIBILIDAD] Saltando item incompleto:', item);
+            continue;
+          }
+
+          await conn.execute(
+            `INSERT INTO disponibilidad_psicologo (psicologoId, diaSemana, horaInicio, horaFin, activo)
+             VALUES (?, ?, ?, ?, ?)`,
+            [psicologoId, diaSemana, horaInicio, horaFin, activo ? 1 : 0]
+          );
+
+          console.log('➕ [DISPONIBILIDAD] Insertado:', { diaSemana, horaInicio, horaFin, activo });
+        }
+
+        await conn.commit();
+        console.log('✅ [DISPONIBILIDAD] Transacción completada exitosamente');
+
+        res.json({
+          success: true,
+          message: "Disponibilidad actualizada exitosamente",
+        });
+
+      } catch (error) {
+        await conn.rollback();
+        console.error("❌ [DISPONIBILIDAD] Error en transacción:", error);
+        throw error;
+      } finally {
+        conn.release();
+      }
+
+    } catch (error) {
+      console.error("❌ [DISPONIBILIDAD] Error actualizando disponibilidad:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor: " + error.message,
+      });
+    }
+  }
+);
+
 module.exports = router;
