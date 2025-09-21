@@ -21,31 +21,45 @@ const ProtectedRoute = ({
   requiredRoles = null,
   fallbackPath = ROUTES.LOGIN,
 }) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, activeRole, hasAnyRole } = useAuth();
   const location = useLocation();
+
+  console.log('🛡️ [PROTECTED_ROUTE] Verificando acceso:', {
+    path: location.pathname,
+    isAuthenticated,
+    isLoading,
+    userRole: user?.rol,
+    activeRole,
+    userInstituciones: user?.instituciones,
+    requiredRoles,
+    fallbackPath
+  });
 
   // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {
+    console.log('⏳ [PROTECTED_ROUTE] Mostrando loading screen');
     return <LoadingScreen />;
   }
 
   // Si no está autenticado, redirigir al login
   if (!isAuthenticated) {
+    console.log('❌ [PROTECTED_ROUTE] Usuario no autenticado, redirigiendo a:', fallbackPath);
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
   // Si se especificaron roles requeridos, verificar que el usuario los tenga
   if (requiredRoles && requiredRoles.length > 0) {
-    // Verificar rol global
-    const hasGlobalRole = requiredRoles.includes(user?.rol);
+    const hasRequiredRole = hasAnyRole(requiredRoles);
 
-    // Verificar roles en instituciones
-    const hasInstitutionRole = user?.instituciones?.some(institution =>
-      requiredRoles.includes(institution.rol)
-    );
+    console.log('🔍 [PROTECTED_ROUTE] Verificando roles:', {
+      requiredRoles,
+      hasRequiredRole,
+      activeRole,
+      userInstituciones: user?.instituciones
+    });
 
-    // El usuario debe tener al menos uno de los roles requeridos (global o por institución)
-    if (!hasGlobalRole && !hasInstitutionRole) {
+    if (!hasRequiredRole) {
+      console.log('❌ [PROTECTED_ROUTE] Usuario no tiene los roles requeridos');
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center max-w-md mx-auto p-6">
@@ -56,6 +70,10 @@ const ProtectedRoute = ({
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Acceso Denegado</h2>
             <p className="text-gray-600 mb-4">No tienes permisos para acceder a esta sección.</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Rol requerido: {requiredRoles.join(', ')}<br/>
+              Tu rol: {activeRole || 'No definido'}
+            </p>
             <button
               onClick={() => window.history.back()}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
@@ -69,6 +87,7 @@ const ProtectedRoute = ({
   }
 
   // Si todo está bien, renderizar el componente hijo
+  console.log('✅ [PROTECTED_ROUTE] Acceso autorizado, renderizando children');
   return children;
 };
 

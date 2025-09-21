@@ -14,6 +14,7 @@ import {
   Building,
   BarChart3,
   TrendingUp,
+  Clock,
 } from "lucide-react";
 import { ROUTES } from "../../../utils/constants";
 
@@ -127,6 +128,29 @@ export const roleSpecificItems = [
       "SUPER_ADMIN_NACIONAL",
     ],
   },
+  // ===== Rutas de Citas =====
+  {
+    href: ROUTES.AGENDA,
+    icon: Calendar,
+    label: "Mi Agenda",
+    roles: ["PSICOLOGO", "ORIENTADOR"],
+  },
+  {
+    href: ROUTES.DISPONIBILIDAD,
+    icon: Clock,
+    label: "Mi Disponibilidad",
+    roles: ["PSICOLOGO", "ORIENTADOR"],
+  },
+  {
+    href: ROUTES.CITAS_ADMIN,
+    icon: Calendar,
+    label: "Administrar Citas",
+    roles: [
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
+  },
   {
     href: ROUTES.CITAS,
     icon: Calendar,
@@ -163,6 +187,12 @@ export const roleSpecificItems = [
     href: ROUTES.MIS_RESULTADOS,
     icon: BarChart3,
     label: "Mis Resultados",
+    roles: ["ESTUDIANTE"],
+  },
+  {
+    href: ROUTES.AGENDAR_CITA,
+    icon: Calendar,
+    label: "Agendar Cita",
     roles: ["ESTUDIANTE"],
   },
   {

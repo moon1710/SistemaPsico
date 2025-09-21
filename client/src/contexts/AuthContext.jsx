@@ -241,6 +241,16 @@ export function AuthProvider({ children }) {
 
   const clearError = () => setError(null);
 
+  // console.log('🔐 [AUTH_CONTEXT] Current state:', {
+  //   user: user ? { id: user.id, email: user.email, instituciones: user.instituciones } : null,
+  //   token: token ? 'TOKEN_EXISTS' : null,
+  //   isAuthenticated,
+  //   isLoading,
+  //   status,
+  //   activeRole,
+  //   activeInstitutionId
+  // });
+
   const value = {
     // estado
     user,
