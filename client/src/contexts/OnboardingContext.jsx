@@ -27,24 +27,31 @@ export const OnboardingProvider = ({ children }) => {
   // Verificar si es primera vez del usuario
   useEffect(() => {
     if (user?.id) {
-      const storageKey = getStorageKey();
-      const hasSeenOnboardingBefore = localStorage.getItem(storageKey);
+      // PRIORIDAD TOTAL al campo perfilCompletado de la BD
+      const profileCompleted = user.perfilCompletado === 1 || user.perfilCompletado === true;
 
-      // Prioridad: usar perfilCompletado de la BD, luego localStorage como fallback
-      const shouldShowOnboarding =
-        !user.perfilCompletado && !hasSeenOnboardingBefore;
+      console.log('🔍 [OnboardingContext] Verificando estado:', {
+        userId: user.id,
+        perfilCompletado: user.perfilCompletado,
+        profileCompleted,
+        shouldShowModal: !profileCompleted
+      });
 
-      if (shouldShowOnboarding) {
+      if (!profileCompleted) {
+        // Perfil NO completado -> mostrar modal
         setIsFirstTime(true);
         setShowOnboarding(true);
         setOnboardingCompleted(false);
+        console.log('📝 [OnboardingContext] Mostrando modal de onboarding');
       } else {
+        // Perfil completado -> no mostrar modal
         setIsFirstTime(false);
         setShowOnboarding(false);
         setOnboardingCompleted(true);
+        console.log('✅ [OnboardingContext] Perfil ya completado, ocultando modal');
       }
     }
-  }, [user?.id, user?.perfilCompletado, getStorageKey]);
+  }, [user?.id, user?.perfilCompletado]);
 
   // Marcar onboarding como completado
   const completeOnboarding = () => {

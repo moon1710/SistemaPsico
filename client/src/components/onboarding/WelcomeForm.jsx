@@ -66,31 +66,61 @@ const WelcomeForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
+      // Filtrar campos vacíos y preparar datos para envío
+      const dataToSend = {};
+
+      // Solo incluir campos que tienen valor
+      Object.keys(formData).forEach(key => {
+        const value = formData[key];
+        // Incluir si no es string vacía, no es null, y no es undefined
+        if (value !== '' && value !== null && value !== undefined) {
+          // Para booleans, siempre incluir
+          if (typeof value === 'boolean') {
+            dataToSend[key] = value;
+          }
+          // Para strings, solo si no están vacíos
+          else if (typeof value === 'string' && value.trim() !== '') {
+            dataToSend[key] = value.trim();
+          }
+          // Para números, siempre incluir
+          else if (typeof value === 'number') {
+            dataToSend[key] = value;
+          }
+        }
+      });
+
+      console.log('🚀 Datos a enviar al servidor:', dataToSend);
+
       // Llamar a la API para actualizar el perfil del usuario
-      const response = await fetch('/api/onboarding/complete-profile', {
+      const response = await fetch('http://localhost:4000/api/onboarding/complete-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(dataToSend)
       });
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Perfil completado:', result);
+        console.log('✅ Perfil completado exitosamente:', result);
+        // Solo completar si la API respondió OK
         completeOnboarding();
       } else {
-        console.error('Error al completar perfil:', response.statusText);
-        // Fallback: completar localmente aunque falle la API
-        completeOnboarding();
+        // Mostrar error detallado al usuario
+        const errorData = await response.json().catch(() => null);
+        console.error('❌ Error al completar perfil:', errorData || response.statusText);
+
+        // Mostrar error al usuario en lugar de completar de todas formas
+        alert(`Error al guardar el perfil: ${errorData?.message || 'Error desconocido'}. Por favor, intenta nuevamente.`);
       }
     } catch (error) {
-      console.error('Error enviando datos del perfil:', error);
-      // Fallback: completar localmente aunque falle la API
-      completeOnboarding();
+      console.error('❌ Error de conexión:', error);
+
+      // Mostrar error al usuario en lugar de completar de todas formas
+      alert('Error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente.');
     }
   };
 
