@@ -1,10 +1,10 @@
 // client/src/components/onboarding/WelcomeForm.jsx
 import React, { useState } from 'react';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { API_CONFIG} from "../../utils/constants";
 
 const WelcomeForm = () => {
   const { user, completeOnboarding } = useOnboarding();
-  
   // Obtener el rol del usuario
   const userRole = user?.instituciones?.[0]?.rol || 'ESTUDIANTE';
   
@@ -94,15 +94,18 @@ const WelcomeForm = () => {
       console.log('🚀 Datos a enviar al servidor:', dataToSend);
 
       // Llamar a la API para actualizar el perfil del usuario
-      const response = await fetch('http://localhost:4000/api/onboarding/complete-profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify(dataToSend)
-      });
-
+      const response = await fetch(
+        `${API_CONFIG.API_BASE}/onboarding/complete-profile`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem('auth_token')}`, // Necesario para auth
+          },
+          credentials: "include", // <- importante para enviar la cookie
+          body: JSON.stringify(dataToSend),
+        }
+      );
       if (response.ok) {
         const result = await response.json();
         console.log('✅ Perfil completado exitosamente:', result);

@@ -13,7 +13,7 @@ export const useOnboarding = () => {
 };
 
 export const OnboardingProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [isFirstTime, setIsFirstTime] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -53,14 +53,63 @@ export const OnboardingProvider = ({ children }) => {
     }
   }, [user?.id, user?.perfilCompletado]);
 
+  // Refrescar datos del usuario desde el servidor
+  const refreshUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return;
+
+      const response = await fetch('/api/auth/profile', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data?.user) {
+          const freshUser = result.data.user;
+          setUser(freshUser);
+          console.log('🔄 [OnboardingContext] Usuario refrescado desde servidor:', freshUser);
+
+          // También actualizar localStorage
+          localStorage.setItem('user_data', JSON.stringify(freshUser));
+          return freshUser;
+        }
+      }
+    } catch (error) {
+      console.error('❌ [OnboardingContext] Error refrescando usuario:', error);
+    }
+    return null;
+  };
+
   // Marcar onboarding como completado
-  const completeOnboarding = () => {
+  const completeOnboarding = async () => {
     if (user?.id) {
       const storageKey = getStorageKey();
       localStorage.setItem(storageKey, "true");
       setOnboardingCompleted(true);
       setShowOnboarding(false);
       setIsFirstTime(false);
+
+      // IMPORTANTE: Obtener datos frescos del servidor en lugar de solo actualizar localmente
+      console.log('🔄 [OnboardingContext] Refrescando datos del usuario desde servidor...');
+      const freshUser = await refreshUserProfile();
+
+      if (freshUser) {
+        console.log('✅ [OnboardingContext] Usuario actualizado con datos frescos');
+      } else {
+        // Fallback: actualizar localmente si falla la petición
+        const updatedUser = {
+          ...user,
+          perfilCompletado: 1
+        };
+        setUser(updatedUser);
+        console.log('⚠️ [OnboardingContext] Fallback: Usuario actualizado localmente');
+      }
     }
   };
 
