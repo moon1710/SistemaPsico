@@ -33,6 +33,13 @@ import MyResultsPage from "./pages/quizzes/MyResultsPage";
 import AdminResultsPage from "./pages/quizzes/AdminResultsPage";
 import AnalyticsPage from "./pages/quizzes/AnalyticsPage";
 
+//AppointmentPages
+import BookAppointmentPage from "./pages/citas/BookAppointmentPage";
+import AgendaPage from "./pages/citas/AgendaPage";
+import AvailabilityPage from "./pages/citas/AvailabilityPage";
+import AppointmentDetailPage from "./pages/citas/AppointmentDetailPage";
+import AdminAppointmentsPage from "./pages/citas/AdminAppointmentsPage";
+
 import { ROUTES } from "./utils/constants";
 import "./App.css";
 
@@ -179,6 +186,67 @@ function App() {
           <ProtectedRoute requiredRoles={['PSICOLOGO', 'ORIENTADOR', 'ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
             <Layout>
               <AnalyticsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Appointment Routes */}
+      {/* Student - Book Appointment */}
+      <Route
+        path={ROUTES.AGENDAR_CITA}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
+            <Layout>
+              <BookAppointmentPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Appointment Detail - Accessible by students and psychologists */}
+      <Route
+        path={ROUTES.CITA_DETALLE}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE', 'PSICOLOGO']}>
+            <Layout>
+              <AppointmentDetailPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Psychologist - Agenda */}
+      <Route
+        path={ROUTES.AGENDA}
+        element={
+          <ProtectedRoute requiredRoles={['PSICOLOGO']}>
+            <Layout>
+              <AgendaPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Psychologist - Availability Configuration */}
+      <Route
+        path={ROUTES.DISPONIBILIDAD}
+        element={
+          <ProtectedRoute requiredRoles={['PSICOLOGO']}>
+            <Layout>
+              <AvailabilityPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin - Appointments Management */}
+      <Route
+        path={ROUTES.CITAS_ADMIN}
+        element={
+          <ProtectedRoute requiredRoles={['ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
+            <Layout>
+              <AdminAppointmentsPage />
             </Layout>
           </ProtectedRoute>
         }
