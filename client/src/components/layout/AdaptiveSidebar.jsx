@@ -350,8 +350,8 @@ const getRoleColor = () => {
                 Mi Perfil
               </Link>
               <Link
-                to="/notificaciones"
-                className="flex items-center px-3 py-2 text-sm text-gray-100 hover:text-white 
+                to={ROUTES.NOTIFICATIONS}
+                className="flex items-center px-3 py-2 text-sm text-gray-100 hover:text-white
            hover:bg-white/10 rounded-lg transition-all duration-200"
               >
                 <Bell className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -392,7 +392,7 @@ const getRoleColor = () => {
     ¿Necesitas ayuda o soporte?
   </p>
   <Link
-    to="/soporte"
+    to={ROUTES.SUPPORT}
     className="text-white hover:text-cyan-200 hover:underline transition-colors"
   >
     Contáctanos

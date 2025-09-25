@@ -3,6 +3,7 @@ const {
   login,
   logout,
   getProfile,
+  updateProfile,
   verifyToken,
   register,
 } = require("../controllers/auth.controller");
@@ -26,6 +27,7 @@ router.post("/register", registerValidation, register);
 router.post("/login", loginValidation, login);
 router.post("/logout", authenticateToken, logout);
 router.get("/profile", authenticateToken, getProfile);
+router.put("/profile", authenticateToken, updateProfile);
 router.get("/verify", authenticateToken, verifyToken);
 
 // Rutas de prueba de roles (si las usas)

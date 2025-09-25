@@ -436,10 +436,174 @@ const verifyToken = async (req, res) => {
   }
 };
 
+/** UPDATE PROFILE */
+const updateProfile = async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const userId = req.user.id;
+    const {
+      nombre,
+      apellidoPaterno,
+      apellidoMaterno,
+      telefono,
+      direccion,
+      genero,
+      fechaNacimiento,
+    } = req.body;
+
+    // Verificar que el usuario existe
+    const [userRows] = await pool.execute(
+      "SELECT id FROM usuarios WHERE id = ?",
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Usuario no encontrado" });
+    }
+
+    // Detectar qué columnas existen
+    const DB_NAME = process.env.MYSQL_DATABASE || "sistema_educativo";
+    const [colsRows] = await pool.execute(
+      `SELECT COLUMN_NAME
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = ?
+         AND TABLE_NAME   = 'usuarios'
+         AND COLUMN_NAME IN ('nombre','apellidoPaterno','apellidoMaterno','telefono','direccion','genero','fechaNacimiento','nombreCompleto','updatedAt')`,
+      [DB_NAME]
+    );
+    const columns = new Set(colsRows.map((r) => r.COLUMN_NAME));
+
+    // Construir SET dinámico
+    const sets = [];
+    const params = [];
+
+    if (columns.has("nombre") && nombre) {
+      sets.push("nombre = ?");
+      params.push(String(nombre).trim());
+    }
+    if (columns.has("apellidoPaterno") && apellidoPaterno) {
+      sets.push("apellidoPaterno = ?");
+      params.push(String(apellidoPaterno).trim());
+    }
+    if (columns.has("apellidoMaterno") && typeof apellidoMaterno !== "undefined") {
+      sets.push("apellidoMaterno = ?");
+      params.push(apellidoMaterno ? String(apellidoMaterno).trim() : null);
+    }
+    if (columns.has("telefono") && typeof telefono !== "undefined") {
+      sets.push("telefono = ?");
+      params.push(telefono ? String(telefono).trim() : null);
+    }
+    if (columns.has("direccion") && typeof direccion !== "undefined") {
+      sets.push("direccion = ?");
+      params.push(direccion ? String(direccion).trim() : null);
+    }
+    if (columns.has("genero") && typeof genero !== "undefined") {
+      sets.push("genero = ?");
+      params.push(genero ? String(genero).trim() : null);
+    }
+    if (columns.has("fechaNacimiento") && typeof fechaNacimiento !== "undefined") {
+      if (fechaNacimiento) {
+        const d = new Date(fechaNacimiento);
+        const ymd = Number.isNaN(d.getTime())
+          ? String(fechaNacimiento).slice(0, 10)
+          : d.toISOString().slice(0, 10);
+        sets.push("fechaNacimiento = ?");
+        params.push(ymd);
+      } else {
+        sets.push("fechaNacimiento = NULL");
+      }
+    }
+
+    // Actualizar nombreCompleto si existen nombre y apellidos
+    if (columns.has("nombreCompleto") && nombre && apellidoPaterno) {
+      const nombreCompleto = apellidoMaterno
+        ? `${nombre} ${apellidoPaterno} ${apellidoMaterno}`
+        : `${nombre} ${apellidoPaterno}`;
+      sets.push("nombreCompleto = ?");
+      params.push(nombreCompleto.trim());
+    }
+
+    if (columns.has("updatedAt")) {
+      sets.push("updatedAt = NOW()");
+    }
+
+    // Marcar perfil como completado
+    sets.push("perfilCompletado = 1");
+
+    if (sets.length === 0) {
+      return res.json({
+        success: true,
+        message: "No hay cambios que aplicar",
+        data: sanitizeUser(req.user),
+      });
+    }
+
+    const sql = `UPDATE usuarios SET ${sets.join(", ")} WHERE id = ? LIMIT 1`;
+    params.push(userId);
+
+    const [result] = await pool.execute(sql, params);
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Usuario no encontrado" });
+    }
+
+    // Obtener el usuario actualizado
+    const [updatedUserRows] = await pool.execute(
+      `SELECT u.id, u.nombre, u.apellidoPaterno, u.apellidoMaterno,
+              u.nombreCompleto, u.email, u.status, u.emailVerificado,
+              u.createdAt, u.lastLogin, u.perfilCompletado, u.telefono,
+              u.direccion, u.genero, u.fechaNacimiento
+       FROM usuarios u WHERE u.id = ?`,
+      [userId]
+    );
+
+    if (updatedUserRows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Error obteniendo usuario actualizado" });
+    }
+
+    const updatedUser = updatedUserRows[0];
+
+    // Obtener instituciones del usuario
+    const [instRows] = await pool.execute(
+      `SELECT ui.institucionId, i.nombre, ui.rolInstitucion
+       FROM usuario_institucion ui
+       JOIN instituciones i ON ui.institucionId = i.id
+       WHERE ui.usuarioId = ?`,
+      [userId]
+    );
+
+    updatedUser.instituciones = instRows.map((r) => ({
+      institucionId: String(r.institucionId),
+      institucionNombre: r.nombre,
+      rol: r.rolInstitucion,
+    }));
+
+    res.json({
+      success: true,
+      message: "Perfil actualizado correctamente",
+      data: sanitizeUser(updatedUser),
+    });
+  } catch (error) {
+    console.error("Error actualizando perfil:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error interno del servidor" });
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   login,
   logout,
   getProfile,
+  updateProfile,
   verifyToken,
   generateToken,
   sanitizeUser,

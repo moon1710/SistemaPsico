@@ -8,7 +8,8 @@
       "Bash(node:*)",
       "Bash(dir \"C:\\Users\\MON\\Documents\\GitHub\\SistemaPsico\\client\\src\\pages\\citas\")",
       "Read(//c/Users/MON/Desktop/**)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

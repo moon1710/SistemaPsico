@@ -26,6 +26,13 @@ import TerminosPage from "./pages/TerminosPage";
 import PrivacidadPage from "./pages/PrivacidadPage";
 import ConfidencialidadPage from "./pages/ConfidencialidadPage";
 
+//Paginas de Usuario
+import ProfilePage from "./pages/ProfilePage";
+import ConfigurationPage from "./pages/ConfigurationPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import SupportPage from "./pages/SupportPage";
+import RecommendationsPage from "./pages/RecommendationsPage";
+
 //QuizzesPages
 import PublicQuizzesPage from "./pages/quizzes/PublicQuizzesPage";
 import TakeQuizPage from "./pages/quizzes/TakeQuizPage";
@@ -259,6 +266,62 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <DashboardPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Rutas de usuario */}
+      <Route
+        path={ROUTES.PROFILE}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ProfilePage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.CONFIGURATION}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ConfigurationPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.NOTIFICATIONS}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <NotificationsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Soporte - Disponible para todos los usuarios autenticados */}
+      <Route
+        path={ROUTES.SUPPORT}
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SupportPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Recomendaciones - Disponible para estudiantes principalmente */}
+      <Route
+        path={ROUTES.RECOMENDACIONES}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE', 'PSICOLOGO', 'ORIENTADOR', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
+            <Layout>
+              <RecommendationsPage />
             </Layout>
           </ProtectedRoute>
         }
