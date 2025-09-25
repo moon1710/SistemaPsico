@@ -209,6 +209,29 @@ const LandingPage = () => {
               </p>
             </div>
             <div>
+              <h4
+                className="footer-title"
+                style={{ color: "#fff", fontWeight: 600, fontSize: "1.05rem" }}
+              >
+                Información
+              </h4>
+              <ul className="footer-links">
+                <li>
+                  <Link to={ROUTES.ABOUTUS} className="footer-link">
+                    Acerca de Nosotros
+                  </Link>
+                </li>
+                <li>
+                  <Link to={ROUTES.HELP} className="footer-link">
+                    Centro de Ayuda
+                  </Link>
+                </li>
+                <li>
+                  <Link to={ROUTES.DOCUMENTACION} className="footer-link">
+                    Documentación
+                  </Link>
+                </li>
+              </ul>
             </div>
             <div>
               <h4
@@ -218,19 +241,31 @@ const LandingPage = () => {
                 Soporte
               </h4>
               <ul className="footer-links">
-                <li>Centro de Ayuda</li>
-                <li>Contacto</li>
-                <li>Capacitación</li>
-                <li>Documentación</li>
+                <li>
+                  <Link to={ROUTES.SUPPORT} className="footer-link">
+                    Contáctanos
+                  </Link>
+                </li>
+                <li>
+                  <Link to={ROUTES.HELP} className="footer-link">
+                    Preguntas Frecuentes
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
           <div className="footer-bottom">
             <p>© 2024 Sistema Psicológico. Todos los derechos reservados.</p>
             <div className="footer-bottom-links">
-              <span>Términos de Servicio</span>
-              <span>Política de Privacidad</span>
-              <span>Confidencialidad</span>
+              <Link to={ROUTES.TERMINOS} className="footer-bottom-link">
+                Términos de Servicio
+              </Link>
+              <Link to={ROUTES.PRIVACIDAD} className="footer-bottom-link">
+                Política de Privacidad
+              </Link>
+              <Link to={ROUTES.CONFINDENCIALIDAD} className="footer-bottom-link">
+                Confidencialidad
+              </Link>
             </div>
           </div>
         </div>

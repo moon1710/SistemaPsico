@@ -407,6 +407,17 @@ body {
 .footer-links li:hover {
   color: #fff;
 }
+
+.footer-link {
+  color: var(--empress);
+  text-decoration: none;
+  transition: color 0.16s;
+  font-family: 'Nunito', Arial, sans-serif;
+}
+
+.footer-link:hover {
+  color: #fff;
+}
 .footer .footer-bottom {
   border-top: 1px solid var(--outer-space);
   padding-top: 1.2rem;
@@ -428,14 +439,44 @@ body {
   color: #fff;
 }
 
+.footer-bottom-link {
+  margin: 0 1.2rem;
+  color: var(--empress);
+  text-decoration: none;
+  transition: color 0.15s;
+  font-family: 'Nunito', Arial, sans-serif;
+}
+
+.footer-bottom-link:hover {
+  color: #fff;
+}
+
 /* ==== RESPONSIVE ==== */
 @media (max-width: 900px) {
   .hero-title { font-size: 2rem; }
   .how-title, .benefits-title { font-size: 1.3rem; }
   .footer .footer-main { grid-template-columns: 1fr; }
+  .footer .footer-bottom {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .footer .footer-bottom .footer-bottom-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .footer-bottom-link {
+    margin: 0.25rem;
+  }
 }
 @media (max-width: 600px) {
   .hero-content { padding: 2rem 0.3rem; }
   .how-section, .benefits-section, .cta-section, .footer { padding-left: 0.5rem; padding-right: 0.5rem; }
   .cta-section h2 { font-size: 1.13rem; }
+  .footer-bottom-link {
+    font-size: 0.9rem;
+    margin: 0.2rem;
+  }
 }
