@@ -293,6 +293,93 @@ router.post(
   }
 );
 
+// Student creates appointment request
+router.post("/", authenticateToken, async (req, res) => {
+  try {
+    const instId = await getActiveInstitutionId(req);
+    if (!instId)
+      return res.status(400).json({ success: false, message: "Sin institución" });
+
+    const {
+      psicologoId,
+      fechaHora,
+      duracion = 60,
+      modalidad = "PRESENCIAL",
+      motivo,
+      ubicacion,
+      notas
+    } = req.body;
+
+    // Validate required fields
+    if (!psicologoId || !fechaHora || !motivo) {
+      return res.status(400).json({
+        success: false,
+        message: "Faltan campos requeridos: psicologoId, fechaHora, motivo"
+      });
+    }
+
+    // Verify the psychologist exists and is available
+    const [psychologist] = await pool.execute(
+      `SELECT u.id FROM usuarios u
+       INNER JOIN usuario_institucion ui ON u.id = ui.usuarioId
+       WHERE u.id = ?
+         AND ui.institucionId = ?
+         AND ui.activo = 1
+         AND ui.rolInstitucion IN ('PSICOLOGO', 'ORIENTADOR')
+         AND u.status = 'ACTIVO'`,
+      [psicologoId, String(instId)]
+    );
+
+    if (!psychologist.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Psicólogo no disponible"
+      });
+    }
+
+    // Check for overlaps with existing appointments
+    if (await hasOverlap(psicologoId, fechaHora, duracion)) {
+      return res.status(409).json({
+        success: false,
+        message: "El horario seleccionado no está disponible"
+      });
+    }
+
+    // Create the appointment request
+    const [result] = await pool.execute(
+      `INSERT INTO citas (
+        id, institucionId, usuarioId, psicologoId, estado, source,
+        fechaHora, duracion, modalidad, motivo, ubicacion, notas,
+        fechaCreacion
+      ) VALUES (UUID(), ?, ?, ?, 'SOLICITADA', 'STUDENT', ?, ?, ?, ?, ?, ?, NOW(3))`,
+      [
+        String(instId),
+        String(req.user.id),
+        String(psicologoId),
+        new Date(fechaHora),
+        Number(duracion),
+        modalidad,
+        motivo,
+        ubicacion || null,
+        notas || null
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Solicitud de cita enviada exitosamente",
+      appointmentId: result.insertId
+    });
+
+  } catch (error) {
+    console.error("Error creating appointment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor"
+    });
+  }
+});
+
 // Student books an OPEN slot → PROGRAMADA for that student
 router.post("/slots/:id/book", authenticateToken, async (req, res) => {
   const instId = await getActiveInstitutionId(req);
@@ -359,6 +446,125 @@ router.post(
     res.json({ success: true });
   }
 );
+
+/* ----------------- Psicólogos disponibles para estudiantes ----------------- */
+
+// Obtener psicólogos disponibles para estudiantes
+router.get("/psicologos", authenticateToken, async (req, res) => {
+  try {
+    const instId = await getActiveInstitutionId(req);
+    if (!instId)
+      return res.status(400).json({ success: false, message: "Sin institución" });
+
+    const [psychologists] = await pool.execute(
+      `SELECT DISTINCT u.id, u.nombre, u.apellidoPaterno, u.apellidoMaterno,
+              CONCAT(u.nombre, ' ', u.apellidoPaterno, ' ', COALESCE(u.apellidoMaterno, '')) as nombreCompleto,
+              u.cedulaProfesional, u.especialidades
+       FROM usuarios u
+       INNER JOIN usuario_institucion ui ON u.id = ui.usuarioId
+       INNER JOIN disponibilidad_psicologo dp ON u.id = dp.psicologoId
+       WHERE ui.institucionId = ?
+         AND ui.activo = 1
+         AND ui.rolInstitucion IN ('PSICOLOGO', 'ORIENTADOR')
+         AND dp.activo = 1
+         AND u.status = 'ACTIVO'
+       ORDER BY u.nombre, u.apellidoPaterno`,
+      [String(instId)]
+    );
+
+    res.json({ success: true, data: psychologists });
+  } catch (error) {
+    console.error("Error getting psychologists:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+    });
+  }
+});
+
+// Obtener disponibilidad de un psicólogo por fecha
+router.get("/disponibilidad/:psicologoId", authenticateToken, async (req, res) => {
+  try {
+    const instId = await getActiveInstitutionId(req);
+    if (!instId)
+      return res.status(400).json({ success: false, message: "Sin institución" });
+
+    const { psicologoId } = req.params;
+    const { fecha } = req.query;
+
+    if (!fecha) {
+      return res.status(400).json({
+        success: false,
+        message: "Fecha requerida"
+      });
+    }
+
+    const fechaObj = new Date(fecha);
+    const diaSemana = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'][fechaObj.getDay()];
+
+    // Obtener horarios configurados para ese día
+    const [disponibilidad] = await pool.execute(
+      `SELECT horaInicio, horaFin FROM disponibilidad_psicologo
+       WHERE psicologoId = ? AND diaSemana = ? AND activo = 1`,
+      [psicologoId, diaSemana]
+    );
+
+    if (!disponibilidad.length) {
+      return res.json({ success: true, data: [] });
+    }
+
+    // Obtener citas ya programadas para esa fecha
+    const [citasOcupadas] = await pool.execute(
+      `SELECT TIME(fechaHora) as hora, duracion FROM citas
+       WHERE psicologoId = ?
+         AND DATE(fechaHora) = ?
+         AND estado IN ('PROGRAMADA', 'CONFIRMADA', 'EN_PROGRESO')
+       ORDER BY fechaHora`,
+      [psicologoId, fecha]
+    );
+
+    // Generar slots disponibles
+    const slotsDisponibles = [];
+    const duracionSlot = 60; // minutos por defecto
+
+    for (const horario of disponibilidad) {
+      const [horaInicioHour, horaInicioMin] = horario.horaInicio.split(':').map(Number);
+      const [horaFinHour, horaFinMin] = horario.horaFin.split(':').map(Number);
+
+      const inicioMinutos = horaInicioHour * 60 + horaInicioMin;
+      const finMinutos = horaFinHour * 60 + horaFinMin;
+
+      for (let minutos = inicioMinutos; minutos < finMinutos; minutos += duracionSlot) {
+        const hora = Math.floor(minutos / 60);
+        const min = minutos % 60;
+        const horaStr = `${hora.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+
+        // Verificar si el slot está ocupado
+        const estaOcupado = citasOcupadas.some(cita => {
+          const citaHora = cita.hora;
+          const citaMinutos = parseInt(citaHora.split(':')[0]) * 60 + parseInt(citaHora.split(':')[1]);
+          const citaFin = citaMinutos + (cita.duracion || 60);
+          const slotFin = minutos + duracionSlot;
+
+          // Verificar si hay solapamiento
+          return (minutos < citaFin && slotFin > citaMinutos);
+        });
+
+        if (!estaOcupado) {
+          slotsDisponibles.push(horaStr);
+        }
+      }
+    }
+
+    res.json({ success: true, data: slotsDisponibles });
+  } catch (error) {
+    console.error("Error getting availability:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+    });
+  }
+});
 
 /* ----------------- Disponibilidad ----------------- */
 
@@ -443,7 +649,7 @@ router.put(
       await conn.beginTransaction();
 
       try {
-        // Desactivar toda la disponibilidad existente
+        // Primero, desactivar toda la disponibilidad existente
         await conn.execute(
           `UPDATE disponibilidad_psicologo SET activo = 0 WHERE psicologoId = ?`,
           [psicologoId]
@@ -451,7 +657,7 @@ router.put(
 
         console.log('✅ [DISPONIBILIDAD] Disponibilidad anterior desactivada');
 
-        // Insertar nueva disponibilidad
+        // Procesar nueva disponibilidad
         for (const item of disponibilidad) {
           const { diaSemana, horaInicio, horaFin, activo = true } = item;
 
@@ -460,13 +666,31 @@ router.put(
             continue;
           }
 
-          await conn.execute(
-            `INSERT INTO disponibilidad_psicologo (psicologoId, diaSemana, horaInicio, horaFin, activo)
-             VALUES (?, ?, ?, ?, ?)`,
-            [psicologoId, diaSemana, horaInicio, horaFin, activo ? 1 : 0]
+          // Verificar si ya existe un registro para este psicólogo y día
+          const [existingRecord] = await conn.execute(
+            `SELECT id FROM disponibilidad_psicologo
+             WHERE psicologoId = ? AND diaSemana = ?`,
+            [psicologoId, diaSemana]
           );
 
-          console.log('➕ [DISPONIBILIDAD] Insertado:', { diaSemana, horaInicio, horaFin, activo });
+          if (existingRecord.length > 0) {
+            // Actualizar registro existente
+            await conn.execute(
+              `UPDATE disponibilidad_psicologo
+               SET horaInicio = ?, horaFin = ?, activo = ?
+               WHERE psicologoId = ? AND diaSemana = ?`,
+              [horaInicio, horaFin, activo ? 1 : 0, psicologoId, diaSemana]
+            );
+            console.log('🔄 [DISPONIBILIDAD] Actualizado:', { diaSemana, horaInicio, horaFin, activo });
+          } else {
+            // Insertar nuevo registro
+            await conn.execute(
+              `INSERT INTO disponibilidad_psicologo (psicologoId, diaSemana, horaInicio, horaFin, activo)
+               VALUES (?, ?, ?, ?, ?)`,
+              [psicologoId, diaSemana, horaInicio, horaFin, activo ? 1 : 0]
+            );
+            console.log('➕ [DISPONIBILIDAD] Insertado:', { diaSemana, horaInicio, horaFin, activo });
+          }
         }
 
         await conn.commit();

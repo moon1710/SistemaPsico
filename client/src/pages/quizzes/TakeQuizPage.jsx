@@ -250,15 +250,15 @@ function QuestionSlide({
       variants={fadeSlide}
     >
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-6 py-4">
+      <div className="bg-white/90 backdrop-blur border-b border-gray-200 shrink-0">
+        <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {showRing && (
                 <ProgressRing value={ringValue} color={theme.primary} />
               )}
               <div>
-                <h1 className="text-lg font-semibold text-gray-900">
+                <h1 className="text-base font-semibold text-gray-900">
                   Evaluación {theme.name}
                 </h1>
                 <p className="text-xs text-gray-500">
@@ -279,7 +279,7 @@ function QuestionSlide({
             </div>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-2">
             <StepStrip
               total={totalQuestions}
               current={questionNumber - 1}
@@ -290,35 +290,35 @@ function QuestionSlide({
           </div>
 
           {/* barra progreso animada */}
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-3 overflow-hidden">
+          <div className="w-full bg-gray-200 rounded-full h-2 mt-2 overflow-hidden">
             <motion.div
               className={`h-2 rounded-full bg-gradient-to-r ${theme.gradient}`}
-              initial={{ width: 0 }}
-              animate={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
-              transition={{ duration: 0.45, ease: "easeInOut" }}
+              style={{ width: `${(questionNumber / totalQuestions) * 100}%` }}
+              layout
+              transition={{ duration: 0.4, ease: "easeOut" }}
             />
           </div>
         </div>
       </div>
 
       {/* Contenido */}
-      <div className="flex-1 flex items-start justify-center px-6 py-8">
+      <div className="flex-1 flex items-center justify-center px-4 py-4 pb-20 min-h-0 overflow-auto">
         <motion.div
           className="w-full max-w-2xl"
           variants={grow}
           initial="initial"
           animate="in"
         >
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-            <div className="text-center mb-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="text-center mb-4">
               <motion.h2
-                className="text-xl font-semibold text-gray-900 leading-relaxed"
+                className="text-lg font-semibold text-gray-900 leading-relaxed"
                 layout
               >
                 {question.texto}
               </motion.h2>
               {question.obligatoria && (
-                <span className="inline-block mt-3 px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                <span className="inline-block mt-2 px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
                   Obligatoria
                 </span>
               )}
@@ -342,39 +342,6 @@ function QuestionSlide({
         </motion.div>
       </div>
 
-      {/* Footer */}
-      <div className="bg-white/90 backdrop-blur border-t border-gray-200 px-6 py-3">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <motion.button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900"
-            {...springy}
-          >
-            <ChevronLeftIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">Anterior</span>
-          </motion.button>
-
-          <motion.div
-            className="text-sm font-semibold text-gray-900"
-            key={questionNumber}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            {questionNumber}{" "}
-            <span className="text-gray-500">/ {totalQuestions}</span>
-          </motion.div>
-
-          <motion.button
-            onClick={onAutoAdvance}
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-white"
-            style={{ background: theme.primary }}
-            {...springy}
-          >
-            <span className="text-sm font-medium">Siguiente</span>
-            <ChevronRightIcon className="w-4 h-4" />
-          </motion.button>
-        </div>
-      </div>
     </motion.div>
   );
 }
@@ -548,32 +515,32 @@ export default function TakeQuizPage() {
   if (showingConsent) {
     return (
       <motion.div
-        className="min-h-screen flex items-center justify-center bg-gray-50 p-6"
+        className="min-h-screen flex items-center justify-center bg-gray-50 p-4"
         style={{ fontFamily: "Montserrat, sans-serif" }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
         <motion.div
-          className="w-full max-w-lg bg-white rounded-2xl shadow-sm border border-gray-200 p-8"
+          className="w-full max-w-lg bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-h-screen overflow-y-auto"
           variants={grow}
           initial="initial"
           animate="in"
         >
-          <div className="text-center mb-6">
+          <div className="text-center mb-4">
             <div
-              className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-white font-bold text-xl shadow"
+              className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-lg shadow"
               style={{ backgroundColor: theme.primary }}
             >
               {quiz.codigo}
             </div>
-            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            <h1 className="text-lg font-semibold text-gray-900 mb-1">
               {quiz.titulo}
             </h1>
             <p className="text-sm text-gray-600">Evaluación de {theme.name}</p>
           </div>
 
           {quiz.descripcion && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-700 leading-relaxed">
                 {quiz.descripcion}
               </p>
@@ -581,7 +548,7 @@ export default function TakeQuizPage() {
           )}
 
           {!!user?.instituciones?.length && (
-            <div className="mb-6">
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Institución
               </label>
@@ -599,7 +566,7 @@ export default function TakeQuizPage() {
             </div>
           )}
 
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"

@@ -48,10 +48,20 @@ const AvailabilityPage = () => {
 
       if (response.ok) {
         const result = await response.json();
-        setAvailability(result.data?.horarios || {});
-        if (result.data?.configuracion) {
-          setConfig(result.data.configuracion);
-        }
+        // Convert backend format to frontend format
+        const backendData = result.data || [];
+        const formattedAvailability = {};
+
+        backendData.forEach(item => {
+          formattedAvailability[item.diaSemana] = {
+            activo: item.activo === 1,
+            horaInicio: item.horaInicio,
+            horaFin: item.horaFin,
+            descansos: [] // Backend doesn't support breaks yet
+          };
+        });
+
+        setAvailability(formattedAvailability);
       }
     } catch (error) {
       console.error("Error loading availability:", error);
