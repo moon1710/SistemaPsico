@@ -708,14 +708,37 @@ export default function TakeQuizPage() {
             ) : (
               <motion.button
                 onClick={async () => {
+                  console.log("🎯 Finalizar button clicked!");
+
                   const unansweredRequired = preguntas.filter(
                     (p) => p.obligatoria && respuestas[p.id] == null
                   );
-                  const canSubmit =
-                    consent && unansweredRequired.length === 0 && !submitting;
-                  if (!canSubmit) return;
+
+                  console.log("📋 Validation check:");
+                  console.log("- Consent:", consent);
+                  console.log("- Unanswered required:", unansweredRequired.length);
+                  console.log("- Already submitting:", submitting);
+                  console.log("- Institution ID:", institutionId);
+                  console.log("- All respuestas:", respuestas);
+                  const requiredQuestions = preguntas.filter(p => p.obligatoria).map(p => ({ id: p.id, obligatoria: p.obligatoria, answered: respuestas[p.id] }));
+                  console.log("- All preguntas obligatorias:", requiredQuestions);
+                  console.log("- Questions with null/undefined answers:", requiredQuestions.filter(q => q.answered == null));
+
+                  const canSubmit = consent && unansweredRequired.length === 0 && !submitting;
+                  console.log("✅ Can submit:", canSubmit);
+
+                  if (!canSubmit) {
+                    console.warn("❌ Cannot submit - validation failed");
+                    if (!consent) console.warn("- Missing consent");
+                    if (unansweredRequired.length > 0) console.warn("- Missing required answers:", unansweredRequired.map(p => p.id));
+                    if (submitting) console.warn("- Already submitting");
+                    return;
+                  }
+
                   try {
+                    console.log("🚀 Starting submission...");
                     setSubmitting(true);
+
                     const payload = {
                       quizId,
                       respuestas: preguntas.map((p) => ({
@@ -726,26 +749,50 @@ export default function TakeQuizPage() {
                       tiempoInicio: startedAtRef.current,
                       institutionId: institutionId || undefined,
                     };
+
+                    console.log("📤 Submission payload:", payload);
+                    console.log("📤 Total answers:", payload.respuestas.length);
+
                     const { data } = await quizzesApi.submitQuiz(payload);
+                    console.log("✅ Submission successful:", data);
+
                     alert(
                       `¡Evaluación completada!\n\nPuntaje: ${data.puntajeTotal}\nNivel: ${data.severidad}`
                     );
                     navigate(ROUTES.MIS_RESULTADOS);
                   } catch (e) {
+                    console.error("❌ Submission failed:", e);
+                    console.error("Error details:", {
+                      status: e.status,
+                      data: e.data,
+                      message: e.message
+                    });
+
                     alert(
                       e?.data?.message ||
                         e.message ||
                         "Error al enviar respuestas"
                     );
                   } finally {
+                    console.log("🏁 Submission finished");
                     setSubmitting(false);
                   }
                 }}
-                className="text-sm px-3 py-1.5 rounded-lg text-white"
-                style={{ background: "#10B981" }}
+                disabled={submitting}
+                className={`text-sm px-3 py-1.5 rounded-lg text-white transition-all ${
+                  submitting ? 'opacity-50 cursor-not-allowed' : 'hover:brightness-110'
+                }`}
+                style={{ background: submitting ? "#6B7280" : "#10B981" }}
                 {...springy}
               >
-                Finalizar
+                {submitting ? (
+                  <>
+                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Enviando...
+                  </>
+                ) : (
+                  "Finalizar"
+                )}
               </motion.button>
             )}
           </motion.div>

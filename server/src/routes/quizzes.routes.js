@@ -586,6 +586,7 @@ router.post("/:quizId/submit", authenticateToken, async (req, res) => {
 
     // --------------------- Insert ---------------------
     const attemptId = randomUUID();
+    console.log("Generated attemptId:", attemptId, "Length:", attemptId?.length);
     const respuestasJSON = JSON.stringify({
       consentimientoAceptado: !!consentimientoAceptado,
       items: respuestas,
@@ -593,23 +594,75 @@ router.post("/:quizId/submit", authenticateToken, async (req, res) => {
     const inicio = tiempoInicio ? new Date(tiempoInicio) : null;
     const fin = new Date();
 
-    await pool.execute(
-      `INSERT INTO respuestas_quiz
-         (id, usuarioId, institucionId, quizId, respuestas, puntajeTotal, severidad, completado, tiempoInicio, tiempoFin)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        attemptId,
-        req.user.id,
-        instId,
-        quiz.id,
-        respuestasJSON,
-        score,
-        severidad,
-        1, // completado = TRUE
-        inicio,
-        fin,
-      ]
-    );
+    console.log("🔍 Debug INSERT values:");
+    console.log("- attemptId:", attemptId, "(type:", typeof attemptId, ")");
+    console.log("- req.user.id:", req.user.id, "(type:", typeof req.user.id, ")");
+    console.log("- instId:", instId, "(type:", typeof instId, ")");
+    console.log("- quiz.id:", quiz.id, "(type:", typeof quiz.id, ")");
+    console.log("- respuestasJSON:", respuestasJSON ? "exists" : "null/undefined", "(length:", respuestasJSON?.length, ")");
+    console.log("- score:", score, "(type:", typeof score, ")");
+    console.log("- severidad:", severidad, "(type:", typeof severidad, ")");
+    console.log("- inicio:", inicio, "(type:", typeof inicio, ")");
+    console.log("- fin:", fin, "(type:", typeof fin, ")");
+
+    // Validate required fields
+    if (!attemptId) throw new Error("attemptId is required");
+    if (!req.user.id) throw new Error("usuarioId is required");
+    if (!instId) throw new Error("institucionId is required");
+    if (!quiz.id) throw new Error("quizId is required");
+    if (!respuestasJSON) throw new Error("respuestas JSON is required");
+
+    // Try with minimal required fields first
+    console.log("🧪 Attempting INSERT with minimal fields...");
+
+    try {
+      await pool.execute(
+        `INSERT INTO respuestas_quiz
+           (id, usuarioId, institucionId, quizId, respuestas)
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          attemptId,
+          req.user.id,
+          instId,
+          quiz.id,
+          respuestasJSON,
+        ]
+      );
+      console.log("✅ Minimal INSERT succeeded - now adding remaining fields...");
+
+      // If minimal works, update with remaining fields
+      await pool.execute(
+        `UPDATE respuestas_quiz
+         SET puntajeTotal = ?, severidad = ?, completado = ?, tiempoInicio = ?, tiempoFin = ?
+         WHERE id = ?`,
+        [score, severidad, 1, inicio, fin, attemptId]
+      );
+
+    } catch (minimalError) {
+      console.error("❌ Even minimal INSERT failed:", minimalError.message);
+
+      // Try without id to see if database can auto-generate
+      console.log("🧪 Trying INSERT without manual ID...");
+      const [result] = await pool.execute(
+        `INSERT INTO respuestas_quiz
+           (usuarioId, institucionId, quizId, respuestas, puntajeTotal, severidad, completado, tiempoInicio, tiempoFin)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          req.user.id,
+          instId,
+          quiz.id,
+          respuestasJSON,
+          score,
+          severidad,
+          1,
+          inicio,
+          fin,
+        ]
+      );
+
+      console.log("✅ INSERT without ID succeeded, insertId:", result.insertId);
+      attemptId = result.insertId;
+    }
 
     // --------------------- Notificar tutores si es alto ---------------------
     await queueTutorNotifications({

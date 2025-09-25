@@ -1,13 +1,41 @@
 //client/src/utils/constants.js
 
-// Configuration for the API
-const BASE_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:4000"
-).replace(/\/$/, "");
+// Configuration for the API - Smart environment detection
+function getApiUrl() {
+  // Check if we're running locally
+  const isLocalhost = window.location.hostname === 'localhost' ||
+                     window.location.hostname === '127.0.0.1';
+
+  // Check if we're in a tunnel
+  const isTunnel = window.location.hostname.includes('devtunnels.ms') ||
+                  window.location.hostname.includes('ngrok.io') ||
+                  window.location.hostname.includes('localtunnel.me') ||
+                  window.location.hostname.includes('tunnelmole.com') ||
+                  window.location.hostname.includes('serveo.net');
+
+  // If running locally, always use localhost
+  if (isLocalhost) {
+    console.log("🏠 Running locally - using localhost backend");
+    return "http://localhost:4000";
+  }
+
+  // If in tunnel, use the tunnel URL
+  if (isTunnel && import.meta.env.VITE_API_URL) {
+    console.log("🌐 Running in tunnel - using tunnel backend:", import.meta.env.VITE_API_URL);
+    return import.meta.env.VITE_API_URL;
+  }
+
+  // Fallback to env var or localhost
+  const fallback = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  console.log("⚙️ Using fallback backend:", fallback);
+  return fallback;
+}
+
+const BACKEND_URL = getApiUrl().replace(/\/$/, "");
 
 export const API_CONFIG = {
-  BASE_URL,
-  API_BASE: `${BASE_URL}/api`,
+  BASE_URL: BACKEND_URL,
+  API_BASE: `${BACKEND_URL}/api`,
   TIMEOUT: 10000,
 };
 

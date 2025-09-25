@@ -11,12 +11,79 @@ const onboardingRoutes = require("./routes/onboarding.routes");
 const app = express();
 
 const corsOptions = {
-  origin: [
-    process.env.FRONTEND_URL || "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // Parse allowed origins from environment (comma-separated)
+    const envAllowedOrigins = process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',').map(url => url.trim())
+      : [];
+
+    // Default allowed origins
+    const defaultAllowedOrigins = [
+      process.env.FRONTEND_URL || "http://localhost:5173",
+      "http://localhost:5174",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5174",
+    ];
+
+    const allowedOrigins = [...defaultAllowedOrigins, ...envAllowedOrigins];
+
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // In production, only allow specific domains if CORS_STRICT is enabled
+    if (process.env.NODE_ENV === 'production' && process.env.CORS_STRICT === 'true') {
+      // Only allow explicitly configured origins in strict mode
+      const msg = `CORS: Origin not allowed in strict mode: ${origin}`;
+      console.warn(msg);
+      return callback(new Error(msg), false);
+    }
+
+    // Allow common development and tunneling patterns
+    const developmentPatterns = [
+      /^https?:\/\/localhost:\d+$/,
+      /^https?:\/\/127\.0\.0\.1:\d+$/,
+      /^https?:\/\/0\.0\.0\.0:\d+$/,
+      /^https?:\/\/.*\.ngrok\.io$/,
+      /^https?:\/\/.*\.tunnelmole\.com$/,
+      /^https?:\/\/.*\.localtunnel\.me$/,
+      /^https?:\/\/.*\.serveo\.net$/,
+      /^https?:\/\/.*\.pagekite\.me$/,
+      /^https?:\/\/.*\.devtunnels\.ms$/,
+      /^https?:\/\/.*\.githubpreview\.dev$/,
+      /^https?:\/\/.*\.cloudflare\.com$/,
+      /^https?:\/\/.*\.vercel\.app$/,
+      /^https?:\/\/.*\.netlify\.app$/,
+      /^https?:\/\/.*\.herokuapp\.com$/,
+      /^https?:\/\/.*\.railway\.app$/,
+      /^https?:\/\/.*\.render\.com$/,
+    ];
+
+    // Check against development patterns
+    for (const pattern of developmentPatterns) {
+      if (pattern.test(origin)) {
+        console.log(`✅ CORS: Allowing development/tunnel origin: ${origin}`);
+        return callback(null, true);
+      }
+    }
+
+    // Log rejected origins for debugging
+    const msg = `CORS: Origin not allowed: ${origin}`;
+    console.warn(msg);
+
+    // In development, log but allow
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`⚠️  Allowing in development mode: ${origin}`);
+      return callback(null, true);
+    }
+
+    // Reject in production if not matched
+    return callback(new Error(msg), false);
+  },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

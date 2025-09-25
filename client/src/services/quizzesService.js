@@ -43,7 +43,20 @@ export const quizzesApi = {
       institutionId,
       body: { respuestas, consentimientoAceptado, tiempoInicio },
     }),
-  myResults: () => authFetch("/quizzes/me/results"),
+  myResults: () => {
+    console.log("🔍 Fetching quiz results from:", `${API_CONFIG.API_BASE}/quizzes/me/results`);
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    console.log("🔑 Using token:", token ? `${token.slice(0, 20)}...` : "NO TOKEN");
+    return authFetch("/quizzes/me/results")
+      .then(result => {
+        console.log("✅ Quiz results response:", result);
+        return result;
+      })
+      .catch(error => {
+        console.error("❌ Quiz results error:", error);
+        throw error;
+      });
+  },
   adminResults: ({
     institutionId,
     codigo,

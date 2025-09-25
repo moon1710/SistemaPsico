@@ -18,12 +18,31 @@ export default function MyResultsPage() {
 
   React.useEffect(() => {
     let alive = true;
+
+    // Debug: Check current user
+    const userData = localStorage.getItem("user_data");
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        console.log("👤 Current user ID:", user.id);
+        console.log("👤 Current user email:", user.email);
+      } catch (e) {
+        console.error("❌ Error parsing user data:", e);
+      }
+    } else {
+      console.warn("⚠️ No user data in localStorage");
+    }
+
     quizzesApi
       .myResults()
-      .then((res) => alive && setRows(res.data || []))
-      .catch((e) =>
-        setError(e.data?.message || e.message || "Error cargando resultados")
-      )
+      .then((res) => {
+        console.log("📊 Quiz results received:", res);
+        alive && setRows(res.data || []);
+      })
+      .catch((e) => {
+        console.error("❌ Error fetching results:", e);
+        setError(e.data?.message || e.message || "Error cargando resultados");
+      })
       .finally(() => setLoading(false));
     return () => (alive = false);
   }, []);
