@@ -21,6 +21,7 @@
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
+    "framer-motion": "^12.23.18",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.4"
   },
