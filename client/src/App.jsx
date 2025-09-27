@@ -46,6 +46,7 @@ import AgendaPage from "./pages/citas/AgendaPage";
 import AvailabilityPage from "./pages/citas/AvailabilityPage";
 import AppointmentDetailPage from "./pages/citas/AppointmentDetailPage";
 import AdminAppointmentsPage from "./pages/citas/AdminAppointmentsPage";
+import UsersManagementPage from "./pages/UsersManagementPage";
 
 import { ROUTES } from "./utils/constants";
 import "./App.css";
@@ -254,6 +255,18 @@ function App() {
           <ProtectedRoute requiredRoles={['ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
             <Layout>
               <AdminAppointmentsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin - Users Management */}
+      <Route
+        path={ROUTES.USUARIOS}
+        element={
+          <ProtectedRoute requiredRoles={['ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
+            <Layout>
+              <UsersManagementPage />
             </Layout>
           </ProtectedRoute>
         }

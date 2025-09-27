@@ -216,4 +216,45 @@ class AuthService {
 // Crear instancia única
 const authService = new AuthService();
 
+// Helper functions for authenticated HTTP requests
+export const authGet = async (endpoint) => {
+  try {
+    const response = await api.get(endpoint);
+    return response.data;
+  } catch (error) {
+    console.error('Auth GET error:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const authPost = async (endpoint, data) => {
+  try {
+    const response = await api.post(endpoint, data);
+    return response.data;
+  } catch (error) {
+    console.error('Auth POST error:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const authPut = async (endpoint, data) => {
+  try {
+    const response = await api.put(endpoint, data);
+    return response.data;
+  } catch (error) {
+    console.error('Auth PUT error:', error);
+    throw error.response?.data || error;
+  }
+};
+
+export const authDelete = async (endpoint) => {
+  try {
+    const response = await api.delete(endpoint);
+    return response.data;
+  } catch (error) {
+    console.error('Auth DELETE error:', error);
+    throw error.response?.data || error;
+  }
+};
+
 export default authService;

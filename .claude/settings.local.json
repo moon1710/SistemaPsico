@@ -9,7 +9,9 @@
       "Bash(dir \"C:\\Users\\MON\\Documents\\GitHub\\SistemaPsico\\client\\src\\pages\\citas\")",
       "Read(//c/Users/MON/Desktop/**)",
       "Bash(findstr:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []
