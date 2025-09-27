@@ -7,7 +7,7 @@ export default function PrivacidadPage() {
         
         
         <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-8 text-gray-900">
-          Pólitica de Privacidad
+          Aviso de Privacidad
         </h1>
         
         <p className="mb-6 text-gray-700 leading-relaxed">
@@ -46,7 +46,7 @@ export default function PrivacidadPage() {
           Transferencia de datos personales
         </h2>
         <p className="mb-4 text-gray-700 leading-relaxed">
-          El Sistema Psicológico Integral no transferirá sus datos personales a terceros sin su consentimiento, no serán transferidos, difundidos, ni distribuidos, salvo lo señalado en el artículo 22 de la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados.
+          Jacaranda no transferirá sus datos personales a terceros sin su consentimiento, no serán transferidos, difundidos, ni distribuidos, salvo lo señalado en el artículo 22 de la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados.
           En el caso del tratamiento de los datos sensibles, se estará sujeto a lo previsto por los artículos 3º, fracción X, 7º y 21 de la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados.
         </p>
 

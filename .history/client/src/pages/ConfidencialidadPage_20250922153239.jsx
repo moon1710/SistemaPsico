@@ -65,7 +65,7 @@ export default function ConfidencialidadPage() {
               <h2 className="text-xl font-semibold text-gray-800">5. Compromiso Institucional</h2>
             </div>
             <p className="text-gray-600 text-sm">
-              El Sistema Psicológico Integral cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), garantizando la seguridad de tu información.
+              Jacaranda cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), garantizando la seguridad de tu información.
             </p>
           </div>
         </div>

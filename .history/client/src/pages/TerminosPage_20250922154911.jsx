@@ -1,7 +1,11 @@
 // src/pages/TerminosPage.jsx
+
+
 export default function TerminosPage() {
+  
+
   return (
-    <div className="min-h-screen w-full bg-gray-100 p-8 flex items-center justify-center">
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 p-8 flex items-center justify-center">
       <div className="max-w-4xl w-full bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* Encabezado con barra de color */}
         <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6">

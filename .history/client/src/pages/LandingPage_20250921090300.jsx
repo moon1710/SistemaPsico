@@ -228,15 +228,13 @@ const LandingPage = () => {
           <div className="footer-bottom">
             <p>© 2024 Sistema Psicológico. Todos los derechos reservados.</p>
             <div className="footer-bottom-links">
-              <Link to ={ROUTES.TERMINOS}> 
+              <Link to ={ROUTES}> 
               <span>Términos de Servicio</span>
               </Link>
               <Link to ={ROUTES.PRIVACIDAD}
               ><span>Política de Privacidad</span>
               </Link>
-              <Link to ={ROUTES.CONFIDENCIALIDAD}>
               <span>Confidencialidad</span>
-              </Link>
             </div>
           </div> 
         </div>

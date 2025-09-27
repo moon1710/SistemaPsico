@@ -1,10 +1,14 @@
 // src/pages/TerminosPage.jsx
+
+
 export default function TerminosPage() {
+  
+
   return (
-    <div className="min-h-screen w-full bg-gray-100 p-8 flex items-center justify-center">
+      <div className="min-h-screen w-full bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 p-8 flex items-center justify-center">
       <div className="max-w-4xl w-full bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* Encabezado con barra de color */}
-        <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6">
+        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6">
           <h1 className="text-3xl font-bold text-white text-center">
             Términos y Condiciones de Uso
           </h1>
@@ -16,17 +20,17 @@ export default function TerminosPage() {
           </p>
 
           <p className="text-gray-600 mb-6 text-justify">
-            Bienvenido al <strong>Sistema Psicológico Integral</strong>, una
-            plataforma desarrollada por el Tecnológico Nacional de México Campus
-            Tuxtepec, cuyo objetivo es ofrecer herramientas de apoyo psicológico
-            y académico para estudiantes.
+            Bienvenido a <strong>Jacaranda</strong>, una plataforma desarrollada
+            por el Tecnológico Nacional de México Campus Tuxtepec, cuyo objetivo
+            es ofrecer herramientas de apoyo psicológico y académico para
+            estudiantes.
           </p>
 
           {/* Secciones */}
           <Section
             number="1"
             title="Aceptación de los Términos"
-            text="Al acceder y utilizar el Sistema Psicológico Integral, usted acepta quedar sujeto a los presentes Términos y Condiciones. En caso de no estar de acuerdo, le solicitamos no utilizar la plataforma."
+            text="Al acceder y utilizar el sitio web Jacaranda, usted acepta quedar sujeto a los presentes Términos y Condiciones. En caso de no estar de acuerdo, le solicitamos no utilizar la plataforma."
           />
           <Section
             number="2"
@@ -46,7 +50,7 @@ export default function TerminosPage() {
           <Section
             number="5"
             title="Limitación de Responsabilidad"
-            text="El Sistema Psicológico Integral es un sistema de apoyo y orientación. No sustituye tratamientos médicos o psicológicos profesionales. El Tecnológico Nacional de México Campus Tuxtepec no será responsable por un uso distinto al establecido."
+            text="Jacaranda es un sistema de apoyo y orientación. No sustituye tratamientos médicos o psicológicos profesionales. El Tecnológico Nacional de México Campus Tuxtepec no será responsable por un uso distinto al establecido."
           />
           <Section
             number="6"
@@ -67,7 +71,7 @@ function Section({ number, title, text }) {
   return (
     <div className="mb-8">
       <h2 className="flex items-center text-xl font-semibold text-gray-800 mb-2">
-        <span className="flex items-center justify-center w-8 h-8 mr-3 rounded-full bg-gradient-to-r from-indigo-600 to-blue-500 text-white font-bold">
+        <span className="flex items-center justify-center w-8 h-8 mr-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold">
           {number}
         </span>
         {title}

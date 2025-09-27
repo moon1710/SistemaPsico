@@ -9,7 +9,7 @@ export default function ConfidencialidadPage() {
           Política de Confidencialidad
         </h1>
         <p className="text-center text-gray-600 mb-10">
-          En el <strong>Sistema Psicológico Integral</strong>, protegemos la información personal de nuestros usuarios con los más altos estándares de confidencialidad y seguridad.
+          En <strong>Jacaranda</strong>, protegemos la información personal de nuestros usuarios con los más altos estándares de confidencialidad y seguridad.
         </p>
 
         {/* Grid de secciones */}
@@ -65,7 +65,7 @@ export default function ConfidencialidadPage() {
               <h2 className="text-xl font-semibold text-gray-800">5. Compromiso Institucional</h2>
             </div>
             <p className="text-gray-600 text-sm">
-              El Sistema Psicológico Integral cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), garantizando la seguridad de tu información.
+              Jacaranda cumple con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP), garantizando la seguridad de tu información.
             </p>
           </div>
         </div>

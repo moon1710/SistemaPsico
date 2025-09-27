@@ -1,5 +1,9 @@
 // src/pages/TerminosPage.jsx
+
+
 export default function TerminosPage() {
+  
+
   return (
     <div className="min-h-screen w-full bg-gray-100 p-8 flex items-center justify-center">
       <div className="max-w-4xl w-full bg-white shadow-xl rounded-2xl overflow-hidden">

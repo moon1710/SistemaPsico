@@ -1,7 +1,11 @@
 // src/pages/TerminosPage.jsx
+import { useLocation } from "react-router-dom";
+
 export default function TerminosPage() {
+  const { pathname } = useLocation();
+
   return (
-    <div className="min-h-screen w-full bg-gray-100 p-8 flex items-center justify-center">
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 p-8 flex items-center justify-center">
       <div className="max-w-4xl w-full bg-white shadow-xl rounded-2xl overflow-hidden">
         {/* Encabezado con barra de color */}
         <div className="bg-gradient-to-r from-indigo-600 to-blue-500 p-6">
@@ -13,6 +17,7 @@ export default function TerminosPage() {
         {/* Contenido */}
         <div className="p-10">
           <p className="text-sm text-gray-500 mb-6">
+            Estás en: <code>{pathname}</code>
           </p>
 
           <p className="text-gray-600 mb-6 text-justify">
