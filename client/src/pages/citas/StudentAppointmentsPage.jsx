@@ -1,9 +1,11 @@
 // client/src/pages/citas/StudentAppointmentsPage.jsx
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { authenticatedFetch } from "../../utils/authUtils";
 import AppointmentBookingForm from "../../components/citas/AppointmentBookingForm";
 
 const StudentAppointmentsPage = () => {
+  const navigate = useNavigate();
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showBookingForm, setShowBookingForm] = useState(false);
@@ -276,9 +278,7 @@ const StudentAppointmentsPage = () => {
                   <div className="flex gap-2 ml-4">
                     {/* Botón Ver Detalles */}
                     <button
-                      onClick={() => {
-                        /* Implementar vista de detalles */
-                      }}
+                      onClick={() => navigate(`/cita/${cita.id}`)}
                       className="px-3 py-1 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
                     >
                       Ver
