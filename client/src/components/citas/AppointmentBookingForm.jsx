@@ -14,6 +14,8 @@ const AppointmentBookingForm = ({ onSuccess, onCancel }) => {
 
   const [psicologos, setPsicologos] = useState([]);
   const [disponibilidad, setDisponibilidad] = useState([]);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -22,7 +24,7 @@ const AppointmentBookingForm = ({ onSuccess, onCancel }) => {
     const cargarPsicologos = async () => {
       try {
         const response = await authenticatedFetch(
-          "/api/citas/psicologos/disponibles"
+          "/api/citas/psicologos"
         );
         if (response && response.ok) {
           const result = await response.json();
@@ -36,30 +38,61 @@ const AppointmentBookingForm = ({ onSuccess, onCancel }) => {
     cargarPsicologos();
   }, []);
 
-  // Cargar disponibilidad cuando se selecciona un psicólogo
+  // Cargar slots disponibles cuando se selecciona psicólogo, fecha o duración
   useEffect(() => {
-    if (formData.psicologoId) {
-      cargarDisponibilidad();
+    if (formData.psicologoId && formData.fechaHora) {
+      cargarSlotsDisponibles();
+    } else {
+      setAvailableSlots([]);
     }
-  }, [formData.psicologoId]);
+  }, [formData.psicologoId, formData.fechaHora, formData.duracion]);
 
-  const cargarDisponibilidad = async () => {
+  const cargarSlotsDisponibles = async () => {
     try {
-      const fechaDesde = new Date().toISOString().split("T")[0];
-      const fechaHasta = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0];
+      setLoadingSlots(true);
+      setErrors(prev => ({ ...prev, fechaHora: "" }));
 
+      const fecha = formData.fechaHora.split("T")[0]; // Extract date part
       const response = await authenticatedFetch(
-        `/api/citas/disponibilidad/${formData.psicologoId}?fechaDesde=${fechaDesde}&fechaHasta=${fechaHasta}`
+        `/api/citas/disponibilidad/${formData.psicologoId}?fecha=${fecha}&duracion=${formData.duracion}`
       );
 
       if (response && response.ok) {
         const result = await response.json();
-        setDisponibilidad(result.data.disponibilidad || []);
+        console.log("Disponibilidad recibida:", result);
+
+        setAvailableSlots(result.data || []);
+
+        // Show debug info in console
+        if (result.debug) {
+          console.log("Debug info:", result.debug);
+        }
+
+        // Clear the time part if the selected time is no longer available
+        if (formData.fechaHora.includes("T")) {
+          const selectedTime = formData.fechaHora.split("T")[1]?.substring(0, 5);
+          if (selectedTime && !result.data.includes(selectedTime)) {
+            setFormData(prev => ({
+              ...prev,
+              fechaHora: fecha // Reset to just the date
+            }));
+          }
+        }
+      } else {
+        const errorResult = await response.json();
+        setErrors(prev => ({
+          ...prev,
+          fechaHora: errorResult.message || "Error obteniendo disponibilidad"
+        }));
       }
     } catch (error) {
-      console.error("Error cargando disponibilidad:", error);
+      console.error("Error cargando slots disponibles:", error);
+      setErrors(prev => ({
+        ...prev,
+        fechaHora: "Error de conexión al obtener disponibilidad"
+      }));
+    } finally {
+      setLoadingSlots(false);
     }
   };
 
@@ -111,7 +144,7 @@ const AppointmentBookingForm = ({ onSuccess, onCancel }) => {
     setLoading(true);
 
     try {
-      const response = await authenticatedFetch("/api/citas/solicitar", {
+      const response = await authenticatedFetch("/api/citas", {
         method: "POST",
         body: JSON.stringify(formData),
       });
@@ -133,39 +166,6 @@ const AppointmentBookingForm = ({ onSuccess, onCancel }) => {
     }
   };
 
-  const generarHorariosDisponibles = () => {
-    if (!formData.fechaHora) return [];
-
-    const fechaSeleccionada = new Date(formData.fechaHora);
-    const diaSemana = [
-      "DOMINGO",
-      "LUNES",
-      "MARTES",
-      "MIERCOLES",
-      "JUEVES",
-      "VIERNES",
-      "SABADO",
-    ][fechaSeleccionada.getDay()];
-
-    const disponibilidadDia = disponibilidad.filter(
-      (d) => d.diaSemana === diaSemana
-    );
-
-    const horarios = [];
-    disponibilidadDia.forEach((slot) => {
-      const [horaInicio] = slot.horaInicio.split(":").map(Number);
-      const [horaFin] = slot.horaFin.split(":").map(Number);
-
-      for (let hora = horaInicio; hora < horaFin; hora++) {
-        horarios.push(`${hora.toString().padStart(2, "0")}:00`);
-        if (hora + 0.5 < horaFin) {
-          horarios.push(`${hora.toString().padStart(2, "0")}:30`);
-        }
-      }
-    });
-
-    return horarios;
-  };
 
   const psicologoSeleccionado = psicologos.find(
     (p) => p.id === formData.psicologoId
@@ -230,6 +230,28 @@ const AppointmentBookingForm = ({ onSuccess, onCancel }) => {
           )}
         </div>
 
+        {/* Duración */}
+        <div>
+          <label
+            htmlFor="duracion"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Duración (minutos) *
+          </label>
+          <select
+            id="duracion"
+            name="duracion"
+            value={formData.duracion}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value={30}>30 minutos</option>
+            <option value={45}>45 minutos</option>
+            <option value={60}>60 minutos</option>
+            <option value={90}>90 minutos</option>
+          </select>
+        </div>
+
         {/* Fecha */}
         <div>
           <label
@@ -286,14 +308,23 @@ const AppointmentBookingForm = ({ onSuccess, onCancel }) => {
                 }));
               }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={loadingSlots}
             >
-              <option value="">Selecciona una hora</option>
-              {generarHorariosDisponibles().map((hora) => (
+              <option value="">
+                {loadingSlots ? "Cargando horarios..." : "Selecciona una hora"}
+              </option>
+              {availableSlots.map((hora) => (
                 <option key={hora} value={hora}>
                   {hora}
                 </option>
               ))}
             </select>
+            {loadingSlots && (
+              <div className="mt-2 flex items-center text-sm text-gray-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                Verificando disponibilidad...
+              </div>
+            )}
           </div>
         )}
 
@@ -320,44 +351,31 @@ const AppointmentBookingForm = ({ onSuccess, onCancel }) => {
                 Presencial
               </label>
             </div>
-            <div>
-              <input
-                type="radio"
-                id="virtual"
-                name="modalidad"
-                value="VIRTUAL"
-                checked={formData.modalidad === "VIRTUAL"}
-                onChange={handleInputChange}
-                className="mr-2"
-              />
-              <label htmlFor="virtual" className="text-sm text-gray-700">
-                Virtual
-              </label>
+            <div className="relative group">
+              <div
+                className="opacity-50 cursor-not-allowed"
+              >
+                <input
+                  type="radio"
+                  id="virtual"
+                  name="modalidad"
+                  value="VIRTUAL"
+                  checked={formData.modalidad === "VIRTUAL"}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                  disabled
+                />
+                <label htmlFor="virtual" className="text-sm text-gray-400 cursor-not-allowed">
+                  Virtual
+                </label>
+              </div>
+              <div className="absolute -top-10 left-0 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                No disponible por el momento
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Duración */}
-        <div>
-          <label
-            htmlFor="duracion"
-            className="block text-sm font-medium text-gray-700 mb-2"
-          >
-            Duración (minutos)
-          </label>
-          <select
-            id="duracion"
-            name="duracion"
-            value={formData.duracion}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value={30}>30 minutos</option>
-            <option value={45}>45 minutos</option>
-            <option value={60}>60 minutos</option>
-            <option value={90}>90 minutos</option>
-          </select>
-        </div>
 
         {/* Motivo */}
         <div>

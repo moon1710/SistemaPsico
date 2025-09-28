@@ -3,11 +3,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_CONFIG, DAYS_OF_WEEK, TIME_SLOTS } from "../../utils/constants";
 import { useAuth } from "../../contexts/AuthContext";
+import { authenticatedFetch } from "../../utils/authUtils";
 
 const AvailabilityPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const [descansos, setDescansos] = useState([]);
   const [availability, setAvailability] = useState({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -33,7 +35,20 @@ const AvailabilityPage = () => {
 
   useEffect(() => {
     loadAvailability();
+    loadDescansos();
   }, []);
+
+  const loadDescansos = async () => {
+    try {
+      const response = await authenticatedFetch("/citas/descansos");
+      if (response && response.ok) {
+        const result = await response.json();
+        setDescansos(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error cargando descansos:", error);
+    }
+  };
 
   const loadAvailability = async () => {
     setLoading(true);
@@ -202,7 +217,7 @@ const AvailabilityPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Configurar Disponibilidad</h1>
-              <p className="text-gray-600 mt-1">Define tus horarios disponibles para citas</p>
+              <p className="text-gray-600 mt-1">Define tus horarios disponibles y descansos</p>
             </div>
             <div className="flex space-x-3">
               <button
@@ -222,6 +237,7 @@ const AvailabilityPage = () => {
           </div>
         </div>
 
+
         {/* Message */}
         {message && (
           <div className={`mb-6 p-4 rounded-lg ${
@@ -233,8 +249,10 @@ const AvailabilityPage = () => {
           </div>
         )}
 
-        {/* Configuration Section */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        {/* Content */}
+          <div>
+            {/* Configuration Section */}
+            <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuración General</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -455,22 +473,69 @@ const AvailabilityPage = () => {
           })}
         </div>
 
-        {/* Summary */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-medium text-blue-900 mb-2">Resumen de tu disponibilidad</h3>
-          <div className="text-sm text-blue-800 space-y-1">
-            {Object.entries(availability).filter(([_, config]) => config?.activo !== false).length === 0 ? (
-              <p>No tienes días configurados como disponibles.</p>
-            ) : (
-              <>
-                <p>Días disponibles: {Object.entries(availability).filter(([_, config]) => config?.activo !== false).length}</p>
-                <p>Duración por defecto de citas: {config.duracionDefault} minutos</p>
-                <p>Los estudiantes pueden agendar con {config.anticipacionMinima} horas de anticipación mínima</p>
-                <p>Descanso automático entre citas: {config.descansoEntreCitas} minutos</p>
-              </>
-            )}
+            {/* Summary */}
+            <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-medium text-blue-900 mb-2">Resumen de tu disponibilidad</h3>
+              <div className="text-sm text-blue-800 space-y-1">
+                {(() => {
+                  const activeDays = Object.entries(availability).filter(([_, config]) => config && config.activo !== false);
+                  const totalBreaks = activeDays.reduce((sum, [_, config]) => sum + (config.descansos?.length || 0), 0);
+
+                  if (activeDays.length === 0) {
+                    return (
+                      <div className="text-center py-4">
+                        <p className="text-gray-500 text-sm">No tienes días configurados como disponibles.</p>
+                        <p className="text-gray-400 text-xs mt-1">Configura al menos un día para empezar a recibir citas.</p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Días disponibles:</span>
+                          <span className="ml-2 text-sm text-green-600 font-semibold">{activeDays.length} de 7</span>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Duración por defecto:</span>
+                          <span className="ml-2 text-sm text-blue-600 font-semibold">{config.duracionDefault} min</span>
+                        </div>
+                      </div>
+
+                      <div className="border-t pt-3">
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Horarios configurados:</h4>
+                        <div className="space-y-1">
+                          {activeDays.map(([day, dayConfig]) => (
+                            <div key={day} className="flex justify-between items-center text-xs">
+                              <span className="text-gray-600">{day}</span>
+                              <span className="text-gray-800 font-medium">
+                                {dayConfig.horaInicio} - {dayConfig.horaFin}
+                                {dayConfig.descansos?.length > 0 && (
+                                  <span className="ml-2 text-orange-600">({dayConfig.descansos.length} descansos)</span>
+                                )}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="border-t pt-3 grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <span className="text-gray-600">Anticipación mínima:</span>
+                          <span className="ml-1 text-gray-800 font-medium">{config.anticipacionMinima}h</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Descanso entre citas:</span>
+                          <span className="ml-1 text-gray-800 font-medium">{config.descansoEntreCitas} min</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
           </div>
-        </div>
       </div>
     </div>
   );

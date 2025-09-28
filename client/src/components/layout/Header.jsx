@@ -21,10 +21,8 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = async () => {
-    const result = await logout();
-    if (result.success) {
-      navigate(ROUTES.LOGIN);
-    }
+    await logout();
+    navigate(ROUTES.LOGIN);
   };
 
   const getRoleColor = (role) => {

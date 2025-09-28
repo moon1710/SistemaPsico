@@ -11,7 +11,10 @@
       "Bash(findstr:*)",
       "Bash(npm run build:*)",
       "Bash(netstat:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(dir \"C:\\Users\\MON\\Documents\\GitHub\\SistemaPsico\\client\\src\\utils\")",
+      "Bash(find:*)",
+      "Bash(tasklist)"
     ],
     "deny": [],
     "ask": []

@@ -42,6 +42,7 @@ import AnalyticsPage from "./pages/quizzes/AnalyticsPage";
 
 //AppointmentPages
 import BookAppointmentPage from "./pages/citas/BookAppointmentPage";
+import StudentAppointmentsPage from "./pages/citas/StudentAppointmentsPage";
 import AgendaPage from "./pages/citas/AgendaPage";
 import AvailabilityPage from "./pages/citas/AvailabilityPage";
 import AppointmentDetailPage from "./pages/citas/AppointmentDetailPage";
@@ -207,6 +208,18 @@ function App() {
           <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
             <Layout>
               <BookAppointmentPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Student - My Appointments */}
+      <Route
+        path={ROUTES.MIS_CITAS}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
+            <Layout>
+              <StudentAppointmentsPage />
             </Layout>
           </ProtectedRoute>
         }
