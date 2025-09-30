@@ -3,6 +3,9 @@ const router = express.Router();
 const { pool } = require("../db");
 const { authenticateToken } = require("../middlewares/auth.middleware");
 const bcrypt = require("bcryptjs");
+const multer = require('multer');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 // Middleware to ensure admin roles for institution
 const ensureInstitucionAdmin = (req, res, next) => {
@@ -24,6 +27,33 @@ const getCurrentInstitution = (req) => {
   // Try to find the first institution (for now, since users typically belong to one institution)
   return instituciones[0]?.institucionId || null;
 };
+
+// Configure multer for photo uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/images/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = uuidv4() + path.extname(file.originalname);
+    cb(null, uniqueName);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Solo se permiten archivos de imagen'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  }
+});
 
 // GET /users - Get all users for the institution
 router.get("/", authenticateToken, ensureInstitucionAdmin, async (req, res) => {
@@ -480,6 +510,56 @@ router.post("/:id/activate", authenticateToken, ensureInstitucionAdmin, async (r
       success: false,
       message: "Error interno del servidor"
     });
+  }
+});
+
+// POST /users/upload-photo - Upload user photo
+router.post("/upload-photo", authenticateToken, upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se ha subido ningún archivo' });
+    }
+
+    const usuarioId = req.user.id;
+    const { descripcion, tags } = req.body;
+
+    // Save file info to database
+    const [result] = await pool.execute(
+      `INSERT INTO archivos (id, usuarioId, nombre, nombreOriginal, tipo, mimeType, tamaño, url, descripcion, tags, esPublico, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        uuidv4(),
+        usuarioId,
+        req.file.filename,
+        req.file.originalname,
+        'IMAGEN',
+        req.file.mimetype,
+        req.file.size,
+        `/uploads/images/${req.file.filename}`,
+        descripcion || null,
+        tags || null,
+        false
+      ]
+    );
+
+    const archivo = {
+      id: result.insertId,
+      url: `/uploads/images/${req.file.filename}`,
+      nombre: req.file.originalname,
+      tipo: 'IMAGEN'
+    };
+
+    console.log('✅ Photo uploaded successfully:', archivo);
+
+    res.json({
+      success: true,
+      message: 'Foto subida exitosamente',
+      archivo
+    });
+
+  } catch (error) {
+    console.error('Error uploading photo:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 

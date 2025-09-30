@@ -14,7 +14,10 @@
       "Bash(taskkill:*)",
       "Bash(dir \"C:\\Users\\MON\\Documents\\GitHub\\SistemaPsico\\client\\src\\utils\")",
       "Bash(find:*)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Bash(npx prisma generate:*)"
     ],
     "deny": [],
     "ask": []

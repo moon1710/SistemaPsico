@@ -130,22 +130,24 @@ class UserService {
       const formData = new FormData();
       formData.append('photo', file);
 
-      const response = await api.post('/user/upload-photo', formData, {
+      const response = await api.post('/users/upload-photo', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      if (response.data.success) {
+      console.log('Upload response:', response.data);
+
+      if (response.data.success && response.data.archivo) {
         // Actualizar foto en localStorage
         const currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_DATA) || '{}');
-        const updatedUser = { ...currentUser, foto: response.data.data.photoUrl };
+        const updatedUser = { ...currentUser, foto: response.data.archivo.url };
         localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(updatedUser));
 
         return {
           success: true,
           message: response.data.message || 'Foto actualizada correctamente',
-          data: { photoUrl: response.data.data.photoUrl },
+          data: { photoUrl: response.data.archivo.url },
         };
       }
 
