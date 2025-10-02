@@ -7,6 +7,53 @@ const { validationResult } = require("express-validator");
 const { pool } = require("../db");
 
 const isInstitutionActive = (s) => ["ACTIVO", "ACTIVA", "ACTIVE"].includes(s);
+
+/** Asignar psicólogo automáticamente a estudiante */
+const autoAssignPsychologist = async (conn, studentId, institucionId) => {
+  try {
+    // Buscar psicólogos activos en la institución
+    const [psychologists] = await conn.execute(
+      `SELECT u.id
+       FROM usuarios u
+       JOIN usuario_institucion ui ON u.id = ui.usuarioId
+       WHERE ui.institucionId = ?
+       AND ui.rolInstitucion = 'PSICOLOGO'
+       AND ui.activo = 1
+       AND u.status = 'ACTIVO'
+       ORDER BY RAND()
+       LIMIT 1`,
+      [institucionId]
+    );
+
+    if (psychologists.length > 0) {
+      const psychologistId = psychologists[0].id;
+
+      // Verificar que no exista ya una asignación
+      const [existing] = await conn.execute(
+        `SELECT 1 FROM tutores_alumnos
+         WHERE alumnoId = ? AND activo = 1 LIMIT 1`,
+        [studentId]
+      );
+
+      if (existing.length === 0) {
+        // Crear la asignación
+        const tutorAlumnoId = crypto.randomUUID();
+        await conn.execute(
+          `INSERT INTO tutores_alumnos (id, institucionId, alumnoId, tutorId, activo)
+           VALUES (?, ?, ?, ?, 1)`,
+          [tutorAlumnoId, institucionId, studentId, psychologistId]
+        );
+
+        console.log(`✅ Psicólogo ${psychologistId} asignado automáticamente al estudiante ${studentId}`);
+      }
+    } else {
+      console.log(`⚠️ No hay psicólogos disponibles en la institución ${institucionId} para asignar al estudiante ${studentId}`);
+    }
+  } catch (error) {
+    console.error('❌ Error asignando psicólogo automáticamente:', error);
+    // No lanzamos el error para que no afecte el registro del estudiante
+  }
+};
 /** Generar JWT */
 const generateToken = (user) => {
   const payload = {
@@ -154,6 +201,11 @@ const register = async (req, res) => {
        WHERE ui.usuarioId = ? AND ui.activo = 1`,
       [id]
     );
+
+    // Asignar psicólogo automáticamente si es estudiante
+    if (rol === "ESTUDIANTE" && institucionId) {
+      await autoAssignPsychologist(conn, id, institucionId);
+    }
 
     await conn.commit();
 

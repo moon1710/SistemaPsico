@@ -10,6 +10,7 @@ const onboardingRoutes = require("./routes/onboarding.routes");
 const recommendationsRoutes = require("./routes/recommendations.routes");
 const usersRoutes = require("./routes/users.routes");
 const archivosRoutes = require("./routes/archivos.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
 
 const app = express();
 
@@ -147,6 +148,7 @@ app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/recommendations", recommendationsRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/archivos", archivosRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Serve static files from uploads
 app.use('/uploads', express.static('uploads'));

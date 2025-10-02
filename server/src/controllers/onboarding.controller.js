@@ -12,6 +12,17 @@ const completeProfile = async (req, res) => {
     console.log('🔥 [ONBOARDING] Iniciando completeProfile para userId:', req.user?.id);
     console.log('🔥 [ONBOARDING] Datos recibidos en req.body:', JSON.stringify(req.body, null, 2));
 
+    // Validar dinámicamente según el rol del usuario
+    const userRole = req.user?.instituciones?.[0]?.rol || "ESTUDIANTE";
+    const { createProfileValidation } = require("../validators/onboarding.validators");
+    const { validationResult } = require("express-validator");
+
+    // Ejecutar validaciones dinámicas
+    const validations = createProfileValidation(userRole);
+    for (const validation of validations) {
+      await validation.run(req);
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('❌ [ONBOARDING] Errores de validación:', errors.array());
@@ -35,36 +46,17 @@ const completeProfile = async (req, res) => {
       ciudad,
       estado,
       // Campos específicos para estudiantes
-      matricula,
       semestre,
       grupo,
       turno,
-      carreraId,
-      trabajaActualmente = false,
-      lugarTrabajo,
-      nombrePadre,
-      telefonoPadre,
-      nombreMadre,
-      telefonoMadre,
-      contactoEmergenciaNombre,
-      contactoEmergenciaTelefono,
-      contactoEmergenciaRelacion,
-      tieneComputadora = false,
-      tieneInternet = false,
-      medioTransporte,
-      nivelSocioeconomico,
-      pasatiempos,
-      deportesPractica,
-      idiomasHabla,
-      tieneBeca = false,
-      tipoBeca,
-      participaActividades = false,
+      carrera,
       // Campos para personal
       numeroEmpleado,
       cedulaProfesional,
       departamento,
-      especialidades,
       telefonoEmergencia,
+      // Términos y condiciones
+      aceptaTerminos,
     } = req.body;
 
     // Verificar estado actual del usuario antes de actualizar
@@ -106,10 +98,6 @@ const completeProfile = async (req, res) => {
 
     // Campos específicos para estudiantes
     if (userRole === "ESTUDIANTE") {
-      if (matricula) {
-        updateFields.push("matricula = ?");
-        updateValues.push(matricula);
-      }
       if (semestre) {
         updateFields.push("semestre = ?");
         updateValues.push(parseInt(semestre));
@@ -122,88 +110,14 @@ const completeProfile = async (req, res) => {
         updateFields.push("turno = ?");
         updateValues.push(turno);
       }
-      if (carreraId) {
-        updateFields.push("carreraId = ?");
-        updateValues.push(carreraId);
+      if (carrera) {
+        updateFields.push("carrera = ?");
+        updateValues.push(carrera);
       }
-
-      updateFields.push("trabajaActualmente = ?");
-      updateValues.push(trabajaActualmente ? 1 : 0);
-
-      if (lugarTrabajo) {
-        updateFields.push("lugarTrabajo = ?");
-        updateValues.push(lugarTrabajo);
-      }
-      if (nombrePadre) {
-        updateFields.push("nombrePadre = ?");
-        updateValues.push(nombrePadre);
-      }
-      if (telefonoPadre) {
-        updateFields.push("telefonoPadre = ?");
-        updateValues.push(telefonoPadre);
-      }
-      if (nombreMadre) {
-        updateFields.push("nombreMadre = ?");
-        updateValues.push(nombreMadre);
-      }
-      if (telefonoMadre) {
-        updateFields.push("telefonoMadre = ?");
-        updateValues.push(telefonoMadre);
-      }
-      if (contactoEmergenciaNombre) {
-        updateFields.push("contactoEmergenciaNombre = ?");
-        updateValues.push(contactoEmergenciaNombre);
-      }
-      if (contactoEmergenciaTelefono) {
-        updateFields.push("contactoEmergenciaTelefono = ?");
-        updateValues.push(contactoEmergenciaTelefono);
-      }
-      if (contactoEmergenciaRelacion) {
-        updateFields.push("contactoEmergenciaRelacion = ?");
-        updateValues.push(contactoEmergenciaRelacion);
-      }
-
-      updateFields.push("tieneComputadora = ?");
-      updateValues.push(tieneComputadora ? 1 : 0);
-
-      updateFields.push("tieneInternet = ?");
-      updateValues.push(tieneInternet ? 1 : 0);
-
-      if (medioTransporte) {
-        updateFields.push("medioTransporte = ?");
-        updateValues.push(medioTransporte);
-      }
-      if (nivelSocioeconomico) {
-        updateFields.push("nivelSocioeconomico = ?");
-        updateValues.push(nivelSocioeconomico);
-      }
-      if (pasatiempos) {
-        updateFields.push("pasatiempos = ?");
-        updateValues.push(pasatiempos);
-      }
-      if (deportesPractica) {
-        updateFields.push("deportesPractica = ?");
-        updateValues.push(deportesPractica);
-      }
-      if (idiomasHabla) {
-        updateFields.push("idiomasHabla = ?");
-        updateValues.push(idiomasHabla);
-      }
-
-      updateFields.push("tieneBeca = ?");
-      updateValues.push(tieneBeca ? 1 : 0);
-
-      if (tipoBeca) {
-        updateFields.push("tipoBeca = ?");
-        updateValues.push(tipoBeca);
-      }
-
-      updateFields.push("participaActividades = ?");
-      updateValues.push(participaActividades ? 1 : 0);
     }
 
-    // Campos para personal (psicólogos, orientadores, admins)
-    if (["PSICOLOGO", "ORIENTADOR", "ADMIN_INSTITUCION"].includes(userRole)) {
+    // Campos para psicólogos
+    if (userRole === "PSICOLOGO") {
       if (numeroEmpleado) {
         updateFields.push("numeroEmpleado = ?");
         updateValues.push(numeroEmpleado);
@@ -216,9 +130,17 @@ const completeProfile = async (req, res) => {
         updateFields.push("departamento = ?");
         updateValues.push(departamento);
       }
-      if (especialidades) {
-        updateFields.push("especialidades = ?");
-        updateValues.push(especialidades);
+      if (telefonoEmergencia) {
+        updateFields.push("telefonoEmergencia = ?");
+        updateValues.push(telefonoEmergencia);
+      }
+    }
+
+    // Campos para orientadores y admins
+    if (["ORIENTADOR", "ADMIN_INSTITUCION"].includes(userRole)) {
+      if (departamento) {
+        updateFields.push("departamento = ?");
+        updateValues.push(departamento);
       }
       if (telefonoEmergencia) {
         updateFields.push("telefonoEmergencia = ?");
