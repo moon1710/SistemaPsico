@@ -59,7 +59,7 @@ export const OnboardingProvider = ({ children }) => {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
 
-      const response = await fetch('/api/auth/profile', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

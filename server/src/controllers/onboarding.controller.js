@@ -34,7 +34,6 @@ const completeProfile = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const userRole = req.user?.instituciones?.[0]?.rol || "ESTUDIANTE";
     console.log('📋 [ONBOARDING] Usuario ID:', userId, 'Rol:', userRole);
     console.log('👤 [ONBOARDING] req.user completo:', JSON.stringify(req.user, null, 2));
 

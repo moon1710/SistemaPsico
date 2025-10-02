@@ -20,6 +20,7 @@ const ProtectedRoute = ({
   children,
   requiredRoles = null,
   fallbackPath = ROUTES.LOGIN,
+  skipOnboardingCheck = false, // Nueva prop para saltar verificación de onboarding
 }) => {
   const { isAuthenticated, isLoading, user, activeRole, hasAnyRole } = useAuth();
   const location = useLocation();
@@ -32,7 +33,8 @@ const ProtectedRoute = ({
     activeRole,
     userInstituciones: user?.instituciones,
     requiredRoles,
-    fallbackPath
+    fallbackPath,
+    perfilCompletado: user?.perfilCompletado
   });
 
   // Mostrar loading mientras se verifica la autenticación
@@ -45,6 +47,31 @@ const ProtectedRoute = ({
   if (!isAuthenticated) {
     console.log('❌ [PROTECTED_ROUTE] Usuario no autenticado, redirigiendo a:', fallbackPath);
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
+  }
+
+  // Verificar si el usuario necesita completar el onboarding
+  if (!skipOnboardingCheck && user && !user.perfilCompletado) {
+    console.log('🚧 [PROTECTED_ROUTE] Usuario necesita completar onboarding');
+    // El OnboardingModal se encargará de mostrarse automáticamente
+    // Pero aquí podemos bloquear la navegación hasta que se complete
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Completa tu Perfil</h2>
+          <p className="text-gray-600 mb-4">
+            Antes de continuar, necesitas completar la información de tu perfil.
+          </p>
+          <p className="text-sm text-gray-500">
+            El formulario de bienvenida se abrirá automáticamente...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // Si se especificaron roles requeridos, verificar que el usuario los tenga
@@ -179,9 +206,14 @@ const InstitutionProtectedRoute = ({
 /**
  * HOC para crear rutas protegidas específicas por rol
  */
-const createRoleProtectedRoute = (allowedRoles) => {
+const createRoleProtectedRoute = (allowedRoles, skipOnboardingCheck = false) => {
   return ({ children }) => (
-    <ProtectedRoute requiredRoles={allowedRoles}>{children}</ProtectedRoute>
+    <ProtectedRoute
+      requiredRoles={allowedRoles}
+      skipOnboardingCheck={skipOnboardingCheck}
+    >
+      {children}
+    </ProtectedRoute>
   );
 };
 
