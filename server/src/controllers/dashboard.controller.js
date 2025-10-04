@@ -29,13 +29,13 @@ const getStudentDashboard = async (req, res) => {
         [userId]
       );
 
-      // Próximas citas (simuladas por ahora)
+      // Próximas citas
       const [citasProximas] = await conn.execute(
         `SELECT COUNT(*) as proximas_citas
          FROM citas c
-         WHERE c.estudianteId = ?
+         WHERE c.usuarioId = ?
          AND c.fechaHora > NOW()
-         AND c.status IN ('PROGRAMADA', 'CONFIRMADA')`,
+         AND c.estado IN ('SOLICITADA', 'CONFIRMADA', 'PROGRAMADA')`,
         [userId]
       );
 
@@ -161,7 +161,7 @@ const getPsychologistDashboard = async (req, res) => {
          FROM citas c
          WHERE c.psicologoId = ?
          AND c.fechaHora > NOW()
-         AND c.status IN ('PROGRAMADA', 'CONFIRMADA')`,
+         AND c.estado IN ('SOLICITADA', 'CONFIRMADA', 'PROGRAMADA')`,
         [userId]
       );
 
