@@ -1,91 +1,96 @@
-// client/src/components/onboarding/onboardingConfig.js
-
+// Modernized onboarding config (no emojis). Uses icon names to be rendered with lucide-react.
 export const onboardingSteps = [
   {
-    id: 'welcome',
-    title: 'Bienvenido al Sistema Psicológico',
-    subtitle: 'Tu plataforma integral de bienestar mental',
-    icon: '👋',
-    description: 'Este sistema está diseñado para brindar apoyo psicológico y recursos de bienestar mental a estudiantes y profesionales de la salud mental.',
+    id: "welcome",
+    title: "Bienvenido a Neuroflora",
+    subtitle: "Plataforma integral de salud mental",
+    icon: "HeartHandshake",
+    description:
+      "Explora herramientas validadas, acompaña tu progreso y conecta con profesionales para cuidar tu salud mental.",
     features: [
-      'Acceso a evaluaciones psicológicas validadas',
-      'Seguimiento personalizado de tu bienestar',
-      'Conexión con profesionales especializados',
-      'Recursos educativos y de autoayuda'
+      "Evaluaciones psicológicas validadas",
+      "Seguimiento personalizado",
+      "Derivaciones y canalización",
+      "Recursos educativos",
     ],
     media: {
-      placeholder: '🏥',
-      description: 'Interface principal del sistema'
-    }
+      // replace with your asset path if available
+      image: "/illustrations/onboarding-welcome.svg",
+      description: "Interfaz principal del sistema",
+    },
   },
   {
-    id: 'dashboard',
-    title: 'Panel de Control',
-    subtitle: 'Tu centro de actividades',
-    icon: '📊',
-    description: 'El dashboard es tu punto de partida. Aquí encontrarás un resumen de tus actividades, evaluaciones pendientes y recursos disponibles.',
+    id: "dashboard",
+    title: "Panel de control",
+    subtitle: "Tu centro de actividades",
+    icon: "ChartBar",
+    description:
+      "Consulta tu estado general, notificaciones y accesos rápidos a las funciones principales.",
     features: [
-      'Vista general de tu progreso',
-      'Notificaciones importantes',
-      'Acceso rápido a funciones principales',
-      'Estadísticas personales'
+      "Resumen de progreso",
+      "Recordatorios y pendientes",
+      "Acceso directo a evaluaciones",
+      "Estadísticas personales",
     ],
     media: {
-      placeholder: '📈',
-      description: 'Vista del dashboard principal'
-    }
+      image: "/illustrations/onboarding-dashboard.svg",
+      description: "Vista del panel principal",
+    },
   },
   {
-    id: 'quizzes',
-    title: 'Evaluaciones Psicológicas',
-    subtitle: 'Herramientas de autoconocimiento',
-    icon: '📝',
-    description: 'Accede a una amplia gama de evaluaciones psicológicas validadas científicamente para conocer mejor tu estado emocional y mental.',
+    id: "quizzes",
+    title: "Evaluaciones psicológicas",
+    subtitle: "Herramientas de autoconocimiento",
+    icon: "Brain",
+    description:
+      "Realiza cuestionarios de forma sencilla y obtén resultados claros con sugerencias prácticas.",
     features: [
-      'Cuestionarios de ansiedad y depresión',
-      'Evaluaciones de estrés y bienestar',
-      'Tests de personalidad y habilidades',
-      'Resultados detallados y recomendaciones'
+      "Ansiedad y depresión",
+      "Estrés y bienestar",
+      "Personalidad y habilidades",
+      "Resultados con recomendaciones",
     ],
     media: {
-      placeholder: '🧠',
-      description: 'Ejemplo de evaluación psicológica'
-    }
+      image: "/illustrations/onboarding-quizzes.svg",
+      description: "Ejemplo de evaluación",
+    },
   },
   {
-    id: 'results',
-    title: 'Mis Resultados',
-    subtitle: 'Seguimiento de tu progreso',
-    icon: '📋',
-    description: 'Revisa todos tus resultados anteriores, observa tendencias en tu bienestar y comparte información relevante con profesionales.',
+    id: "results",
+    title: "Resultados y tendencias",
+    subtitle: "Seguimiento de tu progreso",
+    icon: "ClipboardList",
+    description:
+      "Explora tu historial, identifica patrones y exporta reportes cuando los necesites.",
     features: [
-      'Historial completo de evaluaciones',
-      'Gráficos de progreso temporal',
-      'Comparación entre diferentes períodos',
-      'Exportación de reportes'
+      "Histórico completo",
+      "Gráficas temporales",
+      "Comparaciones por periodo",
+      "Exportación de reportes",
     ],
     media: {
-      placeholder: '📊',
-      description: 'Vista de resultados y análisis'
-    }
+      image: "/illustrations/onboarding-results.svg",
+      description: "Resultados y análisis",
+    },
   },
   {
-    id: 'support',
-    title: 'Soporte y Recursos',
-    subtitle: 'Ayuda cuando la necesites',
-    icon: '🤝',
-    description: 'Encuentra recursos de apoyo, contacta profesionales y accede a material educativo para tu bienestar mental.',
+    id: "support",
+    title: "Soporte y recursos",
+    subtitle: "Acompañamiento cuando lo necesites",
+    icon: "LifeBuoy",
+    description:
+      "Accede a directorios, material educativo y líneas de ayuda para momentos críticos.",
     features: [
-      'Directorio de profesionales',
-      'Recursos educativos especializados',
-      'Líneas de crisis y emergencia',
-      'Comunidad de apoyo'
+      "Directorio de profesionales",
+      "Material de apoyo",
+      "Líneas de emergencia",
+      "Comunidad y acompañamiento",
     ],
     media: {
-      placeholder: '💚',
-      description: 'Red de apoyo y recursos'
-    }
-  }
+      image: "/illustrations/onboarding-support.svg",
+      description: "Red de apoyo y recursos",
+    },
+  },
 ];
 
 export default onboardingSteps;

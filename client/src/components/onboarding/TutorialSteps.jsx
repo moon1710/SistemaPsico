@@ -1,107 +1,149 @@
-// client/src/components/onboarding/TutorialSteps.jsx
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { onboardingSteps } from "./onboardingConfig";
+import * as Icons from "lucide-react";
+
+const iconMap = (name) => {
+  const Ico = Icons[name] || Icons.Info;
+  return <Ico className="w-6 h-6 md:w-7 md:h-7 text-[#527ceb]" />;
+};
+
+const gradients = [
+  "linear-gradient(135deg, #527ceb 0%, #6762b3 100%)",
+  "linear-gradient(135deg, #019fd2 0%, #48b0f7 100%)",
+  "linear-gradient(135deg, #10cfbd 0%, #527ceb 100%)",
+  "linear-gradient(135deg, #6762b3 0%, #21252d 100%)",
+  "linear-gradient(135deg, #2b333c 0%, #019fd2 100%)",
+];
 
 const TutorialSteps = () => {
   const { currentStep, nextStep, prevStep } = useOnboarding();
-
   const step = onboardingSteps[currentStep];
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === onboardingSteps.length - 1;
-
   if (!step) return null;
 
+  const panelGradient = gradients[currentStep % gradients.length];
+
   return (
-    <div className="min-h-[400px] flex flex-col">
-      {/* Step Content */}
-      <div className="flex-1">
-        {/* Icon */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <span className="text-2xl">{step.icon}</span>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            {step.title}
-          </h2>
-          <p className="text-gray-600">{step.subtitle}</p>
-        </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={step.id}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.25 }}
+        className="h-full"
+      >
+        {/* Grid responsiva que *siempre* cabe en viewport */}
+        <div className="grid h-[calc(100%-56px)] md:h-[calc(100%-64px)] gap-4 md:gap-6 md:grid-cols-2">
+          {/* Texto (compactado) */}
+          <div className="space-y-4 md:space-y-5 min-h-0">
+            <div className="inline-flex items-center gap-3 rounded-2xl px-4 py-3 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-gray-100">
+              {iconMap(step.icon)}
+              <div className="min-w-0">
+                <h2 className="font-bold text-[clamp(18px,2.2vw,28px)] text-[#21252d] truncate">
+                  {step.title}
+                </h2>
+                <p className="text-sm md:text-[15px] text-gray-500">
+                  {step.subtitle}
+                </p>
+              </div>
+            </div>
 
-        {/* Description */}
-        <div className="bg-gray-50 rounded-lg p-6 mb-6">
-          <p className="text-gray-700 leading-relaxed">{step.description}</p>
+            <div className="rounded-2xl p-4 md:p-6 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-gray-100">
+              <p className="text-gray-600 leading-relaxed text-[15px] md:text-base">
+                {step.description}
+              </p>
 
-          {/* Features List */}
-          {step.features && step.features.length > 0 && (
-            <ul className="mt-4 space-y-2">
-              {step.features.map((feature, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                    <svg
-                      className="w-3 h-3 text-green-600"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
+              {!!step.features?.length && (
+                <ul className="mt-3 grid gap-2.5 md:gap-3">
+                  {step.features.slice(0, 6).map((f, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-3 text-gray-700"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <span className="text-gray-700">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Image/Video placeholder */}
-        {step.media && (
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-8 text-center mb-6">
-            <div className="text-4xl mb-2">{step.media.placeholder}</div>
-            <p className="text-sm text-gray-500">{step.media.description}</p>
+                      <span className="mt-1 inline-block w-2 h-2 rounded-full bg-[#527ceb] shadow-[0_0_8px_#527ceb]" />
+                      <span className="text-sm md:text-[15px] leading-snug">
+                        {f}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Navigation */}
-      <div className="flex justify-between items-center pt-6 border-t">
-        <button
-          onClick={prevStep}
-          disabled={isFirstStep}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            isFirstStep
-              ? "text-gray-400 cursor-not-allowed"
-              : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-          }`}
-        >
-          ← Anterior
-        </button>
-
-        <div className="flex gap-2">
-          {onboardingSteps.map((_, index) => (
-            <div
-              key={index}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                index === currentStep
-                  ? "bg-blue-600"
-                  : index < currentStep
-                  ? "bg-green-500"
-                  : "bg-gray-300"
-              }`}
-            />
-          ))}
+          {/* Visual: escala sin desbordarse (sin scroll) */}
+          <motion.div
+            whileHover={{ scale: 1.01 }}
+            className="rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.1)] flex min-h-0"
+            style={{
+              background: panelGradient,
+              border: "1px solid rgba(255,255,255,0.2)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <div className="p-3 md:p-5 bg-white/60 w-full flex">
+              <div className="w-full rounded-xl overflow-hidden bg-gradient-to-br from-[#f0f0f0] to-white flex">
+                <div className="w-full aspect-[16/11] md:aspect-[16/9] self-center">
+                  {step.media?.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={step.media.image}
+                      alt={step.media.description || step.title}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="grid place-items-center h-full text-gray-500 text-sm p-6">
+                      {step.media?.description || "Vista previa"}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
 
-        <button
-          onClick={nextStep}
-          className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
-        >
-          {isLastStep ? "Finalizar →" : "Siguiente →"}
-        </button>
-      </div>
-    </div>
+        {/* Controles (ocupan 56–64px reservados arriba) */}
+        <div className="mt-3 md:mt-4 flex items-center justify-between">
+          <button
+            onClick={prevStep}
+            disabled={isFirstStep}
+            className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+              isFirstStep
+                ? "text-gray-400 cursor-not-allowed"
+                : "text-[#2b333c] hover:bg-gray-100"
+            }`}
+          >
+            Anterior
+          </button>
+
+          <div className="flex items-center gap-2">
+            {onboardingSteps.map((_, index) => (
+              <span
+                key={index}
+                className={`w-2 h-2 rounded-full transition ${
+                  index === currentStep
+                    ? "bg-[#527ceb] shadow-[0_0_8px_#527ceb]"
+                    : "bg-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={nextStep}
+            className="px-6 py-2 rounded-xl text-white font-medium transition-all bg-gradient-to-r from-[#527ceb] to-[#6762b3] hover:from-[#019fd2] hover:to-[#48b0f7]"
+          >
+            {isLastStep ? "Finalizar" : "Siguiente"}
+          </motion.button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
