@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { validationResult } = require("express-validator");
 const { pool } = require("../db");
+const { crearNotificacionBienvenida } = require("./notifications.controller");
 
 const isInstitutionActive = (s) => ["ACTIVO", "ACTIVA", "ACTIVE"].includes(s);
 
@@ -208,6 +209,14 @@ const register = async (req, res) => {
     }
 
     await conn.commit();
+
+    // Crear notificación de bienvenida después del commit exitoso
+    try {
+      await crearNotificacionBienvenida(id, nombreCompleto, rol);
+    } catch (error) {
+      console.error('Error creando notificación de bienvenida:', error);
+      // No afecta el registro del usuario
+    }
 
     const user = {
       id,

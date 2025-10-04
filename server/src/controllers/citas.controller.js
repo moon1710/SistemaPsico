@@ -1,6 +1,7 @@
 // controllers/citas.controller.js
 const { pool } = require("../db");
 const { validationResult } = require("express-validator");
+const { crearNotificacionCita } = require("./notifications.controller");
 
 /**
  * Crear nueva solicitud de cita (para estudiantes)
@@ -135,6 +136,13 @@ const solicitarCita = async (req, res) => {
        WHERE c.id = ?`,
       [citaId]
     );
+
+    // Crear notificación de cita nueva para el estudiante
+    try {
+      await crearNotificacionCita(userId, psicologoId, citaCreada[0], 'nueva');
+    } catch (error) {
+      console.error('Error creando notificación de cita:', error);
+    }
 
     res.status(201).json({
       success: true,
@@ -392,6 +400,22 @@ const actualizarEstadoCita = async (req, res) => {
        WHERE c.id = ?`,
       [citaId]
     );
+
+    // Crear notificación de cambio de estado para el estudiante
+    try {
+      const cita = citaActualizada[0];
+      let tipoNotificacion = 'confirmada';
+
+      if (estado === 'CONFIRMADA') {
+        tipoNotificacion = 'confirmada';
+      } else if (estado === 'CANCELADA') {
+        tipoNotificacion = 'cancelada';
+      }
+
+      await crearNotificacionCita(cita.usuarioId, cita.psicologoId, cita, tipoNotificacion);
+    } catch (error) {
+      console.error('Error creando notificación de cambio de estado:', error);
+    }
 
     res.json({
       success: true,

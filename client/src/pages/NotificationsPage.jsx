@@ -13,8 +13,19 @@ import {
   Trash2,
   MoreVertical,
   Filter,
-  Search
+  Search,
+  Gift,
+  Loader
 } from 'lucide-react';
+import {
+  getNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  notificationTypeMap,
+  priorityMap,
+  formatTimestamp
+} from '../services/notificationsService';
 
 const NotificationsPage = () => {
   const { user } = useAuth();
@@ -22,143 +33,140 @@ const NotificationsPage = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNotifications, setSelectedNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    pagina: 1,
+    limite: 50,
+    total: 0,
+    totalPaginas: 0
+  });
 
-  // Mock data - En producción esto vendría de la API
-  useEffect(() => {
-    const mockNotifications = [
-      {
-        id: 1,
-        type: 'appointment',
-        title: 'Cita programada confirmada',
-        message: 'Tu cita con el Dr. García ha sido confirmada para mañana a las 10:00 AM',
-        timestamp: new Date(Date.now() - 5 * 60 * 1000), // 5 minutos atrás
-        read: false,
-        priority: 'high',
-        actions: [
-          { label: 'Ver cita', action: 'view' },
-          { label: 'Reagendar', action: 'reschedule' }
-        ]
-      },
-      {
-        id: 2,
-        type: 'quiz',
-        title: 'Resultados de evaluación disponibles',
-        message: 'Los resultados de tu evaluación de ansiedad ya están disponibles',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
-        read: false,
-        priority: 'medium',
-        actions: [
-          { label: 'Ver resultados', action: 'view' }
-        ]
-      },
-      {
-        id: 3,
-        type: 'system',
-        title: 'Actualización del sistema',
-        message: 'El sistema se actualizará esta noche. Algunos servicios podrían no estar disponibles.',
-        timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 día atrás
-        read: true,
-        priority: 'low',
-        actions: []
-      },
-      {
-        id: 4,
-        type: 'appointment',
-        title: 'Recordatorio de cita',
-        message: 'Tienes una cita programada para hoy a las 3:00 PM con la Psic. Martínez',
-        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 horas atrás
-        read: true,
-        priority: 'high',
-        actions: [
-          { label: 'Ver cita', action: 'view' }
-        ]
-      },
-      {
-        id: 5,
-        type: 'user',
-        title: 'Nuevo mensaje',
-        message: 'Has recibido un mensaje del personal de atención',
-        timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 días atrás
-        read: true,
-        priority: 'medium',
-        actions: [
-          { label: 'Ver mensaje', action: 'view' }
-        ]
+  // Cargar notificaciones desde la API
+  const loadNotifications = async (resetPagina = false) => {
+    try {
+      setLoading(true);
+      const params = {
+        limite: pagination.limite,
+        pagina: resetPagina ? 1 : pagination.pagina
+      };
+
+      if (filter !== 'all') {
+        if (filter === 'unread') {
+          params.leida = false;
+        } else {
+          params.tipo = filter;
+        }
       }
-    ];
-    setNotifications(mockNotifications);
-  }, []);
 
-  const getNotificationIcon = (type) => {
+      const response = await getNotifications(params);
+
+      if (resetPagina) {
+        setNotifications(response.data.notificaciones);
+        setPagination({
+          ...pagination,
+          pagina: 1,
+          total: response.data.total,
+          totalPaginas: response.data.totalPaginas
+        });
+      } else {
+        setNotifications(prev => [...prev, ...response.data.notificaciones]);
+        setPagination({
+          ...pagination,
+          total: response.data.total,
+          totalPaginas: response.data.totalPaginas
+        });
+      }
+    } catch (error) {
+      console.error('Error cargando notificaciones:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications(true);
+  }, [filter]);
+
+  useEffect(() => {
+    if (pagination.pagina > 1) {
+      loadNotifications();
+    }
+  }, [pagination.pagina]);
+
+  const getNotificationIcon = (tipo) => {
     const iconMap = {
-      appointment: Calendar,
-      quiz: FileText,
-      user: User,
-      system: AlertCircle
+      cita: Calendar,
+      evaluacion: FileText,
+      mensaje: User,
+      sistema: AlertCircle,
+      bienvenida: Gift
     };
-    const IconComponent = iconMap[type] || Bell;
+    const IconComponent = iconMap[tipo] || Bell;
     return <IconComponent className="w-5 h-5" />;
   };
 
-  const getPriorityColor = (priority) => {
-    const colorMap = {
-      high: 'bg-red-100 text-red-600 border-red-200',
-      medium: 'bg-yellow-100 text-yellow-600 border-yellow-200',
-      low: 'bg-blue-100 text-blue-600 border-blue-200'
-    };
-    return colorMap[priority] || colorMap.medium;
+  const getPriorityColor = (prioridad) => {
+    return priorityMap[prioridad] || priorityMap.media;
   };
 
-  const getTypeLabel = (type) => {
-    const labelMap = {
-      appointment: 'Citas',
-      quiz: 'Evaluaciones',
-      user: 'Mensajes',
-      system: 'Sistema'
-    };
-    return labelMap[type] || 'General';
+  const getTypeLabel = (tipo) => {
+    return notificationTypeMap[tipo]?.label || 'General';
   };
 
-  const formatTimestamp = (timestamp) => {
-    const now = new Date();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / (1000 * 60));
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (minutes < 60) return `Hace ${minutes} minutos`;
-    if (hours < 24) return `Hace ${hours} horas`;
-    return `Hace ${days} días`;
+  const getTypeColor = (tipo) => {
+    return notificationTypeMap[tipo]?.color || 'bg-gray-100 text-gray-600 border-gray-200';
   };
 
   const filteredNotifications = notifications.filter(notification => {
-    const matchesFilter = filter === 'all' ||
-                         (filter === 'unread' && !notification.read) ||
-                         (filter === notification.type);
-
-    const matchesSearch = notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         notification.message.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesFilter && matchesSearch;
+    const matchesSearch = notification.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         notification.mensaje.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
-  const markAsRead = (id) => {
-    setNotifications(prev => prev.map(notification =>
-      notification.id === id ? { ...notification, read: true } : notification
-    ));
+  const handleMarkAsRead = async (id) => {
+    try {
+      await markAsRead(id);
+      setNotifications(prev => prev.map(notification =>
+        notification.id === id ? { ...notification, leida: true, fechaLectura: new Date() } : notification
+      ));
+    } catch (error) {
+      console.error('Error marcando como leída:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notification => ({ ...notification, read: true })));
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+      setNotifications(prev => prev.map(notification => ({
+        ...notification,
+        leida: true,
+        fechaLectura: new Date()
+      })));
+    } catch (error) {
+      console.error('Error marcando todas como leídas:', error);
+    }
   };
 
-  const deleteNotification = (id) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  const handleDeleteNotification = async (id) => {
+    try {
+      await deleteNotification(id);
+      setNotifications(prev => prev.filter(notification => notification.id !== id));
+      setSelectedNotifications(prev => prev.filter(nId => nId !== id));
+    } catch (error) {
+      console.error('Error eliminando notificación:', error);
+    }
   };
 
-  const deleteSelected = () => {
-    setNotifications(prev => prev.filter(notification => !selectedNotifications.includes(notification.id)));
-    setSelectedNotifications([]);
+  const deleteSelected = async () => {
+    try {
+      await Promise.all(
+        selectedNotifications.map(id => deleteNotification(id))
+      );
+      setNotifications(prev => prev.filter(notification => !selectedNotifications.includes(notification.id)));
+      setSelectedNotifications([]);
+    } catch (error) {
+      console.error('Error eliminando notificaciones seleccionadas:', error);
+    }
   };
 
   const toggleSelection = (id) => {
@@ -176,7 +184,13 @@ const NotificationsPage = () => {
     setSelectedNotifications([]);
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const loadMore = () => {
+    if (pagination.pagina < pagination.totalPaginas && !loading) {
+      setPagination(prev => ({ ...prev, pagina: prev.pagina + 1 }));
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.leida).length;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -198,7 +212,7 @@ const NotificationsPage = () => {
             </div>
             {unreadCount > 0 && (
               <button
-                onClick={markAllAsRead}
+                onClick={handleMarkAllAsRead}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <CheckCircle className="w-4 h-4 mr-2" />
@@ -233,10 +247,11 @@ const NotificationsPage = () => {
               >
                 <option value="all">Todas</option>
                 <option value="unread">No leídas</option>
-                <option value="appointment">Citas</option>
-                <option value="quiz">Evaluaciones</option>
-                <option value="user">Mensajes</option>
-                <option value="system">Sistema</option>
+                <option value="cita">Citas</option>
+                <option value="evaluacion">Evaluaciones</option>
+                <option value="mensaje">Mensajes</option>
+                <option value="sistema">Sistema</option>
+                <option value="bienvenida">Bienvenida</option>
               </select>
             </div>
           </div>
@@ -268,7 +283,12 @@ const NotificationsPage = () => {
 
         {/* Lista de notificaciones */}
         <div className="space-y-4">
-          {filteredNotifications.length === 0 ? (
+          {loading && filteredNotifications.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+              <Loader className="w-8 h-8 text-blue-500 mx-auto mb-4 animate-spin" />
+              <p className="text-gray-600">Cargando notificaciones...</p>
+            </div>
+          ) : filteredNotifications.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
               <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No hay notificaciones</h3>
@@ -281,7 +301,7 @@ const NotificationsPage = () => {
               <div
                 key={notification.id}
                 className={`bg-white rounded-lg shadow-sm border transition-all duration-200 hover:shadow-md ${
-                  notification.read ? 'border-gray-200' : 'border-blue-200 bg-blue-50/30'
+                  notification.leida ? 'border-gray-200' : 'border-blue-200 bg-blue-50/30'
                 } ${selectedNotifications.includes(notification.id) ? 'ring-2 ring-blue-500' : ''}`}
               >
                 <div className="p-6">
@@ -297,8 +317,8 @@ const NotificationsPage = () => {
                     </div>
 
                     {/* Ícono de tipo */}
-                    <div className={`flex-shrink-0 p-2 rounded-full ${getPriorityColor(notification.priority)}`}>
-                      {getNotificationIcon(notification.type)}
+                    <div className={`flex-shrink-0 p-2 rounded-full ${getPriorityColor(notification.prioridad)}`}>
+                      {getNotificationIcon(notification.tipo)}
                     </div>
 
                     {/* Contenido */}
@@ -306,25 +326,28 @@ const NotificationsPage = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <h3 className={`text-sm font-medium ${notification.read ? 'text-gray-900' : 'text-gray-900 font-semibold'}`}>
-                              {notification.title}
+                            <h3 className={`text-sm font-medium ${notification.leida ? 'text-gray-900' : 'text-gray-900 font-semibold'}`}>
+                              {notification.titulo}
                             </h3>
-                            {!notification.read && (
+                            {!notification.leida && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
+                          <p className="text-sm text-gray-600 mb-2">{notification.mensaje}</p>
                           <div className="flex items-center space-x-4">
-                            <span className="text-xs text-gray-500">{formatTimestamp(notification.timestamp)}</span>
-                            <span className={`text-xs px-2 py-1 rounded-full border ${getPriorityColor(notification.priority)}`}>
-                              {getTypeLabel(notification.type)}
+                            <span className="text-xs text-gray-500">{formatTimestamp(notification.fechaCreacion)}</span>
+                            <span className={`text-xs px-2 py-1 rounded-full border ${getTypeColor(notification.tipo)}`}>
+                              {getTypeLabel(notification.tipo)}
+                            </span>
+                            <span className={`text-xs px-2 py-1 rounded-full border ${getPriorityColor(notification.prioridad)}`}>
+                              {notification.prioridad}
                             </span>
                           </div>
                         </div>
 
                         {/* Acciones */}
                         <div className="flex items-center space-x-2 ml-4">
-                          {notification.actions.map((action, index) => (
+                          {notification.acciones && notification.acciones.map((action, index) => (
                             <button
                               key={index}
                               className="text-xs px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
@@ -333,9 +356,9 @@ const NotificationsPage = () => {
                             </button>
                           ))}
 
-                          {!notification.read && (
+                          {!notification.leida && (
                             <button
-                              onClick={() => markAsRead(notification.id)}
+                              onClick={() => handleMarkAsRead(notification.id)}
                               className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
                               title="Marcar como leída"
                             >
@@ -344,7 +367,7 @@ const NotificationsPage = () => {
                           )}
 
                           <button
-                            onClick={() => deleteNotification(notification.id)}
+                            onClick={() => handleDeleteNotification(notification.id)}
                             className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
                             title="Eliminar notificación"
                           >
@@ -360,12 +383,29 @@ const NotificationsPage = () => {
           )}
         </div>
 
-        {/* Paginación o load more (placeholder) */}
-        {filteredNotifications.length > 10 && (
+        {/* Paginación o load more */}
+        {pagination.pagina < pagination.totalPaginas && (
           <div className="text-center mt-8">
-            <button className="px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-              Cargar más notificaciones
+            <button
+              onClick={loadMore}
+              disabled={loading}
+              className="inline-flex items-center px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Cargando...
+                </>
+              ) : (
+                'Cargar más notificaciones'
+              )}
             </button>
+          </div>
+        )}
+
+        {filteredNotifications.length > 0 && pagination.pagina >= pagination.totalPaginas && (
+          <div className="text-center mt-8 text-gray-500 text-sm">
+            Has visto todas las notificaciones
           </div>
         )}
       </div>
