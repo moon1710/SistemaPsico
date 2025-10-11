@@ -32,6 +32,7 @@ import ConfigurationPage from "./pages/ConfigurationPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import SupportPage from "./pages/SupportPage";
 import RecommendationsPage from "./pages/RecommendationsPage";
+import CambiarPasswordPage from "./pages/CambiarPasswordPage";
 
 //QuizzesPages
 import PublicQuizzesPage from "./pages/quizzes/PublicQuizzesPage";
@@ -315,6 +316,16 @@ function App() {
             <Layout>
               <ConfigurationPage />
             </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Cambio de contraseña - Sin layout para pantalla completa */}
+      <Route
+        path={ROUTES.CAMBIAR_PASSWORD}
+        element={
+          <ProtectedRoute>
+            <CambiarPasswordPage />
           </ProtectedRoute>
         }
       />

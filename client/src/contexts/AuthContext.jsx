@@ -164,7 +164,14 @@ export function AuthProvider({ children }) {
         if (t) setToken(t);
         setIsAuthenticated(true);
         setStatus("authenticated");
-        return { success: true };
+
+        // Verificar estado del usuario para redirecciones
+        const redirectPath = determineRedirectPath(u);
+        return {
+          success: true,
+          user: u,
+          redirectPath: redirectPath
+        };
       }
       setIsAuthenticated(false);
       setStatus("unauthenticated");
@@ -179,6 +186,32 @@ export function AuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Función para determinar dónde redirigir al usuario después del login
+  const determineRedirectPath = (user) => {
+    if (!user) return '/dashboard';
+
+    // Para estudiantes recién registrados
+    if (user.rol === 'ESTUDIANTE') {
+      // Si no ha completado el perfil, va a onboarding
+      if (!user.perfilCompletado) {
+        return '/onboarding';
+      }
+
+      // Si completó el perfil pero requiere cambio de contraseña
+      if (user.requiereCambioPassword) {
+        return '/cambiar-password';
+      }
+    }
+
+    // Para otros roles que requieren cambio de contraseña
+    if (user.requiereCambioPassword) {
+      return '/cambiar-password';
+    }
+
+    // Si no hay onboarding pendiente ni cambio de contraseña, va al dashboard
+    return '/dashboard';
   };
 
   const logout = async () => {

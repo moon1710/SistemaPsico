@@ -92,6 +92,7 @@ export const ROUTES = {
   CONFIGURATION: "/configuracion",
   NOTIFICATIONS: "/notificaciones",
   SUPPORT: "/soporte",
+  CAMBIAR_PASSWORD: "/cambiar-password",
   HELP: "/help",
   ABOUTUS: "/aboutUs",
   TERMINOS: "/terminos",

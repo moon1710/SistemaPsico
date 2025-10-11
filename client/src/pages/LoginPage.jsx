@@ -191,15 +191,15 @@ const LoginPage = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="password-toggle-btn"
                 style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#6b7280',
-                  padding: '4px'
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#6b7280",
+                  padding: "4px",
                 }}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -222,23 +222,31 @@ const LoginPage = () => {
             </button>
           </form>
 
+          {/*-----------------Quitar cuando se ponga modulo de recuperacion de contraseña
           <p className="login-recover">
             ¿Olvidaste tu contraseña?{" "}
             <a href="#" className="login-recover-link">
               Recupérala
             </a>
           </p>
+          */}
 
           {/* Separador */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            margin: '20px 0',
-            gap: '10px'
-          }}>
-            <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }}></div>
-            <span style={{ color: '#6b7280', fontSize: '14px' }}>o</span>
-            <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }}></div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              margin: "20px 0",
+              gap: "10px",
+            }}
+          >
+            <div
+              style={{ flex: 1, height: "1px", background: "#e5e7eb" }}
+            ></div>
+            <span style={{ color: "#6b7280", fontSize: "14px" }}>o</span>
+            <div
+              style={{ flex: 1, height: "1px", background: "#e5e7eb" }}
+            ></div>
           </div>
 
           {/* Botón de registro para estudiantes */}
@@ -247,24 +255,26 @@ const LoginPage = () => {
             onClick={() => setShowRegistro(true)}
             className="login-submit"
             style={{
-              background: '#10b981',
-              borderColor: '#10b981',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
+              background: "#10b981",
+              borderColor: "#10b981",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
             }}
           >
             <UserPlus size={20} />
             Registrarse como Estudiante
           </button>
 
-          <p style={{
-            textAlign: 'center',
-            fontSize: '12px',
-            color: '#6b7280',
-            marginTop: '10px'
-          }}>
+          <p
+            style={{
+              textAlign: "center",
+              fontSize: "12px",
+              color: "#6b7280",
+              marginTop: "10px",
+            }}
+          >
             ¿Eres estudiante nuevo? Regístrate con tu número de control
           </p>
         </div>

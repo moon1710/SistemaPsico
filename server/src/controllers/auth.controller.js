@@ -283,14 +283,16 @@ const login = async (req, res) => {
 
     const { email, password } = req.body;
 
+    // Permitir login con email O número de control
     const [userRows] = await pool.execute(
-      `SELECT u.id, u.nombre, u.apellidoPaterno, u.apellidoMaterno, 
-              u.nombreCompleto, u.email, u.passwordHash, 
+      `SELECT u.id, u.nombre, u.apellidoPaterno, u.apellidoMaterno,
+              u.nombreCompleto, u.email, u.passwordHash,
               u.status, u.emailVerificado, u.createdAt,
-              u.lastLogin, u.perfilCompletado
+              u.lastLogin, u.perfilCompletado, u.matricula,
+              u.requiereCambioPassword
        FROM usuarios u
-       WHERE u.email = ? AND u.status = 'ACTIVO'`,
-      [email]
+       WHERE (u.email = ? OR u.matricula = ?) AND u.status = 'ACTIVO'`,
+      [email, email]
     );
 
     if (userRows.length === 0) {
@@ -361,11 +363,13 @@ const login = async (req, res) => {
       apellidoMaterno: user.apellidoMaterno,
       nombreCompleto: user.nombreCompleto,
       email: user.email,
+      matricula: user.matricula,
       status: user.status,
       emailVerificado: user.emailVerificado,
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
       perfilCompletado: user.perfilCompletado,
+      requiereCambioPassword: user.requiereCambioPassword,
       instituciones: payloadInstituciones,
     };
 
@@ -660,6 +664,97 @@ const updateProfile = async (req, res) => {
   }
 };
 
+/**
+ * Cambiar contraseña del usuario
+ */
+const cambiarPassword = async (req, res) => {
+  let conn;
+
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Validaciones básicas
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Se requiere contraseña actual y nueva contraseña"
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: "La nueva contraseña debe tener al menos 8 caracteres"
+      });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "La nueva contraseña debe ser diferente a la actual"
+      });
+    }
+
+    conn = await pool.getConnection();
+
+    // Obtener usuario actual
+    const [userRows] = await conn.execute(
+      `SELECT passwordHash, requiereCambioPassword FROM usuarios WHERE id = ? AND status = 'ACTIVO'`,
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado"
+      });
+    }
+
+    const user = userRows[0];
+
+    // Verificar contraseña actual
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isCurrentPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "La contraseña actual es incorrecta"
+      });
+    }
+
+    // Hash de la nueva contraseña
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    // Actualizar contraseña y marcar que ya no requiere cambio
+    await conn.execute(
+      `UPDATE usuarios
+       SET passwordHash = ?, requiereCambioPassword = FALSE, updatedAt = NOW()
+       WHERE id = ?`,
+      [newPasswordHash, userId]
+    );
+
+    console.log(`✅ Contraseña cambiada para usuario: ${userId}`);
+
+    res.json({
+      success: true,
+      message: "Contraseña cambiada exitosamente",
+      data: {
+        requiereCambioPassword: false
+      }
+    });
+
+  } catch (error) {
+    console.error("Error cambiando contraseña:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+      ...(process.env.NODE_ENV !== "production" && { error: error.message })
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
 module.exports = {
   login,
   logout,
@@ -669,4 +764,5 @@ module.exports = {
   generateToken,
   sanitizeUser,
   register,
+  cambiarPassword,
 };

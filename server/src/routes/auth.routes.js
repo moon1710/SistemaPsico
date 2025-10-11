@@ -6,6 +6,7 @@ const {
   updateProfile,
   verifyToken,
   register,
+  cambiarPassword,
 } = require("../controllers/auth.controller");
 
 const {
@@ -29,6 +30,7 @@ router.post("/logout", authenticateToken, logout);
 router.get("/profile", authenticateToken, getProfile);
 router.put("/profile", authenticateToken, updateProfile);
 router.get("/verify", authenticateToken, verifyToken);
+router.post("/cambiar-password", authenticateToken, cambiarPassword);
 
 // Rutas de prueba de roles (si las usas)
 router.get("/test-roles/super-admin", requireSuperAdminNacional, (req, res) => {

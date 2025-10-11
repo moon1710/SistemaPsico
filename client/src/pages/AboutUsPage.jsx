@@ -4,7 +4,7 @@ export default function AboutUsPage() {
   const { pathname } = useLocation();
   return (
     <div className="p-6 text-lg">
-      Estás en: <code>{pathname}</code> — About Us
+      AAAAAAAAAAAAAA
     </div>
   );
 }
