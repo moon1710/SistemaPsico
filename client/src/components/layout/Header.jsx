@@ -23,11 +23,13 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  // Temporarily commented out notifications functionality
+  // const [showNotifications, setShowNotifications] = useState(false);
+  // const [notifications, setNotifications] = useState([]);
+  // const [unreadCount, setUnreadCount] = useState(0);
 
-  // Cargar notificaciones recientes
+  // Cargar notificaciones recientes - Temporarily disabled
+  /*
   useEffect(() => {
     const loadRecentNotifications = async () => {
       try {
@@ -50,7 +52,10 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
       return () => clearInterval(interval);
     }
   }, [user]);
+  */
 
+  // Temporarily disabled notification icon function
+  /*
   const getNotificationIcon = (tipo) => {
     const iconMap = {
       cita: Calendar,
@@ -62,6 +67,7 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
     const IconComponent = iconMap[tipo] || Bell;
     return <IconComponent className="w-4 h-4" />;
   };
+  */
 
   const handleLogout = async () => {
     await logout();
@@ -118,16 +124,15 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
           </Link>
         </div>
 
-        {/* Right side - Notifications y user menu */}
+        {/* Right side - User menu */}
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
+          {/* Notifications - Commented out temporarily
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors relative"
             >
               <Bell className="w-5 h-5" />
-              {/* Notification badge */}
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[12px] h-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center px-1">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -135,7 +140,6 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
               )}
             </button>
 
-            {/* Notifications dropdown */}
             {showNotifications && (
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                 <div className="px-4 py-2 border-b border-gray-100">
@@ -197,6 +201,7 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
               </div>
             )}
           </div>
+          */}
 
           {/* User menu */}
           <div className="relative">
@@ -283,12 +288,12 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
       </div>
 
       {/* Click outside to close dropdowns */}
-      {(showUserMenu || showNotifications) && (
+      {showUserMenu && (
         <div
           className="fixed inset-0 z-30"
           onClick={() => {
             setShowUserMenu(false);
-            setShowNotifications(false);
+            // setShowNotifications(false); // Temporarily disabled
           }}
         />
       )}

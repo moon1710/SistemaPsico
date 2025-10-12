@@ -32,6 +32,7 @@ import ConfigurationPage from "./pages/ConfigurationPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import SupportPage from "./pages/SupportPage";
 import RecommendationsPage from "./pages/RecommendationsPage";
+import RecursosPage from "./pages/RecursosPage";
 import CambiarPasswordPage from "./pages/CambiarPasswordPage";
 
 //QuizzesPages
@@ -359,6 +360,18 @@ function App() {
           <ProtectedRoute requiredRoles={['ESTUDIANTE', 'PSICOLOGO', 'ORIENTADOR', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
             <Layout>
               <RecommendationsPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Recursos - Centro de bienestar para estudiantes */}
+      <Route
+        path={ROUTES.RECURSOS}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
+            <Layout>
+              <RecursosPage />
             </Layout>
           </ProtectedRoute>
         }

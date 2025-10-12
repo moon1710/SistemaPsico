@@ -120,6 +120,7 @@ export const ROUTES = {
   QUIZ_CONTESTAR: "/quiz/contestar",
   MIS_CITAS: "/mis-citas",
   RECOMENDACIONES: "/recomendaciones",
+  RECURSOS: "/recursos",
 
   // Quizzes
   QUIZ_CONTESTAR_DETALLE: "/quiz/contestar/:quizId",

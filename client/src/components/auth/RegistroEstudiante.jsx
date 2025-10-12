@@ -32,7 +32,7 @@ const RegistroEstudiante = ({ onSuccess, onBackToLogin }) => {
         if (!valor) {
           newErrors.numeroControl = 'Número de control es requerido';
         } else if (!validarNumeroControl(valor)) {
-          newErrors.numeroControl = 'Número de control debe tener 8 caracteres (puede empezar con letra o número)';
+          newErrors.numeroControl = 'Número de control debe tener entre 8 y 10 caracteres alfanuméricos';
         } else {
           delete newErrors.numeroControl;
           // Generar email automáticamente si es válido
@@ -102,7 +102,7 @@ const RegistroEstudiante = ({ onSuccess, onBackToLogin }) => {
 
     // Procesar número de control
     if (name === 'numeroControl') {
-      const valorLimpio = value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
+      const valorLimpio = value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 10);
       setFormData(prev => ({ ...prev, [name]: valorLimpio }));
       validarCampo(name, valorLimpio);
     } else {
@@ -219,8 +219,8 @@ const RegistroEstudiante = ({ onSuccess, onBackToLogin }) => {
               name="numeroControl"
               value={formData.numeroControl}
               onChange={handleInputChange}
-              placeholder="Ej: 21350271 o E13350161"
-              maxLength={8}
+              placeholder="Ej: 21350271, E13350161, M25350001"
+              maxLength={10}
               className={errors.numeroControl ? 'border-red-500' : ''}
               required
             />

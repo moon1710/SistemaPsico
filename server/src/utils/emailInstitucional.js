@@ -16,9 +16,9 @@ function generarEmailInstitucional(numeroControl) {
 
   const control = numeroControl.trim();
 
-  // Validar longitud (debe ser 8 caracteres)
-  if (control.length !== 8) {
-    throw new Error('Número de control debe tener exactamente 8 caracteres');
+  // Validar longitud (debe ser entre 8 y 10 caracteres)
+  if (control.length < 8 || control.length > 10) {
+    throw new Error('Número de control debe tener entre 8 y 10 caracteres');
   }
 
   // Verificar si empieza con número o letra
@@ -46,13 +46,14 @@ function validarNumeroControl(numeroControl) {
 
   const control = numeroControl.trim();
 
-  // Debe tener exactamente 8 caracteres
-  if (control.length !== 8) {
+  // Debe tener entre 8 y 10 caracteres
+  if (control.length < 8 || control.length > 10) {
     return false;
   }
 
-  // Puede empezar con letra o número, seguido de números
-  const formatoValido = /^[A-Za-z0-9][0-9]{7}$/.test(control);
+  // Puede empezar con letra o número, seguido de números y letras
+  // Formatos válidos: 8-10 caracteres alfanuméricos
+  const formatoValido = /^[A-Za-z0-9]{8,10}$/.test(control);
   return formatoValido;
 }
 
@@ -170,6 +171,14 @@ const EJEMPLOS = {
   conLetraM: {
     input: 'M19350086',
     email: 'M19350086@tuxtepec.tecnm.mx'
+  },
+  conLongitud9: {
+    input: 'M25350001',
+    email: 'M25350001@tuxtepec.tecnm.mx'
+  },
+  conLongitud10: {
+    input: 'BE19020191',
+    email: 'BE19020191@tuxtepec.tecnm.mx'
   }
 };
 

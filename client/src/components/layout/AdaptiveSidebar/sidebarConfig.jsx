@@ -15,6 +15,7 @@ import {
   BarChart3,
   TrendingUp,
   Clock,
+  Shield,
 } from "lucide-react";
 import { ROUTES } from "../../../utils/constants";
 
@@ -202,9 +203,9 @@ export const roleSpecificItems = [
     roles: ["ESTUDIANTE"],
   },
   {
-    href: ROUTES.RECOMENDACIONES,
-    icon: BookOpen,
-    label: "Recomendaciones",
+    href: ROUTES.RECURSOS,
+    icon: Shield,
+    label: "Recursos",
     roles: ["ESTUDIANTE"],
   },
 
