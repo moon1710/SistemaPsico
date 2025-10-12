@@ -89,31 +89,36 @@ function analizarNumeroControl(numeroControl) {
 }
 
 /**
- * Mapea género del Excel al formato de la BD
+ * Mapea género del Excel al formato de la BD (ENUM válido)
  * @param {string} genero - Género desde Excel (M/F/etc)
  * @returns {string} Género normalizado
  */
 function mapearGenero(genero) {
-  if (!genero) return 'NO_ESPECIFICADO';
+  if (!genero) return 'PREFIERO_NO_DECIR';
 
-  const generoNormalizado = genero.toString().toUpperCase().trim();
+  // Normalizar: convertir a string, quitar espacios, y hacer uppercase
+  const generoNormalizado = genero.toString().trim().toUpperCase();
 
   const mapeo = {
+    // Formatos comunes de Excel (m/f)
     'M': 'MASCULINO',
+    'F': 'FEMENINO',
+    // Formatos completos
     'MASCULINO': 'MASCULINO',
     'HOMBRE': 'MASCULINO',
-    'F': 'FEMENINO',
     'FEMENINO': 'FEMENINO',
     'MUJER': 'FEMENINO',
+    // No binario
     'NB': 'NO_BINARIO',
     'NO_BINARIO': 'NO_BINARIO',
     'NO BINARIO': 'NO_BINARIO',
-    'OTRO': 'OTRO',
+    // Otros casos
+    'OTRO': 'PREFIERO_NO_DECIR',
     'PREFIERO_NO_DECIR': 'PREFIERO_NO_DECIR',
     'PREFIERO NO DECIR': 'PREFIERO_NO_DECIR'
   };
 
-  return mapeo[generoNormalizado] || 'NO_ESPECIFICADO';
+  return mapeo[generoNormalizado] || 'PREFIERO_NO_DECIR';
 }
 
 /**

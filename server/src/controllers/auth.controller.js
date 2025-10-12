@@ -205,14 +205,20 @@ const register = async (req, res) => {
 
     // Asignar psicólogo automáticamente si es estudiante
     if (rol === "ESTUDIANTE" && institucionId) {
-      await autoAssignPsychologist(conn, id, institucionId);
+      try {
+        await autoAssignPsychologist(conn, id, institucionId);
+      } catch (error) {
+        console.error('⚠️  Error en autoAssignPsychologist (no crítico):', error);
+        // No lanzamos el error para que no afecte el registro
+      }
     }
 
     await conn.commit();
 
     // Crear notificación de bienvenida después del commit exitoso
     try {
-      await crearNotificacionBienvenida(id, nombreCompleto, rol);
+      // await crearNotificacionBienvenida(id, nombreCompleto, rol);
+      console.log('✅ Notificación de bienvenida omitida temporalmente');
     } catch (error) {
       console.error('Error creando notificación de bienvenida:', error);
       // No afecta el registro del usuario

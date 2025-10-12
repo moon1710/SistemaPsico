@@ -109,21 +109,26 @@ const procesarEstudiante = async (fila, connection) => {
     throw new Error('Campos requeridos faltantes: NoControl, Nombres, ApellidoPaterno');
   }
 
-  // Validar número de control
-  if (!validarNumeroControl(fila.NoControl)) {
-    throw new Error(`Número de control inválido: ${fila.NoControl}`);
+  // Convertir NoControl a string y validar
+  const numeroControl = String(fila.NoControl).trim();
+  console.log(`Debug: NoControl original: ${fila.NoControl} (tipo: ${typeof fila.NoControl})`);
+  console.log(`Debug: NoControl convertido: ${numeroControl} (tipo: ${typeof numeroControl})`);
+
+  if (!validarNumeroControl(numeroControl)) {
+    throw new Error(`Número de control inválido: ${numeroControl} (original: ${fila.NoControl})`);
   }
 
   // Generar email institucional
-  const email = generarEmailInstitucional(fila.NoControl);
+  const email = generarEmailInstitucional(numeroControl);
 
   // Verificar si ya existe
-  if (await estudianteExiste(connection, fila.NoControl, email)) {
-    throw new Error(`Estudiante ya existe: ${fila.NoControl} / ${email}`);
+  if (await estudianteExiste(connection, numeroControl, email)) {
+    throw new Error(`Estudiante ya existe: ${numeroControl} / ${email}`);
   }
 
-  // Buscar institución
-  const institucionId = await buscarInstitucionPorNombre(connection, fila.NombreInstituto);
+  // Usar institución fija (ID específico) - comentar la línea siguiente si quieres usar búsqueda por nombre
+  const institucionId = "3579387c-6c49-49c6-83ed-d1f33e79d8a6"; // Institución fija
+  // const institucionId = await buscarInstitucionPorNombre(connection, fila.NombreInstituto); // Búsqueda dinámica
 
   // Hash de la contraseña inicial
   const passwordHash = await bcrypt.hash(CONTRASEÑA_INICIAL, 10);
@@ -135,6 +140,10 @@ const procesarEstudiante = async (fila, connection) => {
     fechaNacimiento = new Date(fila.FechaNacimiento);
     edad = calcularEdad(fechaNacimiento);
   }
+
+  // Mapear género de Excel (m/f) a formato válido del ENUM
+  const generoMapeado = mapearGenero(fila.Genero);
+  console.log(`Debug: Género original: "${fila.Genero}" -> mapeado: "${generoMapeado}"`);
 
   // Crear objeto usuario
   const usuario = {
@@ -154,13 +163,13 @@ const procesarEstudiante = async (fila, connection) => {
     nombreCompleto: `${fila.Nombres.trim()} ${fila.ApellidoPaterno.trim()} ${fila.ApellidoMaterno ? fila.ApellidoMaterno.trim() : ''}`.trim(),
 
     // Identificación
-    matricula: fila.NoControl.trim(),
+    matricula: numeroControl,
     rfc: fila.RFC ? fila.RFC.trim() : null,
 
     // Demográficos
     fechaNacimiento: fechaNacimiento,
     edad: edad,
-    genero: mapearGenero(fila.Genero),
+    genero: generoMapeado,
 
     // Estado del sistema
     rol: 'ESTUDIANTE',
@@ -178,36 +187,103 @@ const procesarEstudiante = async (fila, connection) => {
 };
 
 /**
- * Inserta usuario en la base de datos
+ * Inserta usuario directamente en la base de datos (método directo y confiable)
  * @param {object} connection - Conexión a BD
  * @param {object} usuario - Objeto usuario
  */
 const insertarUsuario = async (connection, usuario) => {
   try {
-    const sql = `
+    await connection.beginTransaction();
+
+    // Verificar si ya existe
+    const [existeUsuario] = await connection.execute(
+      'SELECT id FROM usuarios WHERE email = ? OR matricula = ?',
+      [usuario.email, usuario.matricula]
+    );
+
+    if (existeUsuario.length > 0) {
+      console.log(`ℹ️  Usuario ya existe: ${usuario.email}`);
+      await connection.rollback();
+      return;
+    }
+
+    // 1. Insertar usuario con todos los campos requeridos
+    const sqlUsuario = `
       INSERT INTO usuarios (
         id, institucionId, email, emailVerificado, passwordHash,
         nombre, apellidoPaterno, apellidoMaterno, nombreCompleto,
         matricula, rfc, fechaNacimiento, edad, genero,
-        rol, status, requiereCambioPassword, perfilCompletado,
-        createdAt, updatedAt, createdBy
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        status, requiereCambioPassword, perfilCompletado,
+        createdAt, updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(3), NOW(3))
     `;
 
-    const valores = [
-      usuario.id, usuario.institucionId, usuario.email, usuario.emailVerificado, usuario.passwordHash,
+    const valoresUsuario = [
+      usuario.id, usuario.institucionId, usuario.email, 1, usuario.passwordHash,
       usuario.nombre, usuario.apellidoPaterno, usuario.apellidoMaterno, usuario.nombreCompleto,
       usuario.matricula, usuario.rfc, usuario.fechaNacimiento, usuario.edad, usuario.genero,
-      usuario.rol, usuario.status, usuario.requiereCambioPassword, usuario.perfilCompletado,
-      usuario.createdAt, usuario.updatedAt, usuario.createdBy
+      'ACTIVO', 1, 0
     ];
 
-    await connection.execute(sql, valores);
-    console.log(`✅ Usuario insertado: ${usuario.matricula} - ${usuario.email}`);
+    await connection.execute(sqlUsuario, valoresUsuario);
+
+    // 2. Insertar membresía institucional
+    const sqlMembresia = `
+      INSERT INTO usuario_institucion (usuarioId, institucionId, rolInstitucion, activo)
+      VALUES (?, ?, 'ESTUDIANTE', 1)
+    `;
+    await connection.execute(sqlMembresia, [usuario.id, usuario.institucionId]);
+
+    await connection.commit();
+    console.log(`✅ Usuario y membresía insertados directamente: ${usuario.matricula} - ${usuario.email}`);
 
   } catch (error) {
+    await connection.rollback();
     console.error(`❌ Error insertando usuario ${usuario.matricula}:`, error);
     throw error;
+  }
+};
+
+/**
+ * Actualiza datos adicionales del usuario después del registro
+ */
+const actualizarDatosAdicionales = async (connection, userId, usuario) => {
+  try {
+    const updates = [];
+    const params = [];
+
+    if (usuario.matricula) {
+      updates.push('matricula = ?');
+      params.push(usuario.matricula);
+    }
+    if (usuario.rfc) {
+      updates.push('rfc = ?');
+      params.push(usuario.rfc);
+    }
+    if (usuario.fechaNacimiento) {
+      updates.push('fechaNacimiento = ?');
+      params.push(usuario.fechaNacimiento);
+    }
+    if (usuario.edad) {
+      updates.push('edad = ?');
+      params.push(usuario.edad);
+    }
+    if (usuario.genero) {
+      updates.push('genero = ?');
+      params.push(usuario.genero);
+    }
+
+    if (updates.length > 0) {
+      updates.push('updatedAt = NOW()');
+      const sql = `UPDATE usuarios SET ${updates.join(', ')} WHERE id = ?`;
+      params.push(userId);
+
+      await connection.execute(sql, params);
+      console.log(`✅ Datos adicionales actualizados para: ${usuario.matricula}`);
+    }
+  } catch (error) {
+    console.error(`⚠️  Error actualizando datos adicionales:`, error);
+    // No lanzamos error para que no falle el registro principal
   }
 };
 

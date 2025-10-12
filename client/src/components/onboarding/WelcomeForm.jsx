@@ -19,10 +19,10 @@ const WelcomeForm = () => {
 
   const [formData, setFormData] = useState({
     telefono: "",
-    fechaNacimiento: "",
-    genero: "",
-    ciudad: "",
-    estado: "",
+    // fechaNacimiento: "", // Comentado temporalmente
+    // genero: "", // Comentado temporalmente
+    // ciudad: "", // Comentado temporalmente
+    // estado: "", // Comentado temporalmente
     ...(userRole === "ESTUDIANTE" && {
       semestre: "",
       grupo: "",
@@ -182,6 +182,8 @@ const WelcomeForm = () => {
               )}
             </div>
 
+            {/* Comentado temporalmente - Fecha de nacimiento */}
+            {/*
             <div>
               <label className="block text-sm text-gray-600 mb-1">
                 Fecha de nacimiento {userRole === "ESTUDIANTE" && "*"}
@@ -202,7 +204,10 @@ const WelcomeForm = () => {
                 </p>
               )}
             </div>
+            */}
 
+            {/* Comentado temporalmente - Género */}
+            {/*
             <div>
               <label className="block text-sm text-gray-600 mb-1">
                 Género {userRole === "ESTUDIANTE" && "*"}
@@ -226,7 +231,10 @@ const WelcomeForm = () => {
                 <p className="text-red-600 text-sm mt-1">{formErrors.genero}</p>
               )}
             </div>
+            */}
 
+            {/* Comentado temporalmente - Estado */}
+            {/*
             <div>
               <label className="block text-sm text-gray-600 mb-1">
                 Estado {userRole === "ESTUDIANTE" && "*"}
@@ -245,7 +253,10 @@ const WelcomeForm = () => {
                 <p className="text-red-600 text-sm mt-1">{formErrors.estado}</p>
               )}
             </div>
+            */}
 
+            {/* Comentado temporalmente - Ciudad */}
+            {/*
             <div className="md:col-span-2">
               <label className="block text-sm text-gray-600 mb-1">
                 Ciudad {userRole === "ESTUDIANTE" && "*"}
@@ -264,6 +275,7 @@ const WelcomeForm = () => {
                 <p className="text-red-600 text-sm mt-1">{formErrors.ciudad}</p>
               )}
             </div>
+            */}
           </div>
         </div>
 

@@ -43,6 +43,9 @@ class AuthService {
    */
   async login(credentials) {
     try {
+      console.log('🔐 Login attempt with credentials:', credentials);
+      console.log('🌐 API endpoint:', `${API_CONFIG.API_BASE}${AUTH_ENDPOINTS.LOGIN}`);
+
       const response = await api.post(AUTH_ENDPOINTS.LOGIN, credentials);
 
       if (response.data.success) {
@@ -64,6 +67,8 @@ class AuthService {
       };
     } catch (error) {
       console.error("Error en login:", error);
+      console.error("Response data:", error.response?.data);
+      console.error("Response status:", error.response?.status);
 
       return {
         success: false,
