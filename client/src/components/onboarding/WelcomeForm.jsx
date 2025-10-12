@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import { API_CONFIG } from "../../utils/constants";
 
@@ -16,6 +17,8 @@ const WelcomeForm = () => {
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     telefono: "",
@@ -40,6 +43,9 @@ const WelcomeForm = () => {
       telefonoEmergencia: "",
     }),
     aceptaTerminos: false, // <- requerido
+    // Campos para cambio de contraseña
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const handleInputChange = (e) => {
@@ -65,10 +71,62 @@ const WelcomeForm = () => {
       return;
     }
 
+    // Validaciones de contraseña
+    const errors = {};
+
+    if (!formData.newPassword) {
+      errors.newPassword = "Debes ingresar una nueva contraseña";
+    } else if (formData.newPassword.length < 8) {
+      errors.newPassword = "La nueva contraseña debe tener al menos 8 caracteres";
+    } else if (formData.newPassword === "NeuroFlora*25") {
+      errors.newPassword = "La nueva contraseña debe ser diferente a la temporal";
+    }
+
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "Debes confirmar tu nueva contraseña";
+    } else if (formData.newPassword !== formData.confirmPassword) {
+      errors.confirmPassword = "Las contraseñas no coinciden";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setSubmitError("Por favor corrige los errores en el formulario.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      // Primero cambiar la contraseña (usar automáticamente NeuroFlora*25)
+      const passwordChangeResponse = await fetch(
+        `${API_CONFIG.API_BASE}/auth/cambiar-password`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            currentPassword: "NeuroFlora*25",
+            newPassword: formData.newPassword,
+          }),
+        }
+      );
+
+      if (!passwordChangeResponse.ok) {
+        const passwordError = await passwordChangeResponse.json().catch(() => null);
+        setSubmitError(passwordError?.message || "Error al cambiar la contraseña");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Luego completar el perfil
       const dataToSend = {};
       Object.keys(formData).forEach((key) => {
+        // Excluir campos de contraseña del perfil
+        if (["newPassword", "confirmPassword"].includes(key)) {
+          return;
+        }
         const value = formData[key];
         if (typeof value === "boolean") dataToSend[key] = value;
         else if (typeof value === "number") dataToSend[key] = value;
@@ -508,6 +566,106 @@ const WelcomeForm = () => {
             </div>
           </div>
         )}
+
+        {/* Cambio de contraseña */}
+        <div className={`${card} p-5`} style={{
+          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+          border: "1px solid #e2e8f0"
+        }}>
+          <h3 className="text-lg md:text-xl font-semibold text-[#21252d] flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#527ceb] to-[#6762b3] flex items-center justify-center">
+              <Eye className="w-4 h-4 text-white" />
+            </div>
+            Crear nueva contraseña
+          </h3>
+          <p className="text-sm text-gray-600 mt-2">
+            Tu contraseña actual es temporal. Por seguridad, debes cambiarla ahora por una personalizada.
+          </p>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nueva contraseña *
+              </label>
+              <div className="relative">
+                <input
+                  className={`${inputBase} pr-10 ${
+                    formErrors.newPassword ? "border-red-400 bg-red-50" : ""
+                  }`}
+                  type={showNewPassword ? "text" : "password"}
+                  name="newPassword"
+                  value={formData.newPassword}
+                  onChange={handleInputChange}
+                  placeholder="Mínimo 8 caracteres"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              {formErrors.newPassword && (
+                <p className="text-red-600 text-sm mt-1">
+                  {formErrors.newPassword}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirmar nueva contraseña *
+              </label>
+              <div className="relative">
+                <input
+                  className={`${inputBase} pr-10 ${
+                    formErrors.confirmPassword ? "border-red-400 bg-red-50" : ""
+                  }`}
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Repite la nueva contraseña"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              {formErrors.confirmPassword && (
+                <p className="text-red-600 text-sm mt-1">
+                  {formErrors.confirmPassword}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+            <p className="text-sm font-medium text-blue-800 mb-2">
+              💡 Recomendaciones para tu nueva contraseña:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-blue-700">
+              <div>• Al menos 8 caracteres</div>
+              <div>• Incluye números y símbolos</div>
+              <div>• Mayúsculas y minúsculas</div>
+              <div>• Evita información personal</div>
+            </div>
+          </div>
+        </div>
 
         {/* Aviso de Privacidad (resumen + checkbox requerido) */}
         <div className={`${card} p-5`}>
