@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   AlertTriangle,
   Wind,
@@ -19,7 +20,9 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronRight,
+  Zap,
 } from "lucide-react";
+import { ROUTES } from "../utils/constants";
 
 const RecursosPage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
@@ -28,7 +31,7 @@ const RecursosPage = () => {
     setExpandedSection(expandedSection === sectionId ? null : sectionId);
   };
 
-  const recursos = [
+  const recursosInteractivos = [
     {
       id: "crisis",
       title: "Crisis Inmediata",
@@ -36,100 +39,48 @@ const RecursosPage = () => {
       color: "red",
       urgent: true,
       description: "Ayuda inmediata disponible 24/7",
-      items: [
-        {
-          title: "Plan de Seguridad Personal",
-          description: "Pasos a seguir en momentos de crisis",
-          action: "Crear Plan",
-          icon: Shield,
-        },
-        {
-          title: "Contactos de Emergencia",
-          description: "Números de apoyo institucional y nacional",
-          action: "Ver Contactos",
-          icon: Phone,
-        },
-        {
-          title: "Técnica de Respiración 4-7-8",
-          description: "Ejercicio rápido para calmar la ansiedad",
-          action: "Practicar Ahora",
-          icon: Wind,
-        },
-        {
-          title: "Grounding 5-4-3-2-1",
-          description: "Reconecta con el presente usando tus sentidos",
-          action: "Comenzar",
-          icon: Brain,
-        },
-      ],
+      link: ROUTES.CRISIS_INMEDIATA,
+      features: ["Plan de seguridad personal", "Contactos de emergencia", "Técnicas rápidas de estabilización"]
     },
     {
       id: "primeros-auxilios",
       title: "Primeros Auxilios Emocionales",
       icon: Heart,
       color: "blue",
-      description: "Técnicas de 5-10 minutos para estabilizar emociones",
-      items: [
-        {
-          title: "Respiración Diafragmática",
-          description: "Ejercicio guiado para reducir el estrés",
-          action: "Audio Guiado",
-          icon: Wind,
-          duration: "8 min",
-        },
-        {
-          title: "Nube de Pensamientos",
-          description: "Externaliza y observa tus pensamientos",
-          action: "Ejercicio",
-          icon: Brain,
-          duration: "5 min",
-        },
-        {
-          title: "Escaneo Corporal",
-          description: "Relajación progresiva guiada",
-          action: "Audio",
-          icon: Activity,
-          duration: "10 min",
-        },
-      ],
+      description: "Cómo ayudar a alguien en crisis",
+      link: ROUTES.PRIMEROS_AUXILIOS,
+      features: ["Protocolos paso a paso", "Crisis de ansiedad", "Crisis depresivas", "Episodios disociativos"]
     },
     {
-      id: "programas",
-      title: "Programas Autoguiados",
-      icon: Clock,
-      color: "purple",
-      description: "Programas de 2-6 semanas para desarrollo personal",
-      items: [
-        {
-          title: "Activación Conductual",
-          description: "Programa de 4 semanas para mejorar el ánimo",
-          action: "Comenzar Programa",
-          icon: Activity,
-          duration: "4 semanas",
-        },
-        {
-          title: "Registro de Pensamientos (CBT)",
-          description: "Identifica y cambia patrones de pensamiento",
-          action: "Iniciar",
-          icon: Brain,
-          duration: "6 semanas",
-        },
-        {
-          title: "Plan de Sueño",
-          description: "Mejora tu higiene del sueño paso a paso",
-          action: "Empezar",
-          icon: Moon,
-          duration: "3 semanas",
-        },
-        {
-          title: "Manejo de Preocupación",
-          description: "Técnicas para controlar pensamientos repetitivos",
-          action: "Acceder",
-          icon: Brain,
-          duration: "2 semanas",
-        },
-      ],
+      id: "respiracion",
+      title: "Respiración Guiada",
+      icon: Wind,
+      color: "green",
+      description: "Técnicas de respiración interactivas",
+      link: ROUTES.RESPIRACION_GUIADA,
+      features: ["Respiración 4-7-8", "Respiración cuadrada", "Respiración profunda", "Con temporizador"]
     },
+    {
+      id: "grounding",
+      title: "Técnica 5-4-3-2-1",
+      icon: Brain,
+      color: "purple",
+      description: "Grounding interactivo con los 5 sentidos",
+      link: ROUTES.TECNICA_5432,
+      features: ["Guía paso a paso", "Registro de respuestas", "Conecta con el presente"]
+    },
+    {
+      id: "relajacion",
+      title: "Relajación Muscular",
+      icon: Zap,
+      color: "indigo",
+      description: "Relajación muscular progresiva guiada",
+      link: ROUTES.RELAJACION_MUSCULAR,
+      features: ["Sesión completa", "Versión rápida", "Grupos específicos", "Con instrucciones de voz"]
+    }
+  ];
+
+  const recursosEstaticos = [
     {
       id: "habitos",
       title: "Hábitos y Estilo de Vida",
@@ -138,94 +89,41 @@ const RecursosPage = () => {
       description: "Fundamentos para el bienestar diario",
       items: [
         {
-          title: "Guía Completa del Sueño",
-          description: "Todo sobre higiene del sueño y rutinas",
-          action: "Descargar PDF",
-          icon: Download,
-        },
-        {
-          title: "Alimentación Consciente",
-          description: "Principios básicos de nutrición para estudiantes",
-          action: "Ver Guía",
-          icon: Heart,
-        },
-        {
-          title: "Micro-pausas Activas",
-          description: "Ejercicios de 2 minutos durante el estudio",
-          action: "Video Tutorial",
-          icon: Activity,
-        },
-        {
-          title: "Reducción de Cafeína",
-          description: "Plan gradual para equilibrar el consumo",
-          action: "Plan 7 días",
+          title: "Guía del Sueño Estudiantil",
+          description: "Consejos prácticos para mejorar tu descanso",
+          action: "Próximamente",
           icon: Moon,
+          comingSoon: true,
+        },
+        {
+          title: "Pausas Activas",
+          description: "Ejercicios de 2 minutos durante el estudio",
+          action: "Próximamente",
+          icon: Activity,
+          comingSoon: true,
         },
       ],
     },
     {
       id: "academico",
       title: "Apoyo Académico",
-      icon: Clock,
+      icon: FileText,
       color: "orange",
-      description: "Herramientas para el éxito académico sin estrés",
+      description: "Herramientas para el éxito académico",
       items: [
         {
-          title: "Planificador Semanal",
-          description: "Template imprimible para organizar tu semana",
-          action: "Descargar",
-          icon: Download,
-        },
-        {
-          title: "Método Pomodoro",
-          description: "Técnica de productividad con descansos",
-          action: "Tutorial",
+          title: "Planificador de Estudios",
+          description: "Organiza tu tiempo de forma efectiva",
+          action: "Próximamente",
           icon: Clock,
+          comingSoon: true,
         },
         {
-          title: "Exámenes sin Ansiedad",
-          description: "Estrategias probadas para reducir el estrés",
-          action: "Guía Completa",
+          title: "Manejo de Ansiedad ante Exámenes",
+          description: "Estrategias para reducir el estrés académico",
+          action: "Próximamente",
           icon: Brain,
-        },
-        {
-          title: "Comunicación con Docentes",
-          description: "Cómo pedir extensiones y apoyo académico",
-          action: "Plantillas",
-          icon: FileText,
-        },
-      ],
-    },
-    {
-      id: "seguridad",
-      title: "Seguridad y Protección",
-      icon: Shield,
-      color: "green",
-      description: "Recursos para situaciones de riesgo",
-      items: [
-        {
-          title: "Documentar Incidentes",
-          description: "Guía paso a paso para reportar situaciones",
-          action: "Guía Legal",
-          icon: FileText,
-        },
-        {
-          title: "Canales Institucionales",
-          description: "Contactos seguros dentro del campus",
-          action: "Directorio",
-          icon: Phone,
-        },
-        {
-          title: "Autocuidado Post-Evento",
-          description: "Cómo cuidarte después de una experiencia difícil",
-          action: "Recurso",
-          icon: Heart,
-        },
-        {
-          title: "Privacidad Digital",
-          description: "Protege tu información en redes sociales",
-          action: "Checklist",
-          icon: Smartphone,
+          comingSoon: true,
         },
       ],
     },
@@ -234,46 +132,22 @@ const RecursosPage = () => {
       title: "Red de Apoyo",
       icon: Users,
       color: "teal",
-      description: "Construye y fortalece tu red de soporte",
+      description: "Construye tu red de soporte",
       items: [
         {
-          title: "Mapa de Apoyo Personal",
-          description: "Identifica quién está disponible para ti",
-          action: "Crear Mapa",
-          icon: Users,
+          title: "Directorio de Contactos Campus",
+          description: "Servicios de apoyo disponibles en tu institución",
+          action: "Ver Directorio",
+          icon: Phone,
+          available: true,
         },
         {
           title: "Cómo Pedir Ayuda",
-          description: "Estrategias para comunicar tus necesidades",
-          action: "Guía",
+          description: "Guía para comunicar tus necesidades",
+          action: "Ver Guía",
           icon: Heart,
-        },
-        {
-          title: "Mensajes Modelo",
-          description: "Plantillas para pedir apoyo por mensaje",
-          action: "Templates",
-          icon: FileText,
-        },
-      ],
-    },
-    {
-      id: "diversidad",
-      title: "Diversidad e Inclusión",
-      icon: Heart,
-      color: "pink",
-      description: "Recursos para una comunidad inclusiva",
-      items: [
-        {
-          title: "Grupos Estudiantiles",
-          description: "Directorio de comunidades en el campus",
-          action: "Explorar",
-          icon: Users,
-        },
-        {
-          title: "Atención Sensible",
-          description: "Servicios especializados disponibles",
-          action: "Información",
-          icon: Heart,
+          available: true,
+          link: ROUTES.COMO_PEDIR_AYUDA,
         },
       ],
     },
@@ -342,22 +216,86 @@ const RecursosPage = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
-          <button className="bg-white text-red-600 px-6 py-2 rounded-lg font-semibold hover:bg-red-50 transition-colors flex items-center gap-2">
+          <Link
+            to={ROUTES.CRISIS_INMEDIATA}
+            className="bg-white text-red-600 px-6 py-2 rounded-lg font-semibold hover:bg-red-50 transition-colors flex items-center gap-2"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            Centro de Crisis
+          </Link>
+          <button
+            onClick={() => window.open('tel:911', '_self')}
+            className="bg-red-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-800 transition-colors flex items-center gap-2"
+          >
             <Phone className="w-4 h-4" />
-            Emergencias: 911
-          </button>
-          <button className="bg-red-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-800 transition-colors">
-            Psicología Campus
-          </button>
-          <button className="bg-red-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-800 transition-colors">
-            Chat de Crisis
+            911
           </button>
         </div>
       </motion.div>
 
-      {/* Recursos principales */}
-      <div className="space-y-6">
-        {recursos.map((seccion, index) => {
+      {/* Recursos Interactivos */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="space-y-6"
+      >
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Recursos Interactivos</h2>
+          <p className="text-gray-600 mb-6">Herramientas guiadas que puedes usar ahora mismo</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {recursosInteractivos.map((recurso, index) => {
+            const IconComponent = recurso.icon;
+            return (
+              <motion.div
+                key={recurso.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="group"
+              >
+                <Link to={recurso.link} className="block">
+                  <div className={`rounded-xl p-6 border-2 transition-all duration-300 hover:shadow-lg hover:scale-105 ${getColorClasses(recurso.color, recurso.urgent)}`}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <IconComponent className={`w-8 h-8 ${getIconColor(recurso.color)}`} />
+                      <h3 className="text-xl font-bold text-gray-900">{recurso.title}</h3>
+                    </div>
+                    <p className="text-gray-700 mb-4">{recurso.description}</p>
+                    <ul className="space-y-1 mb-4">
+                      {recurso.features.map((feature, i) => (
+                        <li key={i} className="text-sm text-gray-600 flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-current rounded-full opacity-60"></div>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex items-center gap-2 text-blue-600 font-medium group-hover:gap-3 transition-all">
+                      <span>Usar ahora</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Recursos adicionales */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        className="space-y-6"
+      >
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Recursos Adicionales</h2>
+          <p className="text-gray-600 mb-6">Guías, programas y herramientas complementarias</p>
+        </div>
+
+        {recursosEstaticos.map((seccion, index) => {
           const IconComponent = seccion.icon;
           const isExpanded = expandedSection === seccion.id;
 
@@ -417,15 +355,37 @@ const RecursosPage = () => {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: itemIndex * 0.1 }}
-                            className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+                            className={`bg-white rounded-lg p-4 shadow-sm transition-shadow border-l-4 ${
+                              item.comingSoon
+                                ? 'border-yellow-400 opacity-75 cursor-default'
+                                : item.available
+                                ? 'border-green-400 hover:shadow-md cursor-pointer group'
+                                : 'border-gray-300 hover:shadow-md cursor-pointer group'
+                            }`}
                           >
                             <div className="flex items-start gap-3">
-                              <ItemIcon className={`w-5 h-5 mt-1 ${getIconColor(seccion.color)}`} />
+                              <ItemIcon className={`w-5 h-5 mt-1 ${
+                                item.comingSoon
+                                  ? 'text-yellow-600'
+                                  : getIconColor(seccion.color)
+                              }`} />
                               <div className="flex-1">
                                 <div className="flex items-center justify-between mb-2">
-                                  <h4 className="font-semibold text-gray-900">
+                                  <h4 className={`font-semibold ${
+                                    item.comingSoon ? 'text-gray-700' : 'text-gray-900'
+                                  }`}>
                                     {item.title}
                                   </h4>
+                                  {item.comingSoon && (
+                                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                                      Próximamente
+                                    </span>
+                                  )}
+                                  {item.available && (
+                                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                      Disponible
+                                    </span>
+                                  )}
                                   {item.duration && (
                                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
                                       {item.duration}
@@ -435,10 +395,25 @@ const RecursosPage = () => {
                                 <p className="text-sm text-gray-600 mb-3">
                                   {item.description}
                                 </p>
-                                <button className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 group-hover:gap-3 transition-all">
-                                  {item.action}
-                                  <ArrowRight className="w-4 h-4" />
-                                </button>
+                                {item.comingSoon ? (
+                                  <div className="flex items-center gap-2 text-sm font-medium text-yellow-600">
+                                    <Clock className="w-4 h-4" />
+                                    {item.action}
+                                  </div>
+                                ) : item.link ? (
+                                  <Link
+                                    to={item.link}
+                                    className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 group-hover:gap-3 transition-all"
+                                  >
+                                    {item.action}
+                                    <ArrowRight className="w-4 h-4" />
+                                  </Link>
+                                ) : (
+                                  <button className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 group-hover:gap-3 transition-all">
+                                    {item.action}
+                                    <ArrowRight className="w-4 h-4" />
+                                  </button>
+                                )}
                               </div>
                             </div>
                           </motion.div>
@@ -451,7 +426,7 @@ const RecursosPage = () => {
             </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Footer con información adicional */}
       <motion.div
@@ -466,9 +441,12 @@ const RecursosPage = () => {
         <p className="text-gray-600 mb-4">
           Nuestro equipo de psicólogos está disponible para acompañarte en tu proceso.
         </p>
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+        <Link
+          to={ROUTES.AGENDAR_CITA}
+          className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+        >
           Agendar Cita con Psicología
-        </button>
+        </Link>
       </motion.div>
     </div>
   );

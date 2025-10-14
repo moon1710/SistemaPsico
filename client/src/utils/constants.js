@@ -122,6 +122,20 @@ export const ROUTES = {
   RECOMENDACIONES: "/recomendaciones",
   RECURSOS: "/recursos",
 
+  // Recursos específicos
+  CRISIS_INMEDIATA: "/recursos/crisis-inmediata",
+  PRIMEROS_AUXILIOS: "/recursos/primeros-auxilios",
+  RESPIRACION_GUIADA: "/recursos/respiracion-guiada",
+  TECNICA_5432: "/recursos/tecnica-5432",
+  RELAJACION_MUSCULAR: "/recursos/relajacion-muscular",
+  COMO_PEDIR_AYUDA: "/recursos/como-pedir-ayuda",
+  PROGRAMAS_AUTOGUIADOS: "/recursos/programas-autoguiados",
+  HABITOS_SALUDABLES: "/recursos/habitos-saludables",
+  APOYO_ACADEMICO: "/recursos/apoyo-academico",
+  SEGURIDAD: "/recursos/seguridad",
+  RED_APOYO: "/recursos/red-apoyo",
+  DIVERSIDAD: "/recursos/diversidad",
+
   // Quizzes
   QUIZ_CONTESTAR_DETALLE: "/quiz/contestar/:quizId",
   MIS_RESULTADOS: "/quiz/mis-resultados",

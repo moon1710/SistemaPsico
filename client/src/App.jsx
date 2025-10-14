@@ -35,6 +35,14 @@ import RecommendationsPage from "./pages/RecommendationsPage";
 import RecursosPage from "./pages/RecursosPage";
 import CambiarPasswordPage from "./pages/CambiarPasswordPage";
 
+// Páginas de Recursos
+import CrisisInmediataPage from "./pages/recursos/CrisisInmediataPage";
+import RespiracionGuiadaPage from "./pages/recursos/RespiracionGuiadaPage";
+import Tecnica5432Page from "./pages/recursos/Tecnica5432Page";
+import PrimerosAuxiliosPage from "./pages/recursos/PrimerosAuxiliosPage";
+import RelajacionMuscularPage from "./pages/recursos/RelajacionMuscularPage";
+import ComoPedirAyudaPage from "./pages/recursos/ComoPedirAyudaPage";
+
 //QuizzesPages
 import PublicQuizzesPage from "./pages/quizzes/PublicQuizzesPage";
 import TakeQuizPage from "./pages/quizzes/TakeQuizPage";
@@ -372,6 +380,68 @@ function App() {
           <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
             <Layout>
               <RecursosPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Rutas específicas de recursos */}
+      <Route
+        path={ROUTES.CRISIS_INMEDIATA}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
+            <Layout>
+              <CrisisInmediataPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.RESPIRACION_GUIADA}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
+            <Layout>
+              <RespiracionGuiadaPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.TECNICA_5432}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
+            <Layout>
+              <Tecnica5432Page />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.PRIMEROS_AUXILIOS}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
+            <Layout>
+              <PrimerosAuxiliosPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.RELAJACION_MUSCULAR}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
+            <Layout>
+              <RelajacionMuscularPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.COMO_PEDIR_AYUDA}
+        element={
+          <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
+            <Layout>
+              <ComoPedirAyudaPage />
             </Layout>
           </ProtectedRoute>
         }
