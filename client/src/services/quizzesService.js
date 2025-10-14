@@ -71,11 +71,53 @@ export const quizzesApi = {
     if (pageSize) qs.set("pageSize", pageSize);
     return authFetch(`/quizzes/resultados?${qs.toString()}`, { institutionId });
   },
-  analytics: ({ institutionId, codigo, desde, hasta }) => {
+  analytics: ({ institutionId, codigo, desde, hasta, semestre, genero, carrera }) => {
     const qs = new URLSearchParams();
     if (codigo) qs.set("codigo", codigo);
     if (desde) qs.set("desde", desde);
     if (hasta) qs.set("hasta", hasta);
+    if (semestre) qs.set("semestre", semestre);
+    if (genero) qs.set("genero", genero);
+    if (carrera) qs.set("carrera", carrera);
     return authFetch(`/quizzes/analytics?${qs.toString()}`, { institutionId });
+  },
+  exportAnalytics: ({ institutionId, codigo, desde, hasta, semestre, genero, carrera }) => {
+    const qs = new URLSearchParams();
+    if (codigo) qs.set("codigo", codigo);
+    if (desde) qs.set("desde", desde);
+    if (hasta) qs.set("hasta", hasta);
+    if (semestre) qs.set("semestre", semestre);
+    if (genero) qs.set("genero", genero);
+    if (carrera) qs.set("carrera", carrera);
+
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    const url = `${API_CONFIG.API_BASE}/quizzes/analytics/export?${qs.toString()}`;
+
+    // Crear y hacer click en un enlace de descarga
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `analytics_${new Date().toISOString().split('T')[0]}.csv`;
+
+    // Agregar headers de autorización
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-institution-id': String(institutionId)
+      }
+    })
+    .then(response => response.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `analytics_${institutionId}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    })
+    .catch(error => console.error('Error downloading CSV:', error));
   },
 };

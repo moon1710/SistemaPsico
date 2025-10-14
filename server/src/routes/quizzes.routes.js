@@ -349,7 +349,14 @@ router.get(
   async (req, res) => {
     try {
       const institucionId = req.institucionId; // lo setea el guard
-      const { codigo = null, desde = null, hasta = null } = req.query;
+      const {
+        codigo = null,
+        desde = null,
+        hasta = null,
+        semestre = null,
+        genero = null,
+        carrera = null
+      } = req.query;
 
       const where = ["rq.institucionId = ?"];
       const params = [String(institucionId)];
@@ -367,18 +374,33 @@ router.get(
         where.push("DATE(rq.fechaEnvio) <= ?");
         params.push(String(hasta).slice(0, 10));
       }
+      // Nuevos filtros
+      if (semestre) {
+        where.push("u.semestre = ?");
+        params.push(String(semestre));
+      }
+      if (genero) {
+        where.push("u.genero = ?");
+        params.push(String(genero));
+      }
+      if (carrera) {
+        where.push("u.carrera = ?");
+        params.push(String(carrera));
+      }
 
       const WHERE = `WHERE ${where.join(" AND ")}`;
 
       const [summary] = await pool.execute(
         `SELECT
            COUNT(*)             AS total,
+           COUNT(DISTINCT rq.usuarioId) AS uniqueStudents,
            AVG(rq.puntajeTotal) AS promedio,
            MIN(rq.puntajeTotal) AS minimo,
            MAX(rq.puntajeTotal) AS maximo,
            MAX(rq.fechaEnvio)   AS ultimaMuestra
          FROM respuestas_quiz rq
          JOIN quizzes q ON q.id = rq.quizId
+         JOIN usuarios u ON u.id = rq.usuarioId
          ${WHERE}`,
         params
       );
@@ -387,20 +409,26 @@ router.get(
         `SELECT rq.severidad, COUNT(*) AS total
            FROM respuestas_quiz rq
            JOIN quizzes q ON q.id = rq.quizId
+           JOIN usuarios u ON u.id = rq.usuarioId
            ${WHERE}
           GROUP BY rq.severidad
           ORDER BY FIELD(rq.severidad,'MINIMA','LEVE','MODERADA','SEVERA')`,
         params
       );
 
-      const [trend] = await pool.execute(
-        `SELECT DATE(rq.fechaEnvio) AS fecha, COUNT(*) AS total
+      // Tendencia semanal en lugar de diaria
+      const [weeklyTrend] = await pool.execute(
+        `SELECT
+           WEEK(rq.fechaEnvio, 1) as week_num,
+           YEAR(rq.fechaEnvio) as year,
+           COUNT(*) AS total
            FROM respuestas_quiz rq
            JOIN quizzes q ON q.id = rq.quizId
+           JOIN usuarios u ON u.id = rq.usuarioId
            ${WHERE}
-          GROUP BY DATE(rq.fechaEnvio)
-          ORDER BY fecha ASC
-          LIMIT 180`,
+          GROUP BY YEAR(rq.fechaEnvio), WEEK(rq.fechaEnvio, 1)
+          ORDER BY year ASC, week_num ASC
+          LIMIT 12`,
         params
       );
 
@@ -409,22 +437,204 @@ router.get(
                 COUNT(*) AS total, AVG(rq.puntajeTotal) AS promedio
            FROM respuestas_quiz rq
            JOIN quizzes q ON q.id = rq.quizId
+           JOIN usuarios u ON u.id = rq.usuarioId
            ${WHERE}
           GROUP BY q.codigo, q.\`version\`
           ORDER BY q.codigo, q.\`version\``,
         params
       );
 
+      // Distribución por género
+      const [byGender] = await pool.execute(
+        `SELECT u.genero, COUNT(*) AS total, AVG(rq.puntajeTotal) AS promedio
+           FROM respuestas_quiz rq
+           JOIN quizzes q ON q.id = rq.quizId
+           JOIN usuarios u ON u.id = rq.usuarioId
+           ${WHERE}
+          GROUP BY u.genero
+          ORDER BY u.genero`,
+        params
+      );
+
+      // Distribución por semestre
+      const [bySemester] = await pool.execute(
+        `SELECT u.semestre, COUNT(*) AS total, AVG(rq.puntajeTotal) AS promedio
+           FROM respuestas_quiz rq
+           JOIN quizzes q ON q.id = rq.quizId
+           JOIN usuarios u ON u.id = rq.usuarioId
+           ${WHERE}
+          GROUP BY u.semestre
+          ORDER BY u.semestre`,
+        params
+      );
+
+      // Top 5 carreras con más evaluaciones
+      const [byCareer] = await pool.execute(
+        `SELECT u.carrera, COUNT(*) AS total, AVG(rq.puntajeTotal) AS promedio
+           FROM respuestas_quiz rq
+           JOIN quizzes q ON q.id = rq.quizId
+           JOIN usuarios u ON u.id = rq.usuarioId
+           ${WHERE}
+          GROUP BY u.carrera
+          ORDER BY total DESC
+          LIMIT 10`,
+        params
+      );
+
       return res.json({
         success: true,
-        filters: { institucionId, codigo, desde, hasta },
-        summary: summary?.[0] || { total: 0 },
+        filters: { institucionId, codigo, desde, hasta, semestre, genero, carrera },
+        summary: summary?.[0] || { total: 0, uniqueStudents: 0 },
+        severityDistribution: bySeverity.reduce((acc, item) => {
+          acc[item.severidad] = item.total;
+          return acc;
+        }, {}),
+        weeklyTrends: weeklyTrend.map((item, index) => ({
+          week: index + 1,
+          count: item.total
+        })),
+        averageScoreByQuiz: byQuiz.reduce((acc, item) => {
+          acc[item.codigo] = item.promedio;
+          return acc;
+        }, {}),
+        byGender,
+        bySemester,
+        byCareer,
+        // Para compatibilidad
         bySeverity,
-        trend,
+        trend: weeklyTrend,
         byQuiz,
       });
     } catch (err) {
       console.error("[/quizzes/analytics] error:", err);
+      return res.status(500).json({ success: false, message: "Error interno" });
+    }
+  }
+);
+
+router.get(
+  "/analytics/export",
+  ...requireRolesWithInstitution([
+    "PSICOLOGO",
+    "ORIENTADOR",
+    "ADMIN_INSTITUCION",
+    "SUPER_ADMIN_INSTITUCION",
+    "SUPER_ADMIN_NACIONAL",
+  ]),
+  async (req, res) => {
+    try {
+      const institucionId = req.institucionId;
+      const {
+        codigo = null,
+        desde = null,
+        hasta = null,
+        semestre = null,
+        genero = null,
+        carrera = null
+      } = req.query;
+
+      const where = ["rq.institucionId = ?"];
+      const params = [String(institucionId)];
+
+      if (codigo) {
+        where.push("q.codigo = ?");
+        params.push(String(codigo));
+      }
+      if (desde) {
+        where.push("DATE(rq.fechaEnvio) >= ?");
+        params.push(String(desde).slice(0, 10));
+      }
+      if (hasta) {
+        where.push("DATE(rq.fechaEnvio) <= ?");
+        params.push(String(hasta).slice(0, 10));
+      }
+      if (semestre) {
+        where.push("u.semestre = ?");
+        params.push(String(semestre));
+      }
+      if (genero) {
+        where.push("u.genero = ?");
+        params.push(String(genero));
+      }
+      if (carrera) {
+        where.push("u.carrera = ?");
+        params.push(String(carrera));
+      }
+
+      const WHERE = `WHERE ${where.join(" AND ")}`;
+
+      const [results] = await pool.execute(
+        `SELECT
+           rq.id,
+           rq.fechaEnvio,
+           rq.puntajeTotal,
+           rq.severidad,
+           q.codigo as quizCodigo,
+           q.titulo as quizTitulo,
+           q.version as quizVersion,
+           u.id as estudianteId,
+           COALESCE(u.nombreCompleto, u.nombre) as estudianteNombre,
+           u.email as estudianteEmail,
+           u.carrera,
+           u.semestre,
+           u.genero,
+           u.turno
+         FROM respuestas_quiz rq
+         JOIN quizzes q ON q.id = rq.quizId
+         JOIN usuarios u ON u.id = rq.usuarioId
+         ${WHERE}
+         ORDER BY rq.fechaEnvio DESC`,
+        params
+      );
+
+      // Crear CSV
+      const headers = [
+        'ID Respuesta',
+        'Fecha',
+        'Puntaje Total',
+        'Severidad',
+        'Quiz Código',
+        'Quiz Título',
+        'Quiz Versión',
+        'ID Estudiante',
+        'Nombre Estudiante',
+        'Email Estudiante',
+        'Carrera',
+        'Semestre',
+        'Género',
+        'Turno'
+      ];
+
+      let csv = headers.join(',') + '\n';
+
+      for (const row of results) {
+        const values = [
+          row.id,
+          row.fechaEnvio?.toISOString().split('T')[0] || '',
+          row.puntajeTotal || 0,
+          row.severidad || '',
+          row.quizCodigo || '',
+          `"${(row.quizTitulo || '').replace(/"/g, '""')}"`,
+          row.quizVersion || '',
+          row.estudianteId || '',
+          `"${(row.estudianteNombre || '').replace(/"/g, '""')}"`,
+          row.estudianteEmail || '',
+          `"${(row.carrera || '').replace(/"/g, '""')}"`,
+          row.semestre || '',
+          row.genero || '',
+          row.turno || ''
+        ];
+        csv += values.join(',') + '\n';
+      }
+
+      const filename = `analytics_${institucionId}_${new Date().toISOString().split('T')[0]}.csv`;
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send('\uFEFF' + csv); // BOM para UTF-8
+
+    } catch (err) {
+      console.error("[/quizzes/analytics/export] error:", err);
       return res.status(500).json({ success: false, message: "Error interno" });
     }
   }
