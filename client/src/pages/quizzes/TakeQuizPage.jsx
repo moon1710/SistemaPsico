@@ -428,10 +428,12 @@ export default function TakeQuizPage() {
         institutionId: institutionId || undefined,
       };
       const { data } = await quizzesApi.submitQuiz(payload);
-      alert(
-        `¡Evaluación completada!\n\nPuntaje: ${data.puntajeTotal}\nNivel: ${data.severidad}`
-      );
-      navigate(ROUTES.MIS_RESULTADOS);
+
+      // Navegar a la página de resultado con el resultado como state
+      navigate(ROUTES.QUIZ_RESULTADO, {
+        state: { result: data },
+        replace: true
+      });
     } catch (e) {
       setError(e?.data?.message || e.message || "Error al enviar respuestas");
     } finally {
@@ -723,10 +725,11 @@ export default function TakeQuizPage() {
                     const { data } = await quizzesApi.submitQuiz(payload);
                     console.log("✅ Submission successful:", data);
 
-                    alert(
-                      `¡Evaluación completada!\n\nPuntaje: ${data.puntajeTotal}\nNivel: ${data.severidad}`
-                    );
-                    navigate(ROUTES.MIS_RESULTADOS);
+                    // Navegar a la página de resultado con el resultado como state
+                    navigate(ROUTES.QUIZ_RESULTADO, {
+                      state: { result: data },
+                      replace: true
+                    });
                   } catch (e) {
                     console.error("❌ Submission failed:", e);
                     console.error("Error details:", {

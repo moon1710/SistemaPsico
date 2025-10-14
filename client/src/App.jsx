@@ -46,6 +46,7 @@ import ComoPedirAyudaPage from "./pages/recursos/ComoPedirAyudaPage";
 //QuizzesPages
 import PublicQuizzesPage from "./pages/quizzes/PublicQuizzesPage";
 import TakeQuizPage from "./pages/quizzes/TakeQuizPage";
+import QuizResultPage from "./pages/quizzes/QuizResultPage";
 import MyResultsPage from "./pages/quizzes/MyResultsPage";
 import AdminResultsPage from "./pages/quizzes/AdminResultsPage";
 import AnalyticsPage from "./pages/quizzes/AnalyticsPage";
@@ -58,6 +59,7 @@ import AvailabilityPage from "./pages/citas/AvailabilityPage";
 import AppointmentDetailPage from "./pages/citas/AppointmentDetailPage";
 import AdminAppointmentsPage from "./pages/citas/AdminAppointmentsPage";
 import UsersManagementPage from "./pages/UsersManagementPage";
+import CanalizacionesPage from "./pages/CanalizacionesPage";
 
 import { ROUTES } from "./utils/constants";
 import "./App.css";
@@ -180,6 +182,14 @@ function App() {
         }
       />
       <Route
+        path={ROUTES.QUIZ_RESULTADO}
+        element={
+          <ProtectedRoute>
+            <QuizResultPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path={ROUTES.MIS_RESULTADOS}
         element={
           <ProtectedRoute>
@@ -290,6 +300,18 @@ function App() {
           <ProtectedRoute requiredRoles={['ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
             <Layout>
               <UsersManagementPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Psychologist - Channelizations */}
+      <Route
+        path={ROUTES.CANALIZACIONES}
+        element={
+          <ProtectedRoute requiredRoles={['PSICOLOGO', 'ORIENTADOR', 'ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
+            <Layout>
+              <CanalizacionesPage />
             </Layout>
           </ProtectedRoute>
         }

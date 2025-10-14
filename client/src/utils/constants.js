@@ -138,6 +138,7 @@ export const ROUTES = {
 
   // Quizzes
   QUIZ_CONTESTAR_DETALLE: "/quiz/contestar/:quizId",
+  QUIZ_RESULTADO: "/quiz/resultado",
   MIS_RESULTADOS: "/quiz/mis-resultados",
   QUIZ_RESULTADOS_ADMIN: "/quizzes/resultados", // para psicólogo/orientador/admin
   QUIZ_ANALYTICS_ADMIN: "/quizzes/analytics", // opcional
