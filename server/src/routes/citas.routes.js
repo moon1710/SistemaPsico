@@ -113,6 +113,19 @@ router.get(
     try {
       const { fechaDesde, fechaHasta, estado } = req.query;
 
+      console.log('🔍 Usuario logueado:', {
+        id: req.user.id,
+        rol: req.user.rol,
+        nombre: req.user.nombreCompleto
+      });
+
+      // Check if user has any appointments as psychologist
+      const [totalCitas] = await pool.execute(
+        'SELECT COUNT(*) as total FROM citas WHERE psicologoId = ?',
+        [String(req.user.id)]
+      );
+      console.log('📋 Total citas como psicólogo:', totalCitas[0].total);
+
       let whereClause = "WHERE c.psicologoId = ?";
       let queryParams = [String(req.user.id)];
 

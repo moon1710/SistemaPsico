@@ -38,10 +38,10 @@ const LoginPage = () => {
         password: password,
       };
 
-      // Agregar institucionId solo si se especificó
-      if (institucionId.trim()) {
-        loginData.institucionId = parseInt(institucionId.trim());
-      }
+      // Agregar institucionId solo si se especificó - COMENTADO
+      // if (institucionId.trim()) {
+      //   loginData.institucionId = parseInt(institucionId.trim());
+      // }
 
       // Intentar login
       const result = await login(loginData);
@@ -64,7 +64,7 @@ const LoginPage = () => {
   const fillTestUser = (userEmail, userInstitucionId = "1") => {
     setEmail(userEmail);
     setPassword("Password123!");
-    setInstitucionId(userInstitucionId);
+    // setInstitucionId(userInstitucionId); // COMENTADO - ya no se usa institución
   };
 
   // Manejar éxito en registro de estudiante
@@ -205,7 +205,7 @@ const LoginPage = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            {/* ID Institución */}
+            {/* ID Institución - COMENTADO POR PETICIÓN DEL USUARIO
             <div className="login-input-group">
               <Building className="login-input-icon" size={20} />
               <input
@@ -216,6 +216,7 @@ const LoginPage = () => {
                 className="login-input"
               />
             </div>
+            */}
 
             <button type="submit" disabled={loading} className="login-submit">
               {loading ? "Cargando..." : "Iniciar Sesión"}

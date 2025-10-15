@@ -147,12 +147,16 @@ const getPsychologistDashboard = async (req, res) => {
     const conn = await pool.getConnection();
 
     try {
-      // Estudiantes asignados
+      // Estudiantes de la misma institución
       const [estudiantesAsignados] = await conn.execute(
         `SELECT COUNT(*) as total_estudiantes
-         FROM tutores_alumnos ta
-         WHERE ta.tutorId = ? AND ta.activo = 1`,
-        [userId]
+         FROM usuarios u
+         JOIN usuario_institucion ui ON u.id = ui.usuarioId
+         WHERE ui.institucionId = ?
+         AND u.rol = 'ESTUDIANTE'
+         AND u.status = 'ACTIVO'
+         AND ui.activo = 1`,
+        [institucionId]
       );
 
       // Citas próximas
@@ -165,15 +169,18 @@ const getPsychologistDashboard = async (req, res) => {
         [userId]
       );
 
-      // Evaluaciones recientes de estudiantes asignados
+      // Evaluaciones recientes de estudiantes de la institución
       const [evaluacionesRecientes] = await conn.execute(
         `SELECT COUNT(*) as evaluaciones_recientes
          FROM respuestas_quiz rq
-         JOIN tutores_alumnos ta ON rq.usuarioId = ta.alumnoId
-         WHERE ta.tutorId = ?
-         AND ta.activo = 1
+         JOIN usuarios u ON rq.usuarioId = u.id
+         JOIN usuario_institucion ui ON u.id = ui.usuarioId
+         WHERE ui.institucionId = ?
+         AND u.rol = 'ESTUDIANTE'
+         AND u.status = 'ACTIVO'
+         AND ui.activo = 1
          AND rq.fechaEnvio >= DATE_SUB(NOW(), INTERVAL 7 DAY)`,
-        [userId]
+        [institucionId]
       );
 
       res.json({

@@ -1,20 +1,44 @@
 import React from "react";
 import StatCard from "../StatCard";
 import { Card, CardContent } from "../../../components/ui/Card";
-import {
-  Users,
-  FileText,
-  Calendar,
-  Heart,
-  AlertCircle,
-  Clock,
-} from "lucide-react";
+import { Users, FileText, Calendar, BarChart3, Activity } from "lucide-react";
 import { motion } from "framer-motion";
+import { API_CONFIG, STORAGE_KEYS } from "../../../utils/constants";
 
 const glass =
   "rounded-2xl bg-white/70 backdrop-blur-md border border-white/40 shadow-[0_8px_28px_rgba(0,0,0,0.08)]";
+const listHover = "hover:bg-[#f0f0f0]/60 rounded-lg transition-colors p-3";
 
 const Psicologo = () => {
+  const [dashboardData, setDashboardData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const response = await fetch(
+          `${API_CONFIG.API_BASE}/dashboard/psychologist`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setDashboardData(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
+
   return (
     <>
       <motion.h2
@@ -26,33 +50,38 @@ const Psicologo = () => {
         Panel de Psicólogo
       </motion.h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          title="Estudiantes asignados"
-          value="42"
-          icon={Users}
-          color="from-[#527ceb] to-[#6762b3]"
-        />
-        <StatCard
-          title="Evaluaciones pendientes"
-          value="8"
-          icon={FileText}
-          color="from-[#527ceb] to-[#6762b3]"
-        />
-        <StatCard
-          title="Citas esta semana"
-          value="12"
-          icon={Calendar}
-          color="from-[#10cfbd] to-[#48b0f7]"
-        />
-        <StatCard
-          title="Casos canalizados"
-          value="5"
-          icon={Heart}
-          color="from-[#527ceb] to-[#6762b3]"
-        />
-      </div>
+      {/* Métricas con paleta diversa */}
+      {!loading && dashboardData && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <StatCard
+            title="Estudiantes asignados"
+            value={
+              dashboardData.estadisticas?.total_estudiantes?.toString() || "0"
+            }
+            icon={Users}
+            color="from-[#43cea2] to-[#185a9d]" // ocean
+          />
+          <StatCard
+            title="Evaluaciones recientes"
+            value={
+              dashboardData.estadisticas?.evaluaciones_recientes?.toString() ||
+              "0"
+            }
+            icon={FileText}
+            color="from-[#527ceb] to-[#6762b3]" // brand
+          />
+          <StatCard
+            title="Próximas citas"
+            value={
+              dashboardData.estadisticas?.proximas_citas?.toString() || "0"
+            }
+            icon={Calendar}
+            color="from-[#10cfbd] to-[#48b0f7]" // mint
+          />
+        </div>
+      )}
 
+      {/* Resumen + Próximas acciones */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 6 }}
@@ -62,24 +91,33 @@ const Psicologo = () => {
         >
           <Card className="bg-transparent border-0 shadow-none">
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-[#21252d] mb-3">
-                Próximas citas
+              <h3 className="text-lg font-semibold text-[#21252d] mb-3 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-[#527ceb]" />
+                Resumen de Actividad
               </h3>
               <div className="space-y-3 text-sm text-[#7c777a]">
-                <div className="flex justify-between items-center hover:bg-[#f0f0f0]/60 rounded-lg transition-colors p-3">
-                  <div>
-                    <p className="font-medium text-[#21252d]">Ana García</p>
-                    <p>Seguimiento</p>
+                {dashboardData ? (
+                  <>
+                    <Row
+                      label="Estudiantes bajo tu cuidado"
+                      value={dashboardData.estadisticas?.total_estudiantes || 0}
+                    />
+                    <Row
+                      label="Evaluaciones esta semana"
+                      value={
+                        dashboardData.estadisticas?.evaluaciones_recientes || 0
+                      }
+                    />
+                    <Row
+                      label="Citas programadas"
+                      value={dashboardData.estadisticas?.proximas_citas || 0}
+                    />
+                  </>
+                ) : (
+                  <div className="text-center text-[#7c777a] py-8">
+                    <p>Cargando información del dashboard…</p>
                   </div>
-                  <span>14:00</span>
-                </div>
-                <div className="flex justify-between items-center hover:bg-[#f0f0f0]/60 rounded-lg transition-colors p-3">
-                  <div>
-                    <p className="font-medium text-[#21252d]">Carlos López</p>
-                    <p>Primera consulta</p>
-                  </div>
-                  <span>15:30</span>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -93,18 +131,20 @@ const Psicologo = () => {
         >
           <Card className="bg-transparent border-0 shadow-none">
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-[#21252d] mb-3">
-                Casos prioritarios
+              <h3 className="text-lg font-semibold text-[#21252d] mb-3 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-[#6762b3]" />
+                Próximas acciones
               </h3>
-              <div className="space-y-3 text-sm text-[#7c777a]">
-                <div className="flex items-center gap-3 hover:bg-[#f0f0f0]/60 rounded-lg transition-colors p-3">
-                  <AlertCircle className="w-4 h-4 text-[#6762b3]" />
-                  <span>2 casos de alto riesgo</span>
-                </div>
-                <div className="flex items-center gap-3 hover:bg-[#f0f0f0]/60 rounded-lg transition-colors p-3">
-                  <Clock className="w-4 h-4 text-[#527ceb]" />
-                  <span>3 seguimientos pendientes</span>
-                </div>
+              <div className="space-y-2">
+                {[
+                  "Revisar 3 evaluaciones con severidad alta",
+                  "Confirmar 2 citaciones pendientes",
+                  "Enviar seguimiento a 4 estudiantes",
+                ].map((t) => (
+                  <div key={t} className={listHover}>
+                    <span className="text-sm text-[#21252d]">{t}</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -113,5 +153,14 @@ const Psicologo = () => {
     </>
   );
 };
+
+function Row({ label, value }) {
+  return (
+    <div className="flex justify-between items-center p-3 rounded-lg bg-[#f7f7f7]">
+      <span className="text-sm text-[#7c777a]">{label}</span>
+      <span className="font-semibold text-[#21252d]">{value}</span>
+    </div>
+  );
+}
 
 export default Psicologo;

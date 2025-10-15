@@ -61,6 +61,9 @@ import AdminAppointmentsPage from "./pages/citas/AdminAppointmentsPage";
 import UsersManagementPage from "./pages/UsersManagementPage";
 import CanalizacionesPage from "./pages/CanalizacionesPage";
 
+//Chat
+import ChatPage from "./pages/chat/ChatPage";
+
 import { ROUTES } from "./utils/constants";
 import "./App.css";
 
@@ -312,6 +315,18 @@ function App() {
           <ProtectedRoute requiredRoles={['PSICOLOGO', 'ORIENTADOR', 'ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
             <Layout>
               <CanalizacionesPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Chat - Para psicólogos y estudiantes */}
+      <Route
+        path={ROUTES.CHAT}
+        element={
+          <ProtectedRoute requiredRoles={['PSICOLOGO', 'ORIENTADOR', 'ESTUDIANTE']}>
+            <Layout>
+              <ChatPage />
             </Layout>
           </ProtectedRoute>
         }

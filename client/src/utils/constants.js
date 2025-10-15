@@ -115,12 +115,14 @@ export const ROUTES = {
   CANALIZACIONES: "/canalizaciones",
   CITAS: "/citas",
   SESIONES: "/sesiones",
+  CHAT: "/chat",
 
   // Estudiante
   QUIZ_CONTESTAR: "/quiz/contestar",
   MIS_CITAS: "/mis-citas",
   RECOMENDACIONES: "/recomendaciones",
   RECURSOS: "/recursos",
+  CHAT_ESTUDIANTE: "/chat",
 
   // Recursos específicos
   CRISIS_INMEDIATA: "/recursos/crisis-inmediata",

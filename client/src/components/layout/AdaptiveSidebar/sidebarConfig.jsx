@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Clock,
   Shield,
+  MessageCircle,
 } from "lucide-react";
 import { ROUTES } from "../../../utils/constants";
 
@@ -176,6 +177,18 @@ export const roleSpecificItems = [
       "SUPER_ADMIN_NACIONAL",
     ],
   },
+  {
+    href: ROUTES.CHAT,
+    icon: MessageCircle,
+    label: "Chat",
+    roles: [
+      "PSICOLOGO",
+      "ORIENTADOR",
+      "ADMIN_INSTITUCION",
+      "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
+  },
 
   // ===== Estudiante =====
   {
@@ -206,6 +219,12 @@ export const roleSpecificItems = [
     href: ROUTES.RECURSOS,
     icon: Shield,
     label: "Recursos",
+    roles: ["ESTUDIANTE"],
+  },
+  {
+    href: ROUTES.CHAT_ESTUDIANTE,
+    icon: MessageCircle,
+    label: "Chat con Psicólogo",
     roles: ["ESTUDIANTE"],
   },
 

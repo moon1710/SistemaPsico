@@ -13,6 +13,8 @@ const archivosRoutes = require("./routes/archivos.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const notificationsRoutes = require("./routes/notifications.routes");
 const estudiantesRoutes = require("./routes/estudiantes.routes");
+const reportsRoutes = require("./routes/reports.routes");
+const chatRoutes = require("./routes/chat.routes");
 
 const app = express();
 
@@ -153,6 +155,8 @@ app.use("/api/archivos", archivosRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/estudiantes", estudiantesRoutes);
+app.use("/api/reports", reportsRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Serve static files from uploads
 app.use('/uploads', express.static('uploads'));

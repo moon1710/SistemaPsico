@@ -1,7 +1,7 @@
 // client/src/pages/citas/AgendaPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_CONFIG, APPOINTMENT_STATUSES, APPOINTMENT_MODALITIES } from "../../utils/constants";
+import { API_CONFIG, APPOINTMENT_STATUSES, APPOINTMENT_MODALITIES, STORAGE_KEYS } from "../../utils/constants";
 import { useAuth } from "../../contexts/AuthContext";
 
 const AgendaPage = () => {
@@ -26,10 +26,10 @@ const AgendaPage = () => {
       const endDate = getViewEndDate();
 
       const response = await fetch(
-        `${API_CONFIG.API_BASE}/citas/agenda?inicio=${startDate}&fin=${endDate}`,
+        `${API_CONFIG.API_BASE}/citas/agenda?fechaDesde=${startDate}&fechaHasta=${endDate}`,
         {
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem('auth_token')}`,
+            "Authorization": `Bearer ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
             "Content-Type": "application/json",
           },
           credentials: "include",
@@ -38,7 +38,25 @@ const AgendaPage = () => {
 
       if (response.ok) {
         const result = await response.json();
-        setAppointments(result.data || []);
+        console.log('📅 Agenda response:', result);
+        const citasData = result.data?.citas || [];
+
+        // Transform data to match frontend expectations
+        const transformedAppointments = citasData.map(cita => ({
+          ...cita,
+          estudiante: {
+            nombreCompleto: cita.estudianteNombre,
+            email: cita.estudianteEmail,
+            telefono: cita.estudianteTelefono
+          }
+        }));
+
+        setAppointments(transformedAppointments);
+        console.log('✅ Processed appointments:', transformedAppointments.length);
+      } else {
+        console.error('❌ Failed to load appointments:', response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error details:', errorData);
       }
     } catch (error) {
       console.error("Error loading appointments:", error);
@@ -102,7 +120,7 @@ const AgendaPage = () => {
         {
           method: "PATCH",
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem('auth_token')}`,
+            "Authorization": `Bearer ${localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)}`,
             "Content-Type": "application/json",
           },
           credentials: "include",
