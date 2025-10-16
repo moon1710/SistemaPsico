@@ -183,7 +183,7 @@ router.get("/monthly",
   }
 );
 
-// GET /api/reports/psychologist - Reporte específico para psicólogos
+// GET /api/reports/psychologist - Reporte específico para psicólogos (basado en evaluaciones/quizzes)
 router.get("/psychologist",
   ...requireRolesWithInstitution([
     "PSICOLOGO",
@@ -194,77 +194,166 @@ router.get("/psychologist",
   ]),
   async (req, res) => {
     try {
-      const { psicologoId = req.user.id, fechaInicio, fechaFin } = req.query;
-
-      // Si no es admin y pide datos de otro psicólogo, denegar
+      const { fechaInicio, fechaFin } = req.query;
       const userRoles = req.user.instituciones?.map(inst => inst.rol) || [];
-      const isAdmin = userRoles.some(rol =>
-        ['ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL'].includes(rol)
-      );
-
-      if (!isAdmin && psicologoId !== req.user.id) {
-        return res.status(403).json({
-          success: false,
-          message: "Solo puedes ver tus propios reportes"
-        });
-      }
+      const institucionId = req.institucionId;
 
       let dateFilter = "";
-      let params = [psicologoId];
+      let params = [];
 
+      // Filtro de fechas
       if (fechaInicio && fechaFin) {
-        dateFilter = "AND c.fechaHora BETWEEN ? AND ?";
+        dateFilter = "AND rq.fechaEnvio BETWEEN ? AND ?";
         params.push(fechaInicio, fechaFin);
       } else {
         // Por defecto, último mes
-        dateFilter = "AND c.fechaHora >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+        dateFilter = "AND rq.fechaEnvio >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
       }
 
-      // Resumen de citas
-      const [citasResumen] = await pool.execute(
+      // Filtro por institución si no es super admin nacional
+      let institutionFilter = "";
+      if (!userRoles.includes('SUPER_ADMIN_NACIONAL') && institucionId) {
+        institutionFilter = "AND ui.institucionId = ?";
+        params.push(institucionId);
+      }
+
+      // Resumen de evaluaciones
+      const [evaluacionesResumen] = await pool.execute(
         `SELECT
-           COUNT(*) as total_citas,
-           SUM(CASE WHEN c.estado = 'COMPLETADA' THEN 1 ELSE 0 END) as completadas,
-           SUM(CASE WHEN c.estado = 'CANCELADA' THEN 1 ELSE 0 END) as canceladas,
-           AVG(CASE WHEN c.estado = 'COMPLETADA' THEN c.duracion ELSE NULL END) as duracion_promedio
-         FROM citas c
-         WHERE c.psicologoId = ? ${dateFilter}`,
+           COUNT(*) as total_evaluaciones,
+           SUM(CASE WHEN rq.completado = 1 THEN 1 ELSE 0 END) as completadas,
+           SUM(CASE WHEN rq.severidad = 'SEVERA' THEN 1 ELSE 0 END) as severas,
+           SUM(CASE WHEN rq.severidad = 'MODERADA' THEN 1 ELSE 0 END) as moderadas,
+           SUM(CASE WHEN rq.severidad = 'LEVE' THEN 1 ELSE 0 END) as leves,
+           AVG(CASE WHEN rq.completado = 1 THEN rq.puntajeTotal ELSE NULL END) as puntaje_promedio,
+           COUNT(DISTINCT rq.usuarioId) as estudiantes_evaluados
+         FROM respuestas_quiz rq
+         INNER JOIN usuarios u ON rq.usuarioId = u.id
+         INNER JOIN usuario_institucion ui ON u.id = ui.usuarioId
+         WHERE 1=1 ${dateFilter} ${institutionFilter}`,
         params
       );
 
-      // Estudiantes atendidos
-      const [estudiantesAtendidos] = await pool.execute(
+      // Estudiantes evaluados con detalles
+      const [estudiantesEvaluados] = await pool.execute(
         `SELECT
            u.nombreCompleto,
            u.carrera,
            u.semestre,
-           COUNT(*) as total_citas,
-           MAX(c.fechaHora) as ultima_cita
-         FROM citas c
-         JOIN usuarios u ON c.usuarioId = u.id
-         WHERE c.psicologoId = ? AND c.estado = 'COMPLETADA' ${dateFilter}
-         GROUP BY c.usuarioId, u.nombreCompleto, u.carrera, u.semestre
-         ORDER BY total_citas DESC`,
+           u.matricula,
+           COUNT(*) as total_evaluaciones,
+           MAX(rq.fechaEnvio) as ultima_evaluacion,
+           AVG(rq.puntajeTotal) as puntaje_promedio,
+           MAX(rq.severidad) as mayor_severidad,
+           SUM(CASE WHEN rq.severidad IN ('MODERADA', 'SEVERA') THEN 1 ELSE 0 END) as requiere_atencion
+         FROM respuestas_quiz rq
+         INNER JOIN usuarios u ON rq.usuarioId = u.id
+         INNER JOIN usuario_institucion ui ON u.id = ui.usuarioId
+         WHERE rq.completado = 1 ${dateFilter} ${institutionFilter}
+         GROUP BY rq.usuarioId, u.nombreCompleto, u.carrera, u.semestre, u.matricula
+         ORDER BY requiere_atencion DESC, puntaje_promedio DESC`,
         params
       );
 
-      // Distribución por modalidad
-      const [modalidades] = await pool.execute(
+      // Distribución por tipo de quiz
+      const [distribucionQuiz] = await pool.execute(
         `SELECT
-           c.modalidad,
-           COUNT(*) as cantidad
-         FROM citas c
-         WHERE c.psicologoId = ? ${dateFilter}
-         GROUP BY c.modalidad`,
+           q.titulo as quiz_tipo,
+           q.tipo as categoria,
+           COUNT(*) as cantidad,
+           AVG(rq.puntajeTotal) as puntaje_promedio
+         FROM respuestas_quiz rq
+         INNER JOIN quizzes q ON rq.quizId = q.id
+         INNER JOIN usuarios u ON rq.usuarioId = u.id
+         INNER JOIN usuario_institucion ui ON u.id = ui.usuarioId
+         WHERE rq.completado = 1 ${dateFilter} ${institutionFilter}
+         GROUP BY q.id, q.titulo, q.tipo
+         ORDER BY cantidad DESC`,
+        params
+      );
+
+      // Distribución por severidad
+      const [distribucionSeveridad] = await pool.execute(
+        `SELECT
+           rq.severidad,
+           COUNT(*) as cantidad,
+           ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM respuestas_quiz rq2
+             INNER JOIN usuarios u2 ON rq2.usuarioId = u2.id
+             INNER JOIN usuario_institucion ui2 ON u2.id = ui2.usuarioId
+             WHERE rq2.completado = 1 ${dateFilter} ${institutionFilter})), 2) as porcentaje
+         FROM respuestas_quiz rq
+         INNER JOIN usuarios u ON rq.usuarioId = u.id
+         INNER JOIN usuario_institucion ui ON u.id = ui.usuarioId
+         WHERE rq.completado = 1 ${dateFilter} ${institutionFilter}
+         GROUP BY rq.severidad
+         ORDER BY
+           CASE rq.severidad
+             WHEN 'SEVERA' THEN 1
+             WHEN 'MODERADA' THEN 2
+             WHEN 'LEVE' THEN 3
+             ELSE 4
+           END`,
+        params
+      );
+
+      // Evolución semanal de evaluaciones
+      const [evolucionSemanal] = await pool.execute(
+        `SELECT
+           WEEK(rq.fechaEnvio, 1) as semana,
+           YEAR(rq.fechaEnvio) as año,
+           COUNT(*) as total_evaluaciones,
+           SUM(CASE WHEN rq.completado = 1 THEN 1 ELSE 0 END) as completadas,
+           SUM(CASE WHEN rq.severidad IN ('MODERADA', 'SEVERA') THEN 1 ELSE 0 END) as requieren_atencion
+         FROM respuestas_quiz rq
+         INNER JOIN usuarios u ON rq.usuarioId = u.id
+         INNER JOIN usuario_institucion ui ON u.id = ui.usuarioId
+         WHERE 1=1 ${dateFilter} ${institutionFilter}
+         GROUP BY YEAR(rq.fechaEnvio), WEEK(rq.fechaEnvio, 1)
+         ORDER BY año, semana`,
+        params
+      );
+
+      // Casos que requieren canalización
+      const [casosCanalizacion] = await pool.execute(
+        `SELECT
+           u.nombreCompleto,
+           u.matricula,
+           u.carrera,
+           rq.severidad,
+           q.titulo as evaluacion,
+           rq.fechaEnvio,
+           rq.puntajeTotal,
+           COALESCE(c.estado, 'PENDIENTE') as estado_canalizacion
+         FROM respuestas_quiz rq
+         INNER JOIN usuarios u ON rq.usuarioId = u.id
+         INNER JOIN usuario_institucion ui ON u.id = ui.usuarioId
+         INNER JOIN quizzes q ON rq.quizId = q.id
+         LEFT JOIN canalizaciones_psicologicas c ON rq.id = c.respuestaQuizId
+         WHERE rq.completado = 1
+           AND rq.severidad IN ('MODERADA', 'SEVERA')
+           ${dateFilter} ${institutionFilter}
+         ORDER BY
+           CASE rq.severidad WHEN 'SEVERA' THEN 1 ELSE 2 END,
+           rq.fechaEnvio DESC
+         LIMIT 20`,
         params
       );
 
       res.json({
         success: true,
         data: {
-          resumen: citasResumen[0],
-          estudiantes_atendidos: estudiantesAtendidos,
-          distribucion_modalidad: modalidades,
+          resumen: {
+            ...evaluacionesResumen[0],
+            casos_requieren_atencion: evaluacionesResumen[0].severas + evaluacionesResumen[0].moderadas,
+            tasa_completion: evaluacionesResumen[0].total_evaluaciones > 0
+              ? Math.round((evaluacionesResumen[0].completadas / evaluacionesResumen[0].total_evaluaciones) * 100)
+              : 0
+          },
+          estudiantes_evaluados: estudiantesEvaluados,
+          distribucion_quiz: distribucionQuiz,
+          distribucion_severidad: distribucionSeveridad,
+          evolucion_semanal: evolucionSemanal,
+          casos_canalizacion: casosCanalizacion,
           periodo: {
             inicio: fechaInicio || "Últimos 30 días",
             fin: fechaFin || "Hoy"

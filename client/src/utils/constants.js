@@ -116,6 +116,7 @@ export const ROUTES = {
   CITAS: "/citas",
   SESIONES: "/sesiones",
   CHAT: "/chat",
+  REPORTES_PSICOLOGO: "/reportes/psicologo",
 
   // Estudiante
   QUIZ_CONTESTAR: "/quiz/contestar",
