@@ -157,7 +157,7 @@ const RegistroEstudiante = ({ onSuccess, onBackToLogin }) => {
           if (onSuccess) {
             onSuccess(result);
           }
-        }, 3000);
+        }, 10000); // Aumentado de 3000 a 10000 ms (10 segundos)
       } else {
         setErrors({ submit: result.message || 'Error al registrar estudiante' });
       }

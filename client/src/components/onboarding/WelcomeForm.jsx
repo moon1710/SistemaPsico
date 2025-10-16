@@ -734,18 +734,19 @@ const WelcomeForm = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.98, y: 12 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.98, y: 12 }}
-              className="max-w-2xl w-full rounded-2xl bg-white p-5 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.16)]"
+              className="max-w-2xl w-full max-h-[85vh] rounded-2xl bg-white p-5 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.16)] flex flex-col"
             >
               <h4 className="text-xl font-semibold text-[#21252d]">
                 Aviso de privacidad (versión completa)
               </h4>
-              <div className="mt-3 space-y-2 text-sm text-gray-700 max-h-[60dvh] overflow-y-auto">
+              <div className="mt-3 space-y-2 text-sm text-gray-700 flex-1 overflow-y-auto pr-2"
+                style={{ maxHeight: 'calc(85vh - 180px)' }}>
                 <p>
                   Responsable: Tu institución educativa. Finalidades: brindar
                   acompañamiento psicológico, gestionar citas, generar
@@ -771,7 +772,7 @@ const WelcomeForm = () => {
                 </p>
               </div>
 
-              <div className="mt-5 flex items-center justify-end gap-3">
+              <div className="mt-4 flex items-center justify-end gap-3 flex-shrink-0">
                 <button
                   onClick={() => setShowPrivacy(false)}
                   className="px-4 py-2 rounded-xl text-[#2b333c] hover:bg-gray-100 font-medium"

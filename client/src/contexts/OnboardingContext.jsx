@@ -27,28 +27,48 @@ export const OnboardingProvider = ({ children }) => {
   // Verificar si es primera vez del usuario
   useEffect(() => {
     if (user?.id) {
-      // PRIORIDAD TOTAL al campo perfilCompletado de la BD
+      // PRIORIDAD 1: Verificar localStorage (memoria de onboarding completado)
+      const storageKey = getStorageKey();
+      const onboardingCompletedInStorage = localStorage.getItem(storageKey) === "true";
+
+      // PRIORIDAD 2: Campo perfilCompletado de la BD
       const profileCompleted = user.perfilCompletado === 1 || user.perfilCompletado === true;
+
+      // LÓGICA: Si ya se completó el onboarding (localStorage) O si el perfil está completado, no mostrar
+      const shouldHideOnboarding = onboardingCompletedInStorage || profileCompleted;
 
       console.log('🔍 [OnboardingContext] Verificando estado:', {
         userId: user.id,
         perfilCompletado: user.perfilCompletado,
         profileCompleted,
-        shouldShowModal: !profileCompleted
+        onboardingCompletedInStorage,
+        shouldHideOnboarding,
+        shouldShowModal: !shouldHideOnboarding
       });
 
-      if (!profileCompleted) {
-        // Perfil NO completado -> mostrar modal
+      if (!shouldHideOnboarding) {
+        // Perfil NO completado Y no hay registro en localStorage -> mostrar modal
         setIsFirstTime(true);
         setShowOnboarding(true);
         setOnboardingCompleted(false);
         console.log('📝 [OnboardingContext] Mostrando modal de onboarding');
       } else {
-        // Perfil completado -> no mostrar modal
+        // Perfil completado O ya se completó antes -> no mostrar modal
         setIsFirstTime(false);
         setShowOnboarding(false);
         setOnboardingCompleted(true);
-        console.log('✅ [OnboardingContext] Perfil ya completado, ocultando modal');
+        console.log('✅ [OnboardingContext] Onboarding ya completado, ocultando modal');
+
+        // Sincronización automática: si la BD dice completado pero localStorage no, actualizar localStorage
+        if (profileCompleted && !onboardingCompletedInStorage) {
+          console.log('🔄 [OnboardingContext] Sincronizando: BD dice completado, actualizando localStorage');
+          localStorage.setItem(storageKey, "true");
+        }
+
+        // Si el localStorage dice que está completado pero la BD no, puede ser un caso edge
+        if (onboardingCompletedInStorage && !profileCompleted) {
+          console.log('⚠️ [OnboardingContext] Inconsistencia: localStorage dice completado pero BD no');
+        }
       }
     }
   }, [user?.id, user?.perfilCompletado]);
@@ -59,7 +79,7 @@ export const OnboardingProvider = ({ children }) => {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/profile`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000'}/api/auth/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -84,6 +104,21 @@ export const OnboardingProvider = ({ children }) => {
       console.error('❌ [OnboardingContext] Error refrescando usuario:', error);
     }
     return null;
+  };
+
+  // Limpiar cache de onboarding (función de depuración)
+  const clearOnboardingCache = () => {
+    if (user?.id) {
+      const storageKey = getStorageKey();
+      localStorage.removeItem(storageKey);
+      console.log('🧹 [OnboardingContext] Cache limpiado para usuario:', user.id);
+
+      // Forzar re-evaluación basada en datos actuales de la BD
+      const profileCompleted = user.perfilCompletado === 1 || user.perfilCompletado === true;
+      setIsFirstTime(!profileCompleted);
+      setShowOnboarding(!profileCompleted);
+      setOnboardingCompleted(profileCompleted);
+    }
   };
 
   // Marcar onboarding como completado
@@ -150,6 +185,8 @@ export const OnboardingProvider = ({ children }) => {
     onboardingCompleted,
     completeOnboarding,
     resetOnboarding,
+    clearOnboardingCache,  // Nueva función para limpiar cache
+    refreshUserProfile,    // Función para refrescar datos
     nextStep,
     prevStep,
     goToStep,

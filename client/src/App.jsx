@@ -64,6 +64,10 @@ import CanalizacionesPage from "./pages/CanalizacionesPage";
 //Chat
 import ChatPage from "./pages/chat/ChatPage";
 
+//Reports
+import ReportsPage from "./pages/reports/ReportsPage";
+import PsychologistReportsPage from "./pages/reports/PsychologistReportsPage";
+
 import { ROUTES } from "./utils/constants";
 import "./App.css";
 
@@ -327,6 +331,18 @@ function App() {
           <ProtectedRoute requiredRoles={['PSICOLOGO', 'ORIENTADOR', 'ESTUDIANTE']}>
             <Layout>
               <ChatPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Reports - Para psicólogos */}
+      <Route
+        path={ROUTES.REPORTES_PSICOLOGO}
+        element={
+          <ProtectedRoute requiredRoles={['PSICOLOGO', 'ORIENTADOR']}>
+            <Layout>
+              <PsychologistReportsPage />
             </Layout>
           </ProtectedRoute>
         }

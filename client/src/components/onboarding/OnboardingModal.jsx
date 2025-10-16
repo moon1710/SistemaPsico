@@ -107,21 +107,17 @@ const OnboardingModal = () => {
             </div>
           )}
 
-          {/* Cuerpo: sin scroll en pasos; con scroll SOLO en form */}
+          {/* Cuerpo: con scroll habilitado para mejor UX */}
           <div
-            className={`flex-1 ${isLastStep ? "overflow-y-auto" : ""}`}
+            className="flex-1 overflow-y-auto overflow-x-hidden"
             style={{
               background: "rgba(255,255,255,0.92)",
               backdropFilter: "blur(10px)",
               WebkitBackdropFilter: "blur(10px)",
             }}
           >
-            <div className="h-full p-4 md:p-6">
-              <div
-                className={`${
-                  isLastStep ? "min-h-[calc(96dvh-168px)]" : "h-full"
-                }`}
-              >
+            <div className="p-4 md:p-6">
+              <div className="min-h-full">
                 {isLastStep ? <WelcomeForm /> : <TutorialSteps />}
               </div>
             </div>

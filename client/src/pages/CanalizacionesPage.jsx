@@ -11,12 +11,18 @@ import {
   CalendarDaysIcon,
   ChartBarIcon,
   FunnelIcon,
+  PlusIcon,
 } from "@heroicons/react/24/outline";
 import SeverityBadge from "../components/quizzes/SeverityBadge";
+import canalizacionesService from "../services/canalizacionesService";
+import { useAuth } from "../contexts/AuthContext";
 
 const CanalizacionesPage = () => {
+  const { user } = useAuth();
   const [canalizaciones, setCanalizaciones] = useState([]);
+  const [estadisticas, setEstadisticas] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filtros, setFiltros] = useState({
     severidad: "",
     estado: "",
@@ -24,107 +30,79 @@ const CanalizacionesPage = () => {
     fechaHasta: ""
   });
   const [selectedCase, setSelectedCase] = useState(null);
+  const [actualizandoEstado, setActualizandoEstado] = useState(null);
 
-  // Mock data - En producción esto vendría del backend
-  const mockCanalizaciones = [
-    {
-      id: 1,
-      estudiante: {
-        id: 101,
-        nombre: "Ana García López",
-        email: "ana.garcia@tecnm.mx",
-        carrera: "Ingeniería en Sistemas",
-        semestre: 5
-      },
-      quiz: {
-        tipo: "PHQ-9",
-        nombre: "Evaluación de Depresión",
-        puntaje: 18,
-        severidad: "SEVERA"
-      },
-      fechaResultado: "2024-01-15T10:30:00Z",
-      estado: "PENDIENTE", // PENDIENTE, EN_SEGUIMIENTO, CONTACTADO, RESUELTO
-      prioridad: "ALTA",
-      notas: [],
-      psicologoAsignado: null,
-      ultimaActividad: "2024-01-15T10:30:00Z"
-    },
-    {
-      id: 2,
-      estudiante: {
-        id: 102,
-        nombre: "Carlos Ruiz Mendoza",
-        email: "carlos.ruiz@tecnm.mx",
-        carrera: "Ingeniería Industrial",
-        semestre: 3
-      },
-      quiz: {
-        tipo: "GAD-7",
-        nombre: "Evaluación de Ansiedad",
-        puntaje: 14,
-        severidad: "MODERADA"
-      },
-      fechaResultado: "2024-01-14T15:45:00Z",
-      estado: "EN_SEGUIMIENTO",
-      prioridad: "MEDIA",
-      notas: [
-        {
-          fecha: "2024-01-15T09:00:00Z",
-          psicologo: "Dra. María López",
-          nota: "Primer contacto realizado. Estudiante receptivo. Programada cita para el 18/01."
-        }
-      ],
-      psicologoAsignado: {
-        id: 201,
-        nombre: "Dra. María López"
-      },
-      ultimaActividad: "2024-01-15T09:00:00Z"
-    },
-    {
-      id: 3,
-      estudiante: {
-        id: 103,
-        nombre: "Sofia Hernández Torres",
-        email: "sofia.hernandez@tecnm.mx",
-        carrera: "Ingeniería en Gestión Empresarial",
-        semestre: 7
-      },
-      quiz: {
-        tipo: "BAI",
-        nombre: "Inventario de Ansiedad de Beck",
-        puntaje: 25,
-        severidad: "SEVERA"
-      },
-      fechaResultado: "2024-01-13T08:20:00Z",
-      estado: "CONTACTADO",
-      prioridad: "ALTA",
-      notas: [
-        {
-          fecha: "2024-01-13T14:00:00Z",
-          psicologo: "Psic. Roberto Sánchez",
-          nota: "Contacto telefónico exitoso. Estudiante en crisis de ansiedad por exámenes. Cita programada para hoy."
-        },
-        {
-          fecha: "2024-01-13T16:30:00Z",
-          psicologo: "Psic. Roberto Sánchez",
-          nota: "Primera sesión completada. Plan de seguimiento semanal establecido."
-        }
-      ],
-      psicologoAsignado: {
-        id: 202,
-        nombre: "Psic. Roberto Sánchez"
-      },
-      ultimaActividad: "2024-01-13T16:30:00Z"
+  // Cargar datos reales de la API
+  const cargarCanalizaciones = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [canalizacionesRes, estadisticasRes] = await Promise.all([
+        canalizacionesService.getCanalizaciones(filtros),
+        canalizacionesService.getEstadisticas()
+      ]);
+
+      if (canalizacionesRes.success) {
+        // Transformar datos de la API al formato esperado por el componente
+        const canalizacionesTransformadas = canalizacionesRes.data.map(caso => ({
+          id: caso.canalizacionId || `temp-${caso.quizId}`,
+          estudiante: {
+            id: caso.usuarioId,
+            nombre: caso.nombreCompleto,
+            email: caso.email,
+            carrera: caso.carrera,
+            semestre: caso.semestre,
+            matricula: caso.matricula,
+            telefono: caso.telefono
+          },
+          quiz: {
+            tipo: caso.quizTipo,
+            nombre: caso.quizNombre,
+            puntaje: caso.puntajeTotal,
+            severidad: caso.severidad,
+            fechaAplicacion: caso.fechaEnvio,
+            interpretacion: `${caso.severidad} - Requiere ${caso.severidad === 'SEVERA' ? 'intervención inmediata' : 'seguimiento psicológico'}`
+          },
+          fechaResultado: caso.fechaEnvio,
+          estado: caso.estadoCaso || 'PENDIENTE',
+          prioridad: caso.prioridad || (caso.severidad === 'SEVERA' ? 'ALTA' : 'MEDIA'),
+          motivoCanalizacion: caso.motivoCanalizacion || `Evaluación ${caso.quizNombre} con resultado ${caso.severidad.toLowerCase()}`,
+          notas: caso.notas || [],
+          psicologoAsignado: caso.psicologoNombre ? {
+            id: caso.psicologoAsignado,
+            nombre: caso.psicologoNombre,
+            especialidad: caso.especialidades || 'Psicología General',
+            cedula: caso.cedulaProfesional
+          } : null,
+          ultimaActividad: caso.ultimaActividad || caso.fechaEnvio,
+          proximaCita: caso.proximaCita,
+          fechaAlta: caso.fechaAlta,
+          contactoEmergencia: caso.contactoEmergenciaNombre ? {
+            nombre: caso.contactoEmergenciaNombre,
+            telefono: caso.contactoEmergenciaTelefono
+          } : null,
+          institucionNombre: caso.institucionNombre
+        }));
+
+        setCanalizaciones(canalizacionesTransformadas);
+      }
+
+      if (estadisticasRes.success) {
+        setEstadisticas(estadisticasRes.data);
+      }
+
+    } catch (error) {
+      console.error("Error cargando canalizaciones:", error);
+      setError("Error al cargar las canalizaciones. Por favor, intenta nuevamente.");
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   useEffect(() => {
-    // Simular carga de datos
-    setTimeout(() => {
-      setCanalizaciones(mockCanalizaciones);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    cargarCanalizaciones();
+  }, [filtros]);
 
   const getEstadoConfig = (estado) => {
     const configs = {
@@ -175,27 +153,50 @@ const CanalizacionesPage = () => {
     return true;
   });
 
-  const estadisticas = {
-    total: canalizaciones.length,
-    pendientes: canalizaciones.filter(c => c.estado === 'PENDIENTE').length,
-    severas: canalizaciones.filter(c => c.quiz.severidad === 'SEVERA').length,
-    moderadas: canalizaciones.filter(c => c.quiz.severidad === 'MODERADA').length
+  const estadisticasDisplay = {
+    total: estadisticas.totalCasos || canalizaciones.length,
+    pendientes: estadisticas.pendientes || canalizaciones.filter(c => c.estado === 'PENDIENTE').length,
+    severas: estadisticas.severos || canalizaciones.filter(c => c.quiz.severidad === 'SEVERA').length,
+    moderadas: estadisticas.moderados || canalizaciones.filter(c => c.quiz.severidad === 'MODERADA').length
   };
 
-  const actualizarEstado = (id, nuevoEstado) => {
-    setCanalizaciones(prev =>
-      prev.map(c =>
-        c.id === id ? { ...c, estado: nuevoEstado, ultimaActividad: new Date().toISOString() } : c
-      )
-    );
+  const actualizarEstado = async (id, nuevoEstado) => {
+    try {
+      setActualizandoEstado(id);
+
+      await canalizacionesService.actualizarEstado(id, nuevoEstado, user.id);
+
+      // Actualizar localmente
+      setCanalizaciones(prev =>
+        prev.map(c =>
+          c.id === id ? {
+            ...c,
+            estado: nuevoEstado,
+            ultimaActividad: new Date().toISOString(),
+            psicologoAsignado: nuevoEstado !== 'PENDIENTE' ? { id: user.id, nombre: user.nombreCompleto } : c.psicologoAsignado
+          } : c
+        )
+      );
+
+      // Recargar para obtener datos actualizados
+      await cargarCanalizaciones();
+
+    } catch (error) {
+      console.error("Error actualizando estado:", error);
+      setError("Error al actualizar el estado. Por favor, intenta nuevamente.");
+    } finally {
+      setActualizandoEstado(null);
+    }
   };
 
-  const asignarPsicologo = (id, psicologo) => {
-    setCanalizaciones(prev =>
-      prev.map(c =>
-        c.id === id ? { ...c, psicologoAsignado: psicologo, ultimaActividad: new Date().toISOString() } : c
-      )
-    );
+  const agregarNota = async (id, nota, tipo = 'SEGUIMIENTO') => {
+    try {
+      await canalizacionesService.agregarNota(id, nota, tipo);
+      await cargarCanalizaciones(); // Recargar para mostrar la nueva nota
+    } catch (error) {
+      console.error("Error agregando nota:", error);
+      setError("Error al agregar la nota. Por favor, intenta nuevamente.");
+    }
   };
 
   if (loading) {
@@ -204,6 +205,25 @@ const CanalizacionesPage = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando canalizaciones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="w-5 h-5 text-red-600 mr-2" />
+            <p className="text-red-800">{error}</p>
+          </div>
+          <button
+            onClick={cargarCanalizaciones}
+            className="mt-3 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     );
@@ -222,8 +242,17 @@ const CanalizacionesPage = () => {
           Centro de Canalizaciones
         </h1>
         <p className="text-gray-600">
-          Gestión de casos de riesgo alto y moderado identificados en evaluaciones psicológicas
+          Gestión de casos de riesgo identificados en evaluaciones psicológicas del ITTux
         </p>
+        <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="w-5 h-5 text-red-600 mr-2" />
+            <p className="text-sm text-red-800">
+              <strong>Protocolo de Emergencia:</strong> Para casos de riesgo suicida o crisis inmediata, contactar inmediatamente a:
+              <strong> Centro de Crisis 24/7: 961-6122334</strong> | <strong>SAPTEL: 55-5259-8121</strong>
+            </p>
+          </div>
+        </div>
       </motion.div>
 
       {/* Estadísticas */}
@@ -238,7 +267,7 @@ const CanalizacionesPage = () => {
             <ChartBarIcon className="w-8 h-8 text-blue-600" />
             <div>
               <p className="text-sm text-gray-500">Total de Casos</p>
-              <p className="text-2xl font-bold text-gray-900">{estadisticas.total}</p>
+              <p className="text-2xl font-bold text-gray-900">{estadisticasDisplay.total}</p>
             </div>
           </div>
         </div>
@@ -248,7 +277,7 @@ const CanalizacionesPage = () => {
             <ClockIcon className="w-8 h-8 text-red-600" />
             <div>
               <p className="text-sm text-gray-500">Pendientes</p>
-              <p className="text-2xl font-bold text-red-600">{estadisticas.pendientes}</p>
+              <p className="text-2xl font-bold text-red-600">{estadisticasDisplay.pendientes}</p>
             </div>
           </div>
         </div>
@@ -258,7 +287,7 @@ const CanalizacionesPage = () => {
             <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
             <div>
               <p className="text-sm text-gray-500">Severidad Alta</p>
-              <p className="text-2xl font-bold text-red-600">{estadisticas.severas}</p>
+              <p className="text-2xl font-bold text-red-600">{estadisticasDisplay.severas}</p>
             </div>
           </div>
         </div>
@@ -268,7 +297,7 @@ const CanalizacionesPage = () => {
             <ExclamationTriangleIcon className="w-8 h-8 text-orange-600" />
             <div>
               <p className="text-sm text-gray-500">Severidad Moderada</p>
-              <p className="text-2xl font-bold text-orange-600">{estadisticas.moderadas}</p>
+              <p className="text-2xl font-bold text-orange-600">{estadisticasDisplay.moderadas}</p>
             </div>
           </div>
         </div>
@@ -371,17 +400,26 @@ const CanalizacionesPage = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-4">
                     <div>
+                      <p><strong>Matrícula:</strong> {canalizacion.estudiante.matricula}</p>
                       <p><strong>Email:</strong> {canalizacion.estudiante.email}</p>
                       <p><strong>Carrera:</strong> {canalizacion.estudiante.carrera}</p>
+                      <p><strong>Semestre:</strong> {canalizacion.estudiante.semestre}°</p>
                     </div>
                     <div>
-                      <p><strong>Quiz:</strong> {canalizacion.quiz.nombre}</p>
-                      <p><strong>Puntaje:</strong> {canalizacion.quiz.puntaje}</p>
+                      <p><strong>Evaluación:</strong> {canalizacion.quiz.nombre}</p>
+                      <p><strong>Puntaje:</strong> {canalizacion.quiz.puntaje} - {canalizacion.quiz.interpretacion}</p>
+                      <p><strong>Motivo:</strong> {canalizacion.motivoCanalizacion}</p>
                     </div>
                     <div>
                       <p><strong>Fecha:</strong> {new Date(canalizacion.fechaResultado).toLocaleDateString()}</p>
                       {canalizacion.psicologoAsignado && (
-                        <p><strong>Asignado a:</strong> {canalizacion.psicologoAsignado.nombre}</p>
+                        <>
+                          <p><strong>Asignado a:</strong> {canalizacion.psicologoAsignado.nombre}</p>
+                          <p><strong>Especialidad:</strong> {canalizacion.psicologoAsignado.especialidad}</p>
+                        </>
+                      )}
+                      {canalizacion.proximaCita && (
+                        <p><strong>Próxima cita:</strong> {new Date(canalizacion.proximaCita).toLocaleDateString()}</p>
                       )}
                     </div>
                   </div>
@@ -409,9 +447,30 @@ const CanalizacionesPage = () => {
                   {canalizacion.estado === 'PENDIENTE' && (
                     <button
                       onClick={() => actualizarEstado(canalizacion.id, 'EN_SEGUIMIENTO')}
-                      className="bg-yellow-600 text-white px-3 py-2 rounded-lg hover:bg-yellow-700 transition-colors text-sm"
+                      disabled={actualizandoEstado === canalizacion.id}
+                      className="bg-yellow-600 text-white px-3 py-2 rounded-lg hover:bg-yellow-700 transition-colors text-sm disabled:opacity-50"
                     >
-                      Tomar Caso
+                      {actualizandoEstado === canalizacion.id ? 'Procesando...' : 'Tomar Caso'}
+                    </button>
+                  )}
+
+                  {canalizacion.estado === 'EN_SEGUIMIENTO' && (
+                    <button
+                      onClick={() => actualizarEstado(canalizacion.id, 'CONTACTADO')}
+                      disabled={actualizandoEstado === canalizacion.id}
+                      className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm disabled:opacity-50"
+                    >
+                      {actualizandoEstado === canalizacion.id ? 'Procesando...' : 'Marcar Contactado'}
+                    </button>
+                  )}
+
+                  {(canalizacion.estado === 'CONTACTADO' || canalizacion.estado === 'EN_SEGUIMIENTO') && (
+                    <button
+                      onClick={() => actualizarEstado(canalizacion.id, 'RESUELTO')}
+                      disabled={actualizandoEstado === canalizacion.id}
+                      className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50"
+                    >
+                      {actualizandoEstado === canalizacion.id ? 'Procesando...' : 'Resolver Caso'}
                     </button>
                   )}
 
@@ -460,9 +519,14 @@ const CanalizacionesPage = () => {
                 <h3 className="font-semibold text-gray-900 mb-2">Información del Estudiante</h3>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p><strong>Nombre:</strong> {selectedCase.estudiante.nombre}</p>
+                  <p><strong>Matrícula:</strong> {selectedCase.estudiante.matricula}</p>
                   <p><strong>Email:</strong> {selectedCase.estudiante.email}</p>
                   <p><strong>Carrera:</strong> {selectedCase.estudiante.carrera}</p>
-                  <p><strong>Semestre:</strong> {selectedCase.estudiante.semestre}</p>
+                  <p><strong>Semestre:</strong> {selectedCase.estudiante.semestre}°</p>
+                  <p><strong>Edad:</strong> {selectedCase.estudiante.edad} años</p>
+                  {selectedCase.contactoEmergencia && (
+                    <p><strong>Contacto de emergencia:</strong> {selectedCase.contactoEmergencia.nombre} - {selectedCase.contactoEmergencia.telefono}</p>
+                  )}
                 </div>
               </div>
 
@@ -473,23 +537,62 @@ const CanalizacionesPage = () => {
                     <SeverityBadge value={selectedCase.quiz.severidad} />
                     <span className="font-semibold">Puntaje: {selectedCase.quiz.puntaje}</span>
                   </div>
-                  <p><strong>Evaluación:</strong> {selectedCase.quiz.nombre}</p>
-                  <p><strong>Fecha:</strong> {new Date(selectedCase.fechaResultado).toLocaleString()}</p>
+                  <p><strong>Evaluación:</strong> {selectedCase.quiz.nombre} ({selectedCase.quiz.tipo})</p>
+                  <p><strong>Interpretación:</strong> {selectedCase.quiz.interpretacion}</p>
+                  <p><strong>Motivo de canalización:</strong> {selectedCase.motivoCanalizacion}</p>
+                  <p><strong>Fecha de aplicación:</strong> {new Date(selectedCase.quiz.fechaAplicacion).toLocaleString()}</p>
                 </div>
               </div>
+
+              {selectedCase.psicologoAsignado && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Psicólogo Asignado</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p><strong>Nombre:</strong> {selectedCase.psicologoAsignado.nombre}</p>
+                    <p><strong>Especialidad:</strong> {selectedCase.psicologoAsignado.especialidad}</p>
+                    <p><strong>Cédula profesional:</strong> {selectedCase.psicologoAsignado.cedula}</p>
+                    {selectedCase.proximaCita && (
+                      <p><strong>Próxima cita programada:</strong> {new Date(selectedCase.proximaCita).toLocaleString()}</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {selectedCase.notas.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Historial de Seguimiento</h3>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {selectedCase.notas.map((nota, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-3">
-                        <p className="text-sm text-gray-700">{nota.nota}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {nota.psicologo} - {new Date(nota.fecha).toLocaleString()}
+                      <div key={index} className="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-400">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                            {nota.tipo?.replace(/_/g, ' ') || 'NOTA GENERAL'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(nota.fecha).toLocaleDateString()} {new Date(nota.fecha).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 mb-2">{nota.nota}</p>
+                        <p className="text-xs text-gray-600 font-medium">
+                          👩‍⚕️ {nota.psicologo}
                         </p>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedCase.estado === 'RESUELTO' && selectedCase.fechaAlta && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Información de Alta</h3>
+                  <div className="bg-green-50 rounded-lg p-4 border-l-4 border-green-400">
+                    <p><strong>Fecha de alta:</strong> {new Date(selectedCase.fechaAlta).toLocaleDateString()}</p>
+                    {selectedCase.seguimientoPostAlta && (
+                      <p><strong>Seguimiento programado:</strong> {new Date(selectedCase.seguimientoPostAlta).toLocaleDateString()}</p>
+                    )}
+                    <p className="text-sm text-green-700 mt-2">
+                      ✅ Caso resuelto exitosamente. El estudiante ha mostrado mejoría significativa y está en condiciones de alta terapéutica.
+                    </p>
                   </div>
                 </div>
               )}
