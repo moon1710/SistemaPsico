@@ -9,12 +9,20 @@ const SidebarFooter = ({ isCollapsed }) => {
           <p className="font-medium text-[#f7f7f7]">
             ¿Necesitas ayuda o soporte?
           </p>
-          <Link
-            to="/soporte"
+          <a
+            href={
+              "mailto:orientacionpsicologica@tuxtepec.tecnm.mx" +
+              "?subject=" +
+              encodeURIComponent("Solicitud de orientación psicológica") +
+              "&body=" +
+              encodeURIComponent(
+                "Hola, soy [tu nombre] de [carrera/semestre]. Me gustaría agendar una orientación. Estoy disponible [días/horarios]. Gracias."
+              )
+            }
             className="text-[#10cfbd] hover:underline transition-colors hover:text-[#10cfbd]/80"
           >
             Contáctanos
-          </Link>
+          </a>
         </div>
       ) : (
         <div className="flex justify-center">

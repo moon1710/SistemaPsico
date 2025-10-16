@@ -31,29 +31,29 @@ const ComoPedirAyudaPage = () => {
       titulo: "Apoyo General",
       descripcion: "Cuando necesitas hablar con alguien",
       icon: Heart,
-      color: "blue"
+      color: "blue",
     },
     {
       id: "crisis",
       titulo: "Crisis o Emergencia",
       descripcion: "Situaciones urgentes que requieren ayuda inmediata",
       icon: AlertTriangle,
-      color: "red"
+      color: "red",
     },
     {
       id: "academico",
       titulo: "Apoyo Académico",
       descripcion: "Problemas con estudios, profesores o carga académica",
       icon: BookOpen,
-      color: "green"
+      color: "green",
     },
     {
       id: "profesional",
       titulo: "Ayuda Profesional",
       descripcion: "Contactar psicólogos, consejeros o especialistas",
       icon: User,
-      color: "purple"
-    }
+      color: "purple",
+    },
   ];
 
   const plantillas = {
@@ -69,7 +69,11 @@ const ComoPedirAyudaPage = () => {
 No es nada urgente, pero me haría mucho bien conversar contigo.
 
 Gracias por siempre estar ahí 💙`,
-        consejos: ["Sé específico sobre lo que necesitas", "Da opciones de tiempo flexibles", "Reconoce que valoras su amistad"]
+        consejos: [
+          "Sé específico sobre lo que necesitas",
+          "Da opciones de tiempo flexibles",
+          "Reconoce que valoras su amistad",
+        ],
       },
       {
         titulo: "A un familiar",
@@ -82,7 +86,11 @@ He estado pasando por un momento difícil y creo que me ayudaría mucho hablar c
 Me siento [describe brevemente: ansioso/a, triste, confundido/a] y sé que siempre puedo contar contigo.
 
 ¿Cuándo te viene bien?`,
-        consejos: ["Los familiares a menudo prefieren llamadas", "Sé honesto sobre tus sentimientos", "Propón un momento específico"]
+        consejos: [
+          "Los familiares a menudo prefieren llamadas",
+          "Sé honesto sobre tus sentimientos",
+          "Propón un momento específico",
+        ],
       },
       {
         titulo: "A un compañero de clase",
@@ -95,8 +103,12 @@ Espero que esté todo bien contigo. Últimamente me he sentido un poco desconect
 Me haría mucho bien tener más conexión con mis compañeros.
 
 ¿Qué te parece?`,
-        consejos: ["Sugiere actividades específicas", "Se vulnerable pero no demasiado intenso", "Hazlo sentir como algo mutuamente beneficioso"]
-      }
+        consejos: [
+          "Sugiere actividades específicas",
+          "Se vulnerable pero no demasiado intenso",
+          "Hazlo sentir como algo mutuamente beneficioso",
+        ],
+      },
     ],
     crisis: [
       {
@@ -112,7 +124,12 @@ Por favor llámame inmediatamente: [tu número]
 Si no puedes llamar, por favor ven a [tu ubicación] o envía a alguien.
 
 Esto es real y necesito ayuda.`,
-        consejos: ["Usa palabras claras como 'URGENTE'", "Sé directo sobre el riesgo", "Proporciona tu ubicación", "Ten múltiples contactos preparados"]
+        consejos: [
+          "Usa palabras claras como 'URGENTE'",
+          "Sé directo sobre el riesgo",
+          "Proporciona tu ubicación",
+          "Ten múltiples contactos preparados",
+        ],
       },
       {
         titulo: "A psicología del campus",
@@ -127,7 +144,11 @@ Tengo pensamientos que me asustan y no me siento seguro/a solo/a.
 ¿Hay alguien disponible para atenderme ahora? Puedo ir al centro de bienestar inmediatamente.
 
 Mi número es: [tu teléfono]`,
-        consejos: ["Identifícate como estudiante", "Usa la palabra 'urgente' o 'crisis'", "Mantente disponible para responder"]
+        consejos: [
+          "Identifícate como estudiante",
+          "Usa la palabra 'urgente' o 'crisis'",
+          "Mantente disponible para responder",
+        ],
       },
       {
         titulo: "Mensaje a línea de crisis nacional",
@@ -140,8 +161,12 @@ Mi número es: [tu teléfono]`,
 Estoy teniendo pensamientos de [autolesión/suicidio] y me siento [describe: desesperado/a, solo/a, sin esperanza].
 
 Necesito hablar con alguien que me ayude a sentirme más seguro/a."`,
-        consejos: ["Prepara esta información antes de llamar", "No minimices tu situación", "Estate en un lugar privado para hablar"]
-      }
+        consejos: [
+          "Prepara esta información antes de llamar",
+          "No minimices tu situación",
+          "Estate en un lugar privado para hablar",
+        ],
+      },
     ],
     academico: [
       {
@@ -164,7 +189,12 @@ Atentamente,
 [Tu nombre completo]
 [Número de estudiante]
 [Correo electrónico]`,
-        consejos: ["Usa un asunto claro", "Sé profesional pero humano", "Propón horarios específicos", "No entres en detalles íntimos por email"]
+        consejos: [
+          "Usa un asunto claro",
+          "Sé profesional pero humano",
+          "Propón horarios específicos",
+          "No entres en detalles íntimos por email",
+        ],
       },
       {
         titulo: "A servicios estudiantiles",
@@ -188,7 +218,11 @@ Agradezco su ayuda.
 
 [Tu nombre]
 [Contacto]`,
-        consejos: ["Menciona recursos específicos que necesitas", "Pregunta sobre procesos y documentación", "Sé proactivo en buscar soluciones"]
+        consejos: [
+          "Menciona recursos específicos que necesitas",
+          "Pregunta sobre procesos y documentación",
+          "Sé proactivo en buscar soluciones",
+        ],
       },
       {
         titulo: "A coordinador académico",
@@ -210,8 +244,12 @@ Muchas gracias por su tiempo.
 
 [Tu nombre]
 [Datos de contacto]`,
-        consejos: ["Expresa que estás 'considerando', no decidido", "Muestra que quieres explorar opciones", "Pide orientación sobre procedimientos"]
-      }
+        consejos: [
+          "Expresa que estás 'considerando', no decidido",
+          "Muestra que quieres explorar opciones",
+          "Pide orientación sobre procedimientos",
+        ],
+      },
     ],
     profesional: [
       {
@@ -228,7 +266,11 @@ Soy estudiante de [universidad/carrera] y estoy pasando por [ansiedad/depresión
 
 Si preguntan detalles:
 "Prefiero conversarlo en persona con el profesional, pero puedo decir que [síntoma principal] y creo que me beneficiaría hablar con alguien."`,
-        consejos: ["No necesitas dar todos los detalles por teléfono", "Pregunta sobre tiempos de espera", "Confirma ubicación y qué llevar"]
+        consejos: [
+          "No necesitas dar todos los detalles por teléfono",
+          "Pregunta sobre tiempos de espera",
+          "Confirma ubicación y qué llevar",
+        ],
       },
       {
         titulo: "Psicólogo privado por recomendación",
@@ -249,7 +291,11 @@ Estoy experimentando [ansiedad/depresión/estrés académico/etc] y creo que me 
 Muchas gracias por su tiempo.
 
 [Tu nombre]`,
-        consejos: ["Menciona quién lo recomendó", "Pregunta costos desde el inicio", "Se claro sobre tu disponibilidad de horarios"]
+        consejos: [
+          "Menciona quién lo recomendó",
+          "Pregunta costos desde el inicio",
+          "Se claro sobre tu disponibilidad de horarios",
+        ],
       },
       {
         titulo: "Seguimiento después de primera sesión",
@@ -264,9 +310,13 @@ Agradezco mucho su profesionalismo y tiempo. ¿Podrían orientarme sobre algún 
 Muchas gracias por su comprensión.
 
 [Tu nombre]`,
-        consejos: ["Es normal no conectar con el primer terapeuta", "Se honesto pero respetuoso", "Pide recomendaciones para otros profesionales"]
-      }
-    ]
+        consejos: [
+          "Es normal no conectar con el primer terapeuta",
+          "Se honesto pero respetuoso",
+          "Pide recomendaciones para otros profesionales",
+        ],
+      },
+    ],
   };
 
   const copiarMensaje = (texto, id) => {
@@ -278,42 +328,46 @@ Muchas gracias por su comprensión.
   const barreras = [
     {
       barrera: "No quiero ser una carga",
-      respuesta: "Las personas que te quieren QUIEREN ayudarte. Pedir ayuda les da la oportunidad de estar ahí para ti.",
-      icono: Heart
+      respuesta:
+        "Las personas que te quieren QUIEREN ayudarte. Pedir ayuda les da la oportunidad de estar ahí para ti.",
+      icono: Heart,
     },
     {
       barrera: "Debería poder manejarlo solo/a",
-      respuesta: "Pedir ayuda es una señal de fortaleza, no debilidad. Los más fuertes saben cuándo necesitan apoyo.",
-      icono: Target
+      respuesta:
+        "Pedir ayuda es una señal de fortaleza, no debilidad. Los más fuertes saben cuándo necesitan apoyo.",
+      icono: Target,
     },
     {
       barrera: "No sé cómo empezar la conversación",
-      respuesta: "Usa las plantillas de abajo. Un simple 'necesito hablar contigo' es suficiente para empezar.",
-      icono: MessageCircle
+      respuesta:
+        "Usa las plantillas de abajo. Un simple 'necesito hablar contigo' es suficiente para empezar.",
+      icono: MessageCircle,
     },
     {
       barrera: "Tengo miedo de que me juzguen",
-      respuesta: "Las personas que realmente te importan no te juzgarán. Y los profesionales están entrenados para no juzgar.",
-      icono: Shield
-    }
+      respuesta:
+        "Las personas que realmente te importan no te juzgarán. Y los profesionales están entrenados para no juzgar.",
+      icono: Shield,
+    },
   ];
 
   const getColorClasses = (color) => {
     const colors = {
-      blue: 'bg-blue-50 border-blue-200 text-blue-700',
-      red: 'bg-red-50 border-red-200 text-red-700',
-      green: 'bg-green-50 border-green-200 text-green-700',
-      purple: 'bg-purple-50 border-purple-200 text-purple-700'
+      blue: "bg-blue-50 border-blue-200 text-blue-700",
+      red: "bg-red-50 border-red-200 text-red-700",
+      green: "bg-green-50 border-green-200 text-green-700",
+      purple: "bg-purple-50 border-purple-200 text-purple-700",
     };
     return colors[color] || colors.blue;
   };
 
   const getIconColor = (color) => {
     const colors = {
-      blue: 'text-blue-600',
-      red: 'text-red-600',
-      green: 'text-green-600',
-      purple: 'text-purple-600'
+      blue: "text-blue-600",
+      red: "text-red-600",
+      green: "text-green-600",
+      purple: "text-purple-600",
     };
     return colors[color] || colors.blue;
   };
@@ -339,7 +393,8 @@ Muchas gracias por su comprensión.
             Cómo Pedir Ayuda
           </h1>
           <p className="text-gray-600 mt-2">
-            Guía práctica para comunicar tus necesidades y recibir el apoyo que mereces
+            Guía práctica para comunicar tus necesidades y recibir el apoyo que
+            mereces
           </p>
         </div>
       </motion.div>
@@ -388,7 +443,9 @@ Muchas gracias por su comprensión.
         transition={{ duration: 0.5, delay: 0.4 }}
         className="space-y-4"
       >
-        <h2 className="text-2xl font-bold text-gray-900">Plantillas de Mensajes</h2>
+        <h2 className="text-2xl font-bold text-gray-900">
+          Plantillas de Mensajes
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {categorias.map((categoria) => {
             const IconComponent = categoria.icon;
@@ -399,15 +456,19 @@ Muchas gracias por su comprensión.
                 className={`p-4 rounded-xl border-2 text-left transition-all ${
                   categoriaActiva === categoria.id
                     ? getColorClasses(categoria.color)
-                    : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                    : "bg-gray-50 border-gray-200 hover:border-gray-300"
                 }`}
               >
-                <IconComponent className={`w-6 h-6 mb-2 ${
-                  categoriaActiva === categoria.id
-                    ? getIconColor(categoria.color)
-                    : 'text-gray-500'
-                }`} />
-                <h3 className="font-semibold text-gray-900 mb-1">{categoria.titulo}</h3>
+                <IconComponent
+                  className={`w-6 h-6 mb-2 ${
+                    categoriaActiva === categoria.id
+                      ? getIconColor(categoria.color)
+                      : "text-gray-500"
+                  }`}
+                />
+                <h3 className="font-semibold text-gray-900 mb-1">
+                  {categoria.titulo}
+                </h3>
                 <p className="text-sm text-gray-600">{categoria.descripcion}</p>
               </button>
             );
@@ -415,7 +476,7 @@ Muchas gracias por su comprensión.
         </div>
       </motion.div>
 
-      {/* Plantillas de la categoría activa */}
+      {/* Contenido de la categoría activa (guías prácticas, no mensajes) */}
       <AnimatePresence mode="wait">
         <motion.div
           key={categoriaActiva}
@@ -425,62 +486,193 @@ Muchas gracias por su comprensión.
           transition={{ duration: 0.3 }}
           className="space-y-6"
         >
-          {plantillas[categoriaActiva]?.map((plantilla, index) => (
+          {(
+            {
+              general: [
+                {
+                  titulo: "Hablar con alguien de confianza",
+                  descripcion: "Inicia una conversación sin abrumarte.",
+                  pasos: [
+                    "Abre con algo simple: pregunta si tiene 5–10 minutos.",
+                    "Di cómo te has sentido en 1–2 frases (sin entrar a detalles íntimos).",
+                    "Pide algo concreto: escuchar, compañía, o ayuda para agendar con profesional.",
+                  ],
+                  ejemplos: [
+                    "“¿Tienes un momento esta tarde? Me ayudaría conversar tantito.”",
+                    "“Últimamente me he sentido saturada/o y me vendría bien hablar.”",
+                  ],
+                  evita: [
+                    "Minimizar lo que sientes (“no es nada, olvídalo”).",
+                    "Culparte por pedir apoyo.",
+                  ],
+                },
+                {
+                  titulo: "Pedir acompañamiento",
+                  descripcion:
+                    "Si te cuesta ir sola/o a un lugar o iniciar un trámite.",
+                  pasos: [
+                    "Explica qué actividad te cuesta (ej. ‘ir a psicología’).",
+                    "Pide compañía para ese momento puntual.",
+                    "Agradece y confirma hora/lugar.",
+                  ],
+                  ejemplos: [
+                    "“¿Me acompañas mañana a psicología a las 12? Me sentiría más tranquila/o.”",
+                  ],
+                  evita: ["Dejarlo ambiguo (sin hora/lugar)."],
+                },
+              ],
+              crisis: [
+                {
+                  titulo: "Si es urgente",
+                  descripcion: "Activa tus apoyos sin rodeos.",
+                  pasos: [
+                    "Di que es una crisis y que necesitas hablar ahora.",
+                    "Indica cómo contactarte y dónde estás si aplica.",
+                    "Si no responden, usa otra opción (Línea de la Vida/911/Centro de Crisis).",
+                  ],
+                  ejemplos: [
+                    "“Estoy en crisis, ¿podemos hablar ahora mismo?”",
+                    "“Me siento en riesgo; necesito apoyo inmediato.”",
+                  ],
+                  evita: ["Suavizar demasiado (‘luego te cuento’)."],
+                },
+                {
+                  titulo: "En campus (horario laboral)",
+                  descripcion: "Pide prioridad de atención.",
+                  pasos: [
+                    "Identifícate como estudiante.",
+                    "Usa palabras clave: ‘crisis’, ‘prioridad’ o ‘riesgo’.",
+                    "Pregunta disponibilidad inmediata.",
+                  ],
+                  ejemplos: [
+                    "“Soy de [programa], estoy en crisis. ¿Hay alguien que pueda atenderme hoy?”",
+                  ],
+                  evita: ["Esperar a ‘sentirte mejor’ para pedir ayuda."],
+                },
+              ],
+              academico: [
+                {
+                  titulo: "Conversar con un/a profesor/a",
+                  descripcion:
+                    "Cuando tu situación afecta entregas o asistencia.",
+                  pasos: [
+                    "Solicita una reunión breve (10–15 min).",
+                    "Explica que hay una situación personal afectando tu rendimiento.",
+                    "Propón 2–3 horarios y pregunta opciones de apoyo/ajuste.",
+                  ],
+                  ejemplos: [
+                    "“¿Podemos agendar 10 minutos? Quiero explorar opciones por una situación personal.”",
+                  ],
+                  evita: ["Contar detalles íntimos por correo/mensaje."],
+                },
+                {
+                  titulo: "Servicios estudiantiles",
+                  descripcion:
+                    "Extensiones, ajustes, o reducción temporal de carga.",
+                  pasos: [
+                    "Pregunta por el proceso y requisitos.",
+                    "Menciona apoyos concretos que buscas.",
+                    "Aclara tu disponibilidad para una cita.",
+                  ],
+                  ejemplos: [
+                    "“¿Podrían orientarme sobre extensiones y ajustes? Puedo el jueves por la mañana.”",
+                  ],
+                  evita: ["Esperar al último día para pedir extensiones."],
+                },
+              ],
+              profesional: [
+                {
+                  titulo: "Psicología (campus o externo)",
+                  descripcion: "Primera toma de contacto.",
+                  pasos: [
+                    "Di que buscas apoyo psicológico por un motivo breve.",
+                    "Pregunta por disponibilidad, modalidad y costos (si aplica).",
+                    "Confirma fecha, hora y qué llevar.",
+                  ],
+                  ejemplos: [
+                    "“Busco apoyo por estrés/ansiedad. ¿Hay disponibilidad esta semana?”",
+                  ],
+                  evita: [
+                    "Sentirte obligada/o a compartir todo en la primera llamada.",
+                  ],
+                },
+                {
+                  titulo: "Si no conectaste con un terapeuta",
+                  descripcion: "Es válido pedir otra opción.",
+                  pasos: [
+                    "Agradece la sesión.",
+                    "Explica que buscas otro enfoque.",
+                    "Pregunta por una recomendación alternativa.",
+                  ],
+                  ejemplos: [
+                    "“¿Podrías sugerirme a alguien con otro enfoque?”",
+                  ],
+                  evita: ["Desaparecer sin avisar."],
+                },
+              ],
+            }[categoriaActiva] || []
+          ).map((bloque, i) => (
             <motion.div
-              key={index}
+              key={i}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm"
+              transition={{ duration: 0.3, delay: i * 0.05 }}
+              className="rounded-2xl bg-white/70 backdrop-blur-md border border-white/40 shadow-[0_8px_28px_rgba(0,0,0,0.08)] p-6"
             >
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                    {plantilla.titulo}
+                  <h3 className="text-xl font-semibold text-[#21252d]">
+                    {bloque.titulo}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    <strong>Situación:</strong> {plantilla.situacion}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Canal recomendado:</strong> {plantilla.canal}
-                  </p>
+                  <p className="text-sm text-[#7c777a]">{bloque.descripcion}</p>
                 </div>
-                <button
-                  onClick={() => copiarMensaje(plantilla.plantilla, `${categoriaActiva}-${index}`)}
-                  className="flex items-center gap-2 bg-blue-100 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-200 transition-colors"
-                >
-                  {mensajeCopiado === `${categoriaActiva}-${index}` ? (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Copiado
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      Copiar
-                    </>
-                  )}
-                </button>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <h4 className="font-medium text-gray-900 mb-2">Plantilla de mensaje:</h4>
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
-                  {plantilla.plantilla}
-                </pre>
-              </div>
-
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">Consejos adicionales:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  {plantilla.consejos.map((consejo, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                      {consejo}
-                    </li>
+              {/* Pasos claros */}
+              <div className="mb-4">
+                <h4 className="font-medium text-[#21252d] mb-2">
+                  Pasos sugeridos
+                </h4>
+                <ol className="list-decimal pl-5 space-y-1 text-sm text-[#21252d]">
+                  {bloque.pasos.map((p, idx) => (
+                    <li key={idx}>{p}</li>
                   ))}
-                </ul>
+                </ol>
               </div>
+
+              {/* Cómo decirlo (opciones, no plantilla) */}
+              {bloque.ejemplos?.length ? (
+                <div className="mb-4">
+                  <h4 className="font-medium text-[#21252d] mb-2">
+                    Cómo podrías decirlo
+                  </h4>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {bloque.ejemplos.map((ej, k) => (
+                      <div
+                        key={k}
+                        className="rounded-xl bg-white/60 backdrop-blur border border-white/40 p-3 text-sm text-[#21252d]"
+                      >
+                        {ej}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Qué evitar */}
+              {bloque.evita?.length ? (
+                <div>
+                  <h4 className="font-medium text-[#21252d] mb-2">Evita</h4>
+                  <ul className="space-y-1 text-sm text-[#7c777a]">
+                    {bloque.evita.map((ev, j) => (
+                      <li key={j} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-black/30 mt-2" />
+                        {ev}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </motion.div>
           ))}
         </motion.div>
@@ -509,7 +701,7 @@ Muchas gracias por su comprensión.
             </div>
           </Link>
           <button
-            onClick={() => window.open('tel:911', '_self')}
+            onClick={() => window.open("tel:911", "_self")}
             className="bg-white p-4 rounded-lg hover:shadow-md transition-shadow flex items-center gap-3"
           >
             <Phone className="w-6 h-6 text-red-500" />
@@ -519,7 +711,7 @@ Muchas gracias por su comprensión.
             </div>
           </button>
           <button
-            onClick={() => window.open('tel:800-911-2000', '_self')}
+            onClick={() => window.open("tel:800-911-2000", "_self")}
             className="bg-white p-4 rounded-lg hover:shadow-md transition-shadow flex items-center gap-3"
           >
             <Phone className="w-6 h-6 text-blue-500" />
@@ -559,7 +751,9 @@ Muchas gracias por su comprensión.
             <Heart className="w-6 h-6 text-pink-500" />
             <div>
               <p className="font-semibold">Técnicas de Calma</p>
-              <p className="text-sm text-gray-600">Mientras esperas respuesta</p>
+              <p className="text-sm text-gray-600">
+                Mientras esperas respuesta
+              </p>
             </div>
           </Link>
         </div>

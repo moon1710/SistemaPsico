@@ -12,10 +12,13 @@ import {
   ChartBarIcon,
   FunnelIcon,
   PlusIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import SeverityBadge from "../components/quizzes/SeverityBadge";
 import canalizacionesService from "../services/canalizacionesService";
 import { useAuth } from "../contexts/AuthContext";
+
+const GOOGLE_CALENDAR_LINK = "https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2B-xvZKl6KLUb7H0jvcNNBNdXAhGO9X2G0Qwl0DOMBFDzykmYM1Kv0MOHSs0vPrWkUZTDyy2QQ";
 
 const CanalizacionesPage = () => {
   const { user } = useAuth();
@@ -31,6 +34,7 @@ const CanalizacionesPage = () => {
   });
   const [selectedCase, setSelectedCase] = useState(null);
   const [actualizandoEstado, setActualizandoEstado] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(null);
 
   // Cargar datos reales de la API
   const cargarCanalizaciones = async () => {
@@ -103,6 +107,15 @@ const CanalizacionesPage = () => {
   useEffect(() => {
     cargarCanalizaciones();
   }, [filtros]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setDropdownOpen(null);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const getEstadoConfig = (estado) => {
     const configs = {
@@ -474,13 +487,61 @@ const CanalizacionesPage = () => {
                     </button>
                   )}
 
-                  <button
-                    onClick={() => window.open(`tel:${canalizacion.estudiante.email}`, '_self')}
-                    className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-1"
-                  >
-                    <PhoneIcon className="w-4 h-4" />
-                    Contactar
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDropdownOpen(dropdownOpen === canalizacion.id ? null : canalizacion.id);
+                      }}
+                      className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-1"
+                    >
+                      <PhoneIcon className="w-4 h-4" />
+                      Contactar
+                      <ChevronDownIcon className="w-4 h-4" />
+                    </button>
+
+                    {dropdownOpen === canalizacion.id && (
+                      <div
+                        className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border z-10"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              window.open(`mailto:${canalizacion.estudiante.email}`, '_self');
+                              setDropdownOpen(null);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <PhoneIcon className="w-4 h-4" />
+                            Enviar email
+                          </button>
+                          <button
+                            onClick={() => {
+                              window.open(GOOGLE_CALENDAR_LINK, '_blank');
+                              setDropdownOpen(null);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <CalendarDaysIcon className="w-4 h-4" />
+                            Agendar cita
+                          </button>
+                          {canalizacion.estudiante.telefono && (
+                            <button
+                              onClick={() => {
+                                window.open(`tel:${canalizacion.estudiante.telefono}`, '_self');
+                                setDropdownOpen(null);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <PhoneIcon className="w-4 h-4" />
+                              Llamar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
