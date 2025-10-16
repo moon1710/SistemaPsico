@@ -6,7 +6,7 @@ import { ROUTES } from "../utils/constants";
 import RegistroEstudiante from "../components/auth/RegistroEstudiante";
 
 // Asegúrate de que la ruta sea correcta:
-import backgroundImage from "../assets/bgLogin.png";
+import backgroundImage from "../assets/bgLog.png";
 import "../styles/login.css"
 import "../index.css"
 
@@ -110,27 +110,29 @@ const LoginPage = () => {
 
         {/* Sección derecha sigue igual */}
         <section
-          className="login-section-right"
+          className="login-section-right has-overlay"
           style={{
             backgroundImage: `url(${backgroundImage})`,
             backgroundColor: "#2b333c",
           }}
         >
-          <div className="login-badge">Registro de Estudiantes</div>
+          <div className="login-badge">NeuroFlora</div>
 
           <div className="login-right-content">
-            <h2>Únete a NeuroFlora</h2>
+            <h2>Cuidando la salud de todos</h2>
             <p>
-              Regístrate con tu número de control institucional y comienza tu
-              experiencia en nuestra plataforma de bienestar estudiantil.
+              Plataforma integral para psicólogos, orientadores y estudiantes.
+              Construyendo comunidades educativas más saludables y resilientes.
             </p>
-            <span className="login-highlight">Tu bienestar es nuestra prioridad</span>
+            <span className="login-highlight">
+              Eres nuestra prioridad
+            </span>
           </div>
 
           <div className="login-status-list">
             <div className="login-status-item">
               <span className="login-status-dot green"></span>
-              <span>Registro Seguro</span>
+              <span>Sistema Activo</span>
             </div>
             <div className="login-status-item">
               <span className="login-status-dot blue"></span>
@@ -138,7 +140,7 @@ const LoginPage = () => {
             </div>
             <div className="login-status-item">
               <span className="login-status-dot purple"></span>
-              <span>Soporte 24/7</span>
+              <span>24/7 Disponible</span>
             </div>
           </div>
         </section>

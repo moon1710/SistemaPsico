@@ -98,9 +98,10 @@
 
 .login-input:focus {
   border-color: var(--cornflower-blue);
-  box-shadow: 0 0 0 2px var(--cornflower-blue, #527ceb, 0.09);
+  /* antes: box-shadow: 0 0 0 2px var(--cornflower-blue, #527ceb, 0.09);  <-- inválido */
+  box-shadow: 0 0 0 3px rgba(82,124,235,.18); /* foco accesible y bonito */
 }
-
+.login-input-group:focus-within .login-input-icon { color: var(--cornflower-blue); }
 /* === Submit Button === */
 .login-submit {
   width: 100%;
@@ -275,3 +276,31 @@
 .login-status-dot.green { background: #27e467; }
 .login-status-dot.blue { background: var(--cornflower-blue);}
 .login-status-dot.purple { background: var(--blue-violet); }
+
+/* Overlay para mejorar contraste del texto sobre el fondo */
+@media (min-width: 1024px) {
+  .login-section-right::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /* Radial suave + gradiente diagonal + velo ligero */
+    background:
+      radial-gradient(900px 480px at 20% 15%, rgba(93, 13, 104, 0.021), transparent 10%),
+      linear-gradient(130deg, rgba(70, 79, 100, 0.25), rgba(64,36,97,.20)),
+      rgba(74, 9, 160, 0.02);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Aseguramos que el contenido quede por encima del overlay */
+  .login-section-right > * { position: relative; z-index: 1; }
+
+  /* Pequeño text-shadow para legibilidad sin “halo” exagerado */
+  .login-right-content h2,
+  .login-right-content p,
+  .login-badge,
+  .login-status-item,
+  .login-highlight {
+    text-shadow: 0 1px 2px rgba(63, 21, 57, 0.25);
+  }
+}

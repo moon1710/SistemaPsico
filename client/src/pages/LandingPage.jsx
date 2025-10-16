@@ -33,7 +33,7 @@ const LandingPage = () => {
         <div className="hero-content">
           <p className="hero-badge">Sistema Psicológico Integral</p>
           <h1 className="hero-title">
-            Bienestar estudiantil <span className="accent">para todos</span>
+            Salud emocional <span className="accent">para todos</span>
           </h1>
           <p className="hero-description">
             La plataforma integral para instituciones educativas donde
@@ -263,7 +263,10 @@ const LandingPage = () => {
               <Link to={ROUTES.PRIVACIDAD} className="footer-bottom-link">
                 Política de Privacidad
               </Link>
-              <Link to={ROUTES.CONFINDENCIALIDAD} className="footer-bottom-link">
+              <Link
+                to={ROUTES.CONFINDENCIALIDAD}
+                className="footer-bottom-link"
+              >
                 Confidencialidad
               </Link>
             </div>
