@@ -269,7 +269,7 @@ const getRoleColor = () => {
           {!isCollapsed && (
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-[#f7f7f7]">
-                Sistema Psicológico
+                NeuroFlora
               </h1>
             </div>
           )}

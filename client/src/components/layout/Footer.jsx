@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="footer-inner">
         <div className="footer-main">
           <div>
-            <h3 className="footer-title">Sistema Psicológico</h3>
+            <h3 className="footer-title">NeuroFlora </h3>
             <p className="footer-desc">
               Plataforma integral para el bienestar estudiantil, diseñada para
               instituciones educativas que priorizan la salud mental de su
