@@ -37,6 +37,22 @@ const ProfilePage = () => {
   });
   const [errors, setErrors] = useState({});
 
+  // Actualizar formData cuando el usuario cambie
+  React.useEffect(() => {
+    if (user) {
+      setFormData({
+        nombre: user?.nombre || '',
+        apellidoPaterno: user?.apellidoPaterno || '',
+        apellidoMaterno: user?.apellidoMaterno || '',
+        email: user?.email || '',
+        telefono: user?.telefono || '',
+        direccion: user?.direccion || '',
+        genero: user?.genero || '',
+        fechaNacimiento: user?.fechaNacimiento ? new Date(user.fechaNacimiento).toISOString().split('T')[0] : '',
+      });
+    }
+  }, [user]);
+
   const getRoleColor = (role) => {
     const colors = {
       SUPER_ADMIN_NACIONAL: "bg-purple-100 text-purple-800 border-purple-200",
@@ -112,7 +128,9 @@ const ProfilePage = () => {
     setMessage({ type: '', text: '' });
 
     try {
+      console.log('📝 Enviando datos del perfil:', formData);
       const result = await userService.updateProfile(formData);
+      console.log('✅ Resultado de actualización:', result);
 
       if (result.success) {
         // Actualizar el contexto de autenticación

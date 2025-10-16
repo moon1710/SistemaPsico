@@ -289,6 +289,8 @@ const login = async (req, res) => {
 
     const { email, password } = req.body;
 
+    console.log('🔐 Intento de login:', { email, passwordLength: password?.length });
+
     // Permitir login con email O número de control
     const [userRows] = await pool.execute(
       `SELECT u.id, u.nombre, u.apellidoPaterno, u.apellidoMaterno,
@@ -301,7 +303,10 @@ const login = async (req, res) => {
       [email, email]
     );
 
+    console.log('👥 Usuarios encontrados:', userRows.length);
+
     if (userRows.length === 0) {
+      console.log('❌ Usuario no encontrado:', email);
       return res
         .status(401)
         .json({
@@ -314,7 +319,10 @@ const login = async (req, res) => {
     const user = userRows[0];
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    console.log('🔑 Validación de contraseña:', isPasswordValid);
+
     if (!isPasswordValid) {
+      console.log('❌ Contraseña incorrecta para usuario:', user.email);
       return res
         .status(401)
         .json({
@@ -431,10 +439,11 @@ const getProfile = async (req, res) => {
     const userId = req.user.id;
 
     const [userRows] = await pool.execute(
-      `SELECT u.id, u.carreraId, u.nombre, u.apellidoPaterno, 
+      `SELECT u.id, u.carreraId, u.nombre, u.apellidoPaterno,
               u.apellidoMaterno, u.nombreCompleto, u.email, u.status,
               u.emailVerificado, u.requiereCambioPassword, u.createdAt,
-              u.lastLogin, u.perfilCompletado
+              u.lastLogin, u.perfilCompletado, u.telefono, u.direccion,
+              u.genero, u.fechaNacimiento, u.foto
        FROM usuarios u
        WHERE u.id = ?`,
       [userId]
@@ -477,6 +486,11 @@ const getProfile = async (req, res) => {
       createdAt: base.createdAt,
       lastLogin: base.lastLogin,
       perfilCompletado: base.perfilCompletado,
+      telefono: base.telefono,
+      direccion: base.direccion,
+      genero: base.genero,
+      fechaNacimiento: base.fechaNacimiento,
+      foto: base.foto,
       instituciones: instituciones.map(
         ({ institucionStatus, membershipStatus, ...rest }) => rest
       ),
@@ -627,7 +641,7 @@ const updateProfile = async (req, res) => {
       `SELECT u.id, u.nombre, u.apellidoPaterno, u.apellidoMaterno,
               u.nombreCompleto, u.email, u.status, u.emailVerificado,
               u.createdAt, u.lastLogin, u.perfilCompletado, u.telefono,
-              u.direccion, u.genero, u.fechaNacimiento
+              u.direccion, u.genero, u.fechaNacimiento, u.foto
        FROM usuarios u WHERE u.id = ?`,
       [userId]
     );

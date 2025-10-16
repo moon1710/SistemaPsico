@@ -116,18 +116,6 @@ export const roleSpecificItems = [
     roles: ["ESTUDIANTE"],
   },
   {
-    href: ROUTES.AGENDAR_CITA,
-    icon: Calendar,
-    label: "Agendar Cita",
-    roles: ["ESTUDIANTE"],
-  },
-  {
-    href: ROUTES.MIS_CITAS,
-    icon: Calendar,
-    label: "Mis Citas",
-    roles: ["ESTUDIANTE"],
-  },
-  {
     href: ROUTES.RECURSOS,
     icon: Shield,
     label: "Recursos",

@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import authService from "../services/authService"; // <- ya lo usabas
 import { normalizeRole } from "../utils/roles";
+import { STORAGE_KEYS } from "../utils/constants";
 
 const ACTIVE_KEY = "activeInstitutionId:v1";
 const TOKEN_KEY = "authToken:v1";
@@ -231,18 +232,28 @@ export function AuthProvider({ children }) {
 
   const updateProfile = async () => {
     try {
+      console.log('🔄 Actualizando perfil en contexto...');
+      // Recargar el perfil del usuario desde el servidor
       const res = await authService.getProfile?.();
+      console.log('📄 Respuesta del servidor:', res);
+
       if (res?.success && res.data) {
-        // merge suave
-        const merged = { ...(user || {}), ...(res.data || {}) };
-        _setUserAndDefaultInstitution(merged);
-        return { success: true, data: res.data };
+        // Actualizar el usuario en el contexto con los datos más recientes
+        const updatedUser = { ...(user || {}), ...res.data };
+        console.log('👤 Usuario actualizado:', updatedUser);
+        _setUserAndDefaultInstitution(updatedUser);
+
+        // Actualizar también en localStorage
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(updatedUser));
+
+        return { success: true, data: updatedUser };
       }
       return {
         success: false,
         error: res?.error || "No se pudo actualizar perfil",
       };
     } catch (e) {
+      console.error('Error updating profile in context:', e);
       return { success: false, error: e?.message || "Error de red" };
     }
   };

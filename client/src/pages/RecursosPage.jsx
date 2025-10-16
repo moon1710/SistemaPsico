@@ -1,3 +1,4 @@
+// RecursosPage.jsx — versión “humana”, glass + gradientes
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -15,7 +16,6 @@ import {
   Activity,
   Heart,
   ArrowRight,
-  Play,
   Download,
   ExternalLink,
   ChevronDown,
@@ -23,61 +23,57 @@ import {
   Zap,
 } from "lucide-react";
 import { ROUTES } from "../utils/constants";
+import {
+  glass,
+  softCard,
+  gradPrimary,
+  pageWrap,
+  subtleText,
+  cta,
+  baseBg,
+} from "../../src/components/ui/tokens.js"; // <- añade este import
 
 const RecursosPage = () => {
   const [expandedSection, setExpandedSection] = useState(null);
-
-  const toggleSection = (sectionId) => {
-    setExpandedSection(expandedSection === sectionId ? null : sectionId);
-  };
+  const toggleSection = (id) =>
+    setExpandedSection(expandedSection === id ? null : id);
 
   const recursosInteractivos = [
     {
       id: "crisis",
       title: "Crisis Inmediata",
       icon: AlertTriangle,
-      color: "red",
-      urgent: true,
-      description: "Ayuda inmediata disponible 24/7",
+      description: "Ayuda inmediata 24/7",
       link: ROUTES.CRISIS_INMEDIATA,
-      features: ["Plan de seguridad personal", "Contactos de emergencia", "Técnicas rápidas de estabilización"]
     },
     {
       id: "primeros-auxilios",
       title: "Primeros Auxilios Emocionales",
       icon: Heart,
-      color: "blue",
-      description: "Cómo ayudar a alguien en crisis",
+      description: "Cómo ayudar en una crisis",
       link: ROUTES.PRIMEROS_AUXILIOS,
-      features: ["Protocolos paso a paso", "Crisis de ansiedad", "Crisis depresivas", "Episodios disociativos"]
     },
     {
       id: "respiracion",
       title: "Respiración Guiada",
       icon: Wind,
-      color: "green",
-      description: "Técnicas de respiración interactivas",
+      description: "Técnicas interactivas con temporizador",
       link: ROUTES.RESPIRACION_GUIADA,
-      features: ["Respiración 4-7-8", "Respiración cuadrada", "Respiración profunda", "Con temporizador"]
     },
     {
       id: "grounding",
       title: "Técnica 5-4-3-2-1",
       icon: Brain,
-      color: "purple",
-      description: "Grounding interactivo con los 5 sentidos",
+      description: "Conecta con el presente (paso a paso)",
       link: ROUTES.TECNICA_5432,
-      features: ["Guía paso a paso", "Registro de respuestas", "Conecta con el presente"]
     },
     {
       id: "relajacion",
       title: "Relajación Muscular",
       icon: Zap,
-      color: "indigo",
-      description: "Relajación muscular progresiva guiada",
+      description: "Sesión completa, rápida o por zonas",
       link: ROUTES.RELAJACION_MUSCULAR,
-      features: ["Sesión completa", "Versión rápida", "Grupos específicos", "Con instrucciones de voz"]
-    }
+    },
   ];
 
   const recursosEstaticos = [
@@ -85,22 +81,21 @@ const RecursosPage = () => {
       id: "habitos",
       title: "Hábitos y Estilo de Vida",
       icon: Moon,
-      color: "indigo",
-      description: "Fundamentos para el bienestar diario",
+      description: "Fundamentos para tu día a día",
       items: [
         {
           title: "Guía del Sueño Estudiantil",
-          description: "Consejos prácticos para mejorar tu descanso",
+          description: "Consejos prácticos para descansar mejor",
           action: "Próximamente",
-          icon: Moon,
           comingSoon: true,
+          icon: Moon,
         },
         {
           title: "Pausas Activas",
-          description: "Ejercicios de 2 minutos durante el estudio",
+          description: "Micro-ejercicios de 2 minutos al estudiar",
           action: "Próximamente",
-          icon: Activity,
           comingSoon: true,
+          icon: Activity,
         },
       ],
     },
@@ -108,22 +103,21 @@ const RecursosPage = () => {
       id: "academico",
       title: "Apoyo Académico",
       icon: FileText,
-      color: "orange",
-      description: "Herramientas para el éxito académico",
+      description: "Herramientas para estudiar sin ahogarte",
       items: [
         {
           title: "Planificador de Estudios",
-          description: "Organiza tu tiempo de forma efectiva",
+          description: "Organiza tiempo y cargas",
           action: "Próximamente",
-          icon: Clock,
           comingSoon: true,
+          icon: Clock,
         },
         {
-          title: "Manejo de Ansiedad ante Exámenes",
-          description: "Estrategias para reducir el estrés académico",
+          title: "Manejo de Ansiedad en Exámenes",
+          description: "Estrategias antes/durante/después",
           action: "Próximamente",
-          icon: Brain,
           comingSoon: true,
+          icon: Brain,
         },
       ],
     },
@@ -131,323 +125,242 @@ const RecursosPage = () => {
       id: "apoyo",
       title: "Red de Apoyo",
       icon: Users,
-      color: "teal",
-      description: "Construye tu red de soporte",
+      description: "Construye tu red de sostén",
       items: [
         {
           title: "Directorio de Contactos Campus",
-          description: "Servicios de apoyo disponibles en tu institución",
+          description: "Servicios disponibles en tu institución",
           action: "Ver Directorio",
-          icon: Phone,
           available: true,
+          icon: Phone,
         },
         {
           title: "Cómo Pedir Ayuda",
-          description: "Guía para comunicar tus necesidades",
+          description: "Frases, plantillas y tips",
           action: "Ver Guía",
-          icon: Heart,
           available: true,
+          icon: Heart,
           link: ROUTES.COMO_PEDIR_AYUDA,
         },
       ],
     },
   ];
 
-  const getColorClasses = (color, urgent = false) => {
-    const colors = {
-      red: urgent
-        ? "bg-red-100 border-red-300 text-red-800"
-        : "bg-red-50 border-red-200 text-red-700",
-      blue: "bg-blue-50 border-blue-200 text-blue-700",
-      purple: "bg-purple-50 border-purple-200 text-purple-700",
-      indigo: "bg-indigo-50 border-indigo-200 text-indigo-700",
-      orange: "bg-orange-50 border-orange-200 text-orange-700",
-      green: "bg-green-50 border-green-200 text-green-700",
-      teal: "bg-teal-50 border-teal-200 text-teal-700",
-      pink: "bg-pink-50 border-pink-200 text-pink-700",
-    };
-    return colors[color] || colors.blue;
-  };
-
-  const getIconColor = (color) => {
-    const colors = {
-      red: "text-red-600",
-      blue: "text-blue-600",
-      purple: "text-purple-600",
-      indigo: "text-indigo-600",
-      orange: "text-orange-600",
-      green: "text-green-600",
-      teal: "text-teal-600",
-      pink: "text-pink-600",
-    };
-    return colors[color] || colors.blue;
-  };
-
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center"
-      >
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Centro de Recursos de Bienestar
-        </h1>
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Herramientas, técnicas y recursos diseñados para apoyar tu bienestar
-          emocional, académico y personal durante tu experiencia universitaria.
-        </p>
-      </motion.div>
+    <div className={`${baseBg}`}>
+      <div className={pageWrap}>
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="text-center"
+        >
+          <h1 className="text-4xl font-bold text-[#21252d] mb-3">
+            Centro de Recursos
+          </h1>
+          <p className={`text-lg ${subtleText} max-w-3xl mx-auto`}>
+            Herramientas y técnicas para acompañarte en lo académico, emocional
+            y personal.
+          </p>
+        </motion.div>
 
-      {/* Banner de Crisis - Siempre visible */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="bg-red-600 text-white rounded-xl p-6 shadow-lg"
-      >
-        <div className="flex items-center gap-4 mb-4">
-          <AlertTriangle className="w-8 h-8" />
-          <div>
-            <h2 className="text-xl font-bold">¿Necesitas Ayuda Inmediata?</h2>
-            <p>Si estás en crisis o tienes pensamientos de autolesión, busca ayuda ahora.</p>
+        {/* Banner de Crisis (gradiente, no sólido) */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.35, delay: 0.05 }}
+          className={`${gradPrimary} text-white ${glass} p-6`}
+        >
+          <div className="flex items-center gap-4 mb-4">
+            <AlertTriangle className="w-8 h-8" />
+            <div>
+              <h2 className="text-xl font-bold">¿Necesitas ayuda inmediata?</h2>
+              <p className="opacity-90">
+                Si estás en crisis o con ideas de autolesión, pide apoyo ahora.
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            to={ROUTES.CRISIS_INMEDIATA}
-            className="bg-white text-red-600 px-6 py-2 rounded-lg font-semibold hover:bg-red-50 transition-colors flex items-center gap-2"
-          >
-            <AlertTriangle className="w-4 h-4" />
-            Centro de Crisis
-          </Link>
-          <button
-            onClick={() => window.open('tel:911', '_self')}
-            className="bg-red-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-800 transition-colors flex items-center gap-2"
-          >
-            <Phone className="w-4 h-4" />
-            911
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Recursos Interactivos */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="space-y-6"
-      >
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Recursos Interactivos</h2>
-          <p className="text-gray-600 mb-6">Herramientas guiadas que puedes usar ahora mismo</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recursosInteractivos.map((recurso, index) => {
-            const IconComponent = recurso.icon;
-            return (
-              <motion.div
-                key={recurso.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="group"
-              >
-                <Link to={recurso.link} className="block">
-                  <div className={`rounded-xl p-6 border-2 transition-all duration-300 hover:shadow-lg hover:scale-105 ${getColorClasses(recurso.color, recurso.urgent)}`}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <IconComponent className={`w-8 h-8 ${getIconColor(recurso.color)}`} />
-                      <h3 className="text-xl font-bold text-gray-900">{recurso.title}</h3>
-                    </div>
-                    <p className="text-gray-700 mb-4">{recurso.description}</p>
-                    <ul className="space-y-1 mb-4">
-                      {recurso.features.map((feature, i) => (
-                        <li key={i} className="text-sm text-gray-600 flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 bg-current rounded-full opacity-60"></div>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex items-center gap-2 text-blue-600 font-medium group-hover:gap-3 transition-all">
-                      <span>Usar ahora</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div>
-
-      {/* Recursos adicionales */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-        className="space-y-6"
-      >
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Recursos Adicionales</h2>
-          <p className="text-gray-600 mb-6">Guías, programas y herramientas complementarias</p>
-        </div>
-
-        {recursosEstaticos.map((seccion, index) => {
-          const IconComponent = seccion.icon;
-          const isExpanded = expandedSection === seccion.id;
-
-          return (
-            <motion.div
-              key={seccion.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              className={`rounded-xl border-2 overflow-hidden ${getColorClasses(
-                seccion.color,
-                seccion.urgent
-              )}`}
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to={ROUTES.CRISIS_INMEDIATA}
+              className={`${glass} px-5 py-2 font-semibold transition-all hover:scale-[1.02]`}
             >
-              {/* Header de la sección */}
-              <div
-                className="p-6 cursor-pointer hover:bg-opacity-80 transition-all"
-                onClick={() => toggleSection(seccion.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <IconComponent className={`w-8 h-8 ${getIconColor(seccion.color)}`} />
+              Centro de Crisis
+            </Link>
+            <button
+              onClick={() => window.open("tel:911", "_self")}
+              className={`${glass} px-5 py-2 font-semibold transition-all hover:scale-[1.02]`}
+            >
+              Llamar al 911
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Interactivos (tarjetas glass) */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.1 }}
+        >
+          <div className="mt-8 mb-2">
+            <h2 className="text-2xl font-bold">Recursos Interactivos</h2>
+            <p className={subtleText}>Usa estas herramientas ahora mismo</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recursosInteractivos.map((r, i) => {
+              const Icon = r.icon;
+              return (
+                <motion.div
+                  key={r.id}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: 0.05 * i }}
+                >
+                  <Link to={r.link} className="block">
+                    <div className={`${softCard} p-6`}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div
+                          className={`w-10 h-10 ${gradPrimary} rounded-xl flex items-center justify-center`}
+                        >
+                          <Icon className="w-6 h-6 text-white" />
+                        </div>
+                        <h3 className="text-lg font-semibold">{r.title}</h3>
+                      </div>
+                      <p className={`${subtleText} mb-4`}>{r.description}</p>
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <span className="text-[#527ceb]">Usar ahora</span>
+                        <ArrowRight className="w-4 h-4 text-[#527ceb]" />
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Adicionales (acordeones glass) */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.15 }}
+          className="space-y-6 mt-10"
+        >
+          <div>
+            <h2 className="text-2xl font-bold">Recursos Adicionales</h2>
+            <p className={subtleText}>Guías y programas complementarios</p>
+          </div>
+
+          {recursosEstaticos.map((sec, idx) => {
+            const Icon = sec.icon;
+            const open = expandedSection === sec.id;
+            return (
+              <div key={sec.id} className={`${softCard} overflow-hidden`}>
+                <button
+                  className="w-full p-6 flex items-center justify-between"
+                  onClick={() => toggleSection(sec.id)}
+                >
+                  <div className="flex items-center gap-4 text-left">
+                    <div
+                      className={`w-10 h-10 ${gradPrimary} rounded-xl flex items-center justify-center`}
+                    >
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
                     <div>
-                      <h3 className="text-xl font-bold">{seccion.title}</h3>
-                      <p className="text-sm opacity-80">{seccion.description}</p>
+                      <h3 className="text-lg font-semibold">{sec.title}</h3>
+                      <p className={`text-sm ${subtleText}`}>
+                        {sec.description}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium">
-                      {seccion.items.length} recursos
-                    </span>
-                    {isExpanded ? (
-                      <ChevronDown className="w-5 h-5" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5" />
-                    )}
-                  </div>
-                </div>
-              </div>
+                  {open ? (
+                    <ChevronDown className="w-5 h-5" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5" />
+                  )}
+                </button>
 
-              {/* Contenido expandible */}
-              {isExpanded && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="border-t border-current border-opacity-20"
-                >
-                  <div className="p-6 bg-white bg-opacity-50">
+                {open && (
+                  <div className="px-6 pb-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {seccion.items.map((item, itemIndex) => {
-                        const ItemIcon = item.icon;
+                      {sec.items.map((it, i) => {
+                        const ItIcon = it.icon;
                         return (
-                          <motion.div
-                            key={itemIndex}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.3, delay: itemIndex * 0.1 }}
-                            className={`bg-white rounded-lg p-4 shadow-sm transition-shadow border-l-4 ${
-                              item.comingSoon
-                                ? 'border-yellow-400 opacity-75 cursor-default'
-                                : item.available
-                                ? 'border-green-400 hover:shadow-md cursor-pointer group'
-                                : 'border-gray-300 hover:shadow-md cursor-pointer group'
-                            }`}
-                          >
+                          <div key={i} className={`${softCard} p-4`}>
                             <div className="flex items-start gap-3">
-                              <ItemIcon className={`w-5 h-5 mt-1 ${
-                                item.comingSoon
-                                  ? 'text-yellow-600'
-                                  : getIconColor(seccion.color)
-                              }`} />
+                              <div
+                                className={`w-9 h-9 ${gradPrimary} rounded-lg flex items-center justify-center mt-1`}
+                              >
+                                <ItIcon className="w-5 h-5 text-white" />
+                              </div>
                               <div className="flex-1">
-                                <div className="flex items-center justify-between mb-2">
-                                  <h4 className={`font-semibold ${
-                                    item.comingSoon ? 'text-gray-700' : 'text-gray-900'
-                                  }`}>
-                                    {item.title}
-                                  </h4>
-                                  {item.comingSoon && (
-                                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
+                                <div className="flex items-center justify-between mb-1">
+                                  <h4 className="font-semibold">{it.title}</h4>
+                                  {it.comingSoon && (
+                                    <span className="text-xs px-2 py-1 rounded-lg bg-black/5">
                                       Próximamente
                                     </span>
                                   )}
-                                  {item.available && (
-                                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                  {it.available && (
+                                    <span className="text-xs px-2 py-1 rounded-lg bg-black/5">
                                       Disponible
                                     </span>
                                   )}
-                                  {item.duration && (
-                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                                      {item.duration}
-                                    </span>
-                                  )}
                                 </div>
-                                <p className="text-sm text-gray-600 mb-3">
-                                  {item.description}
+                                <p className={`text-sm ${subtleText} mb-3`}>
+                                  {it.description}
                                 </p>
-                                {item.comingSoon ? (
-                                  <div className="flex items-center gap-2 text-sm font-medium text-yellow-600">
-                                    <Clock className="w-4 h-4" />
-                                    {item.action}
+                                {it.comingSoon ? (
+                                  <div className={`text-sm ${subtleText}`}>
+                                    Muy pronto ✨
                                   </div>
-                                ) : item.link ? (
+                                ) : it.link ? (
                                   <Link
-                                    to={item.link}
-                                    className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 group-hover:gap-3 transition-all"
+                                    to={it.link}
+                                    className="inline-flex items-center gap-2 text-sm font-medium text-[#527ceb] transition-all hover:gap-3"
                                   >
-                                    {item.action}
+                                    {it.action}
                                     <ArrowRight className="w-4 h-4" />
                                   </Link>
                                 ) : (
-                                  <button className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 group-hover:gap-3 transition-all">
-                                    {item.action}
+                                  <button className="inline-flex items-center gap-2 text-sm font-medium text-[#527ceb] transition-all hover:gap-3">
+                                    {it.action}
                                     <ArrowRight className="w-4 h-4" />
                                   </button>
                                 )}
                               </div>
                             </div>
-                          </motion.div>
+                          </div>
                         );
                       })}
                     </div>
                   </div>
-                </motion.div>
-              )}
-            </motion.div>
-          );
-        })}
-      </motion.div>
+                )}
+              </div>
+            );
+          })}
+        </motion.div>
 
-      {/* Footer con información adicional */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
-        className="bg-gray-50 rounded-xl p-6 text-center"
-      >
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          ¿Necesitas más apoyo personalizado?
-        </h3>
-        <p className="text-gray-600 mb-4">
-          Nuestro equipo de psicólogos está disponible para acompañarte en tu proceso.
-        </p>
-        <Link
-          to={ROUTES.AGENDAR_CITA}
-          className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+        {/* Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.45, delay: 0.2 }}
+          className={`${softCard} p-6 text-center`}
         >
-          Agendar Cita con Psicología
-        </Link>
-      </motion.div>
+          <h3 className="text-lg font-semibold mb-2">
+            ¿Quieres apoyo personalizado?
+          </h3>
+          <p className={subtleText}>
+            Nuestro equipo puede acompañarte paso a paso.
+          </p>
+          <Link to={ROUTES.AGENDAR_CITA} className={`inline-block mt-4 ${cta}`}>
+            Agendar cita con psicología
+          </Link>
+        </motion.div>
+      </div>
     </div>
   );
 };

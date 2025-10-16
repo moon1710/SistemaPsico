@@ -9,65 +9,13 @@ import {
   User,
   LogOut,
   Settings,
-  Bell,
-  ChevronDown,
-  Brain,
-  Calendar,
-  FileText,
-  AlertCircle,
-  Gift
+  ChevronDown
 } from "lucide-react";
-import { getNotifications, getUnreadCount, formatTimestamp } from "../../services/notificationsService";
 
 const Header = ({ onToggleSidebar, isSidebarOpen }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  // Temporarily commented out notifications functionality
-  // const [showNotifications, setShowNotifications] = useState(false);
-  // const [notifications, setNotifications] = useState([]);
-  // const [unreadCount, setUnreadCount] = useState(0);
-
-  // Cargar notificaciones recientes - Temporarily disabled
-  /*
-  useEffect(() => {
-    const loadRecentNotifications = async () => {
-      try {
-        const [notificationsResponse, unreadResponse] = await Promise.all([
-          getNotifications({ limite: 5, leida: false }),
-          getUnreadCount()
-        ]);
-
-        setNotifications(notificationsResponse.data.notificaciones);
-        setUnreadCount(unreadResponse.data.no_leidas);
-      } catch (error) {
-        console.error('Error cargando notificaciones:', error);
-      }
-    };
-
-    if (user) {
-      loadRecentNotifications();
-      // Actualizar cada 30 segundos
-      const interval = setInterval(loadRecentNotifications, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-  */
-
-  // Temporarily disabled notification icon function
-  /*
-  const getNotificationIcon = (tipo) => {
-    const iconMap = {
-      cita: Calendar,
-      evaluacion: FileText,
-      mensaje: User,
-      sistema: AlertCircle,
-      bienvenida: Gift
-    };
-    const IconComponent = iconMap[tipo] || Bell;
-    return <IconComponent className="w-4 h-4" />;
-  };
-  */
 
   const handleLogout = async () => {
     await logout();
@@ -130,83 +78,6 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
 
         {/* Right side - User menu */}
         <div className="flex items-center space-x-4">
-          {/* Notifications - Commented out temporarily
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors relative"
-            >
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[12px] h-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center px-1">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
-
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <h3 className="font-semibold text-gray-900">
-                    Notificaciones
-                    {unreadCount > 0 && (
-                      <span className="ml-2 px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </h3>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-gray-500">
-                      <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                      <p className="text-sm">No hay notificaciones nuevas</p>
-                    </div>
-                  ) : (
-                    notifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-l-2 ${
-                          !notification.leida ? 'border-blue-500 bg-blue-50/30' : 'border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className="flex-shrink-0 mt-0.5">
-                            {getNotificationIcon(notification.tipo)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm ${!notification.leida ? 'font-medium text-gray-900' : 'text-gray-800'}`}>
-                              {notification.titulo}
-                            </p>
-                            <p className="text-xs text-gray-600 line-clamp-2 mt-1">
-                              {notification.mensaje}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {formatTimestamp(notification.fechaCreacion)}
-                            </p>
-                          </div>
-                          {!notification.leida && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div className="px-4 py-2 border-t border-gray-100">
-                  <Link
-                    to={ROUTES.NOTIFICATIONS}
-                    onClick={() => setShowNotifications(false)}
-                    className="text-sm text-blue-600 hover:text-blue-700"
-                  >
-                    Ver todas las notificaciones
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-          */}
-
           {/* User menu */}
           <div className="relative">
             <button
@@ -266,7 +137,7 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
                   <User className="w-4 h-4" />
                   <span>Mi Perfil</span>
                 </Link>
-
+                {/*
                 <Link
                   to={ROUTES.CONFIGURATION}
                   className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -275,6 +146,7 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
                   <Settings className="w-4 h-4" />
                   <span>Configuración</span>
                 </Link>
+ */}
 
                 <hr className="my-2" />
 
@@ -295,10 +167,7 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
       {showUserMenu && (
         <div
           className="fixed inset-0 z-30"
-          onClick={() => {
-            setShowUserMenu(false);
-            // setShowNotifications(false); // Temporarily disabled
-          }}
+          onClick={() => setShowUserMenu(false)}
         />
       )}
     </header>
