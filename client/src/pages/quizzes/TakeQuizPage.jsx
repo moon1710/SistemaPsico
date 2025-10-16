@@ -10,6 +10,8 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
+import jacarandaImg from "../../assets/jacaranda.png";
+import lavandaImg from "../../assets/lavanda.png";
 
 /* =============== PALETA (tus colores) =============== */
 const QUIZ_THEMES = {
@@ -529,11 +531,19 @@ export default function TakeQuizPage() {
           animate="in"
         >
           <div className="text-center mb-4">
-            <div
-              className="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-bold text-lg shadow"
-              style={{ backgroundColor: theme.primary }}
-            >
-              {quiz.codigo}
+            <div className="w-15 h-15 mx-auto mb-3 flex items-center justify-center">
+              {quiz.codigo === 'BAI' ? (
+                <img src={jacarandaImg} alt="BAI Quiz" className="w-full h-full object-contain" />
+              ) : quiz.codigo === 'BDI2' ? (
+                <img src={lavandaImg} alt="BDI2 Quiz" className="w-full h-full object-contain" />
+              ) : (
+                <div
+                  className="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-lg shadow"
+                  style={{ backgroundColor: theme.primary }}
+                >
+                  {quiz.codigo}
+                </div>
+              )}
             </div>
             <h1 className="text-lg font-semibold text-gray-900 mb-1">
               {quiz.titulo}

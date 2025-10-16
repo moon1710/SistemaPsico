@@ -115,11 +115,15 @@ const Header = ({ onToggleSidebar, isSidebarOpen }) => {
 
           {/* Logo */}
           <Link to={ROUTES.DASHBOARD} className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <Brain className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 flex items-center justify-center">
+              <img
+                src="/logo.png" // ruta del logo, cambia si está en otra carpeta
+                alt="NeuroFlora Logo"
+                className="w-9 h-9 object-contain" // tamaño pequeño y proporcional
+              />
             </div>
             <span className="font-bold text-gray-900 text-lg hidden sm:block">
-              Sistema Psicológico
+              NeuroFlora
             </span>
           </Link>
         </div>
