@@ -66,41 +66,6 @@ export const roleSpecificItems = [
       "SUPER_ADMIN_NACIONAL",
     ],
   },
-  // ===== Rutas de Citas =====
-  {
-    href: ROUTES.AGENDA,
-    icon: Calendar,
-    label: "Mi Agenda",
-    roles: ["PSICOLOGO", "ORIENTADOR"],
-  },
-  {
-    href: ROUTES.DISPONIBILIDAD,
-    icon: Clock,
-    label: "Mi Disponibilidad",
-    roles: ["PSICOLOGO", "ORIENTADOR"],
-  },
-  {
-    href: ROUTES.CITAS_ADMIN,
-    icon: Calendar,
-    label: "Administrar Citas",
-    roles: [
-      "ADMIN_INSTITUCION",
-      "SUPER_ADMIN_INSTITUCION",
-      "SUPER_ADMIN_NACIONAL",
-    ],
-  },
-  {
-    href: ROUTES.CHAT,
-    icon: MessageCircle,
-    label: "Chat",
-    roles: [
-      "PSICOLOGO",
-      "ORIENTADOR",
-      "ADMIN_INSTITUCION",
-      "SUPER_ADMIN_INSTITUCION",
-      "SUPER_ADMIN_NACIONAL",
-    ],
-  },
 
   // ===== Estudiante =====
   {
@@ -123,13 +88,13 @@ export const roleSpecificItems = [
   },
 
   // ===== Reportes =====
-  {
-    href: ROUTES.REPORTES_PSICOLOGO,
-    icon: BarChart3,
-    label: "Mis Reportes",
-    roles: [
-      "PSICOLOGO",
-      "ORIENTADOR",
-    ],
-  },
+  //{
+  // href: ROUTES.REPORTES_PSICOLOGO,
+  //icon: BarChart3,
+  //label: "Mis Reportes",
+  //roles: [
+  //"PSICOLOGO",
+  //"ORIENTADOR",
+  //],
+  //},
 ];

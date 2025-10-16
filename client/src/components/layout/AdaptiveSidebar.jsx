@@ -140,19 +140,6 @@ const AdaptiveSidebar = ({ user, onLogout, isCollapsed, onToggle }) => {
           "SUPER_ADMIN_NACIONAL",
         ],
       },
-
-      // Reportes (para personal administrativo y psicológico)
-      {
-        href: "/reportes",
-        icon: BarChart3,
-        label: "Reportes",
-        roles: [
-          "PSICOLOGO",
-          "SUPER_ADMIN_INSTITUCION",
-          "SUPER_ADMIN_NACIONAL",
-          "ORIENTADOR",
-        ],
-      },
     ];
 
     // Filtrar según el rol del usuario
@@ -166,16 +153,16 @@ const AdaptiveSidebar = ({ user, onLogout, isCollapsed, onToggle }) => {
   const menuItems = getMenuItems();
 
   // Función para obtener el color del rol
-const getRoleColor = () => {
-  const colors = {
-    SUPER_ADMIN_NACIONAL: "from-[#4c1d95] to-[#527ceb]", // morado profundo → azul confianza
-    ADMIN_INSTITUCION: "from-[#527ceb] to-[#3730a3]", // azul → morado institucional
-    PSICOLOGO: "from-[#cdb4db] to-[#527ceb]", // lavanda → azul → calmante/terapéutico
-    ESTUDIANTE: "from-[#527ceb] to-[#10cfbd]", // azul → turquesa → juvenil y fresco
-    ORIENTADOR: "from-[#3730a3] to-[#cdb4db]", // morado oscuro → lavanda → guía/acompañamiento
+  const getRoleColor = () => {
+    const colors = {
+      SUPER_ADMIN_NACIONAL: "from-[#4c1d95] to-[#527ceb]", // morado profundo → azul confianza
+      ADMIN_INSTITUCION: "from-[#527ceb] to-[#3730a3]", // azul → morado institucional
+      PSICOLOGO: "from-[#cdb4db] to-[#527ceb]", // lavanda → azul → calmante/terapéutico
+      ESTUDIANTE: "from-[#527ceb] to-[#10cfbd]", // azul → turquesa → juvenil y fresco
+      ORIENTADOR: "from-[#3730a3] to-[#cdb4db]", // morado oscuro → lavanda → guía/acompañamiento
+    };
+    return colors[user?.rol] || "from-gray-500 to-gray-700";
   };
-  return colors[user?.rol] || "from-gray-500 to-gray-700";
-};
 
   // Función para obtener el label del rol
   const getRoleLabel = () => {
@@ -196,8 +183,8 @@ const getRoleColor = () => {
     return (
       <div className="relative group">
         <Link
-      to={href}
-      className={`
+          to={href}
+          className={`
         flex items-center px-4 py-3 text-sm font-medium rounded-xl
         transition-all duration-300
         ${
@@ -207,16 +194,16 @@ const getRoleColor = () => {
         }
         ${isCollapsed ? "justify-center px-3" : ""}
       `}
-    >
-      <Icon
-        className={`
+        >
+          <Icon
+            className={`
           ${isCollapsed ? "h-6 w-6" : "h-5 w-5 mr-3"}
           transition-transform duration-200
           ${isActive ? "" : "group-hover:scale-110"}
         `}
-      />
-      {!isCollapsed && <span>{label}</span>}
-    </Link>
+          />
+          {!isCollapsed && <span>{label}</span>}
+        </Link>
 
         {/* Tooltip para cuando está contraída */}
         {isCollapsed && (
@@ -268,9 +255,7 @@ const getRoleColor = () => {
         <div className="flex items-center justify-between p-4 border-b border-[#2b333c]/30">
           {!isCollapsed && (
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-[#f7f7f7]">
-                NeuroFlora
-              </h1>
+              <h1 className="text-xl font-bold text-[#f7f7f7]">NeuroFlora</h1>
             </div>
           )}
 
@@ -388,16 +373,16 @@ const getRoleColor = () => {
         <div className="p-4 border-t border-[#2b333c]/30 mt-auto">
           {!isCollapsed ? (
             <div className="text-xs text-center space-y-2">
-  <p className="font-semibold text-white">
-    ¿Necesitas ayuda o soporte?
-  </p>
-  <Link
-    to={ROUTES.SUPPORT}
-    className="text-white hover:text-cyan-200 hover:underline transition-colors"
-  >
-    Contáctanos
-  </Link>
-</div>
+              <p className="font-semibold text-white">
+                ¿Necesitas ayuda o soporte?
+              </p>
+              <Link
+                to={ROUTES.SUPPORT}
+                className="text-white hover:text-cyan-200 hover:underline transition-colors"
+              >
+                Contáctanos
+              </Link>
+            </div>
           ) : (
             <div className="flex justify-center">
               <div
