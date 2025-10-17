@@ -49,13 +49,13 @@ const HelpPage = () => {
           directamente.
         </p>
         <a
-          href="mailto:soporte@neuroflora.com"
+          href="mailto:orientacionpsicologica@tuxtepec.tecnm.mx"
           className="inline-flex items-center font-medium text-white bg-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-150"
         >
           Enviar Correo a Soporte
         </a>
         <span className="ml-4 text-sm text-gray-500">
-          (soporte@neuroflora.com)
+          (orientacionpsicologica@tuxtepec.tecnm.mx)
         </span>
       </div>
 

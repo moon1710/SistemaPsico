@@ -142,10 +142,10 @@ const ConfidencialidadPage = () => {
           Departamento de Ética y Cumplimiento:
         </p>
         <a
-          href="mailto:etica@neuroflora.com"
+          href="mailto:orientacionpsicologica@tuxtepec.tecnm.mx"
           className="mt-2 inline-block font-bold text-indigo-700 hover:text-indigo-900 transition duration-150"
         >
-          etica@neuroflora.com
+          orientacionpsicologica@tuxtepec.tecnm.mx
         </a>
       </section>
     </main>

@@ -188,10 +188,10 @@ const PrivacidadPage = () => {
             Delegado de Protección de Datos (DPO)
           </p>
           <a
-            href="mailto:dpo@neuroflora.com"
+            href="mailto:orientacionpsicologica@tuxtepec.tecnm.mx"
             className="text-lg font-bold text-indigo-700 hover:text-indigo-900 transition duration-150"
           >
-            dpo@neuroflora.com
+            orientacionpsicologica@tuxtepec.tecnm.mx
           </a>
         </div>
       </section>

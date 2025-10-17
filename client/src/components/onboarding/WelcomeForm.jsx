@@ -339,7 +339,9 @@ const WelcomeForm = () => {
                 maxLength="10"
               />
               {formErrors.codigoPostal && (
-                <p className="text-red-600 text-sm mt-1">{formErrors.codigoPostal}</p>
+                <p className="text-red-600 text-sm mt-1">
+                  {formErrors.codigoPostal}
+                </p>
               )}
             </div>
 
@@ -357,7 +359,9 @@ const WelcomeForm = () => {
                 onChange={handleInputChange}
               />
               {formErrors.colonia && (
-                <p className="text-red-600 text-sm mt-1">{formErrors.colonia}</p>
+                <p className="text-red-600 text-sm mt-1">
+                  {formErrors.colonia}
+                </p>
               )}
             </div>
           </div>
@@ -594,10 +598,13 @@ const WelcomeForm = () => {
         )}
 
         {/* Cambio de contraseña */}
-        <div className={`${card} p-5`} style={{
-          background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-          border: "1px solid #e2e8f0"
-        }}>
+        <div
+          className={`${card} p-5`}
+          style={{
+            background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+            border: "1px solid #e2e8f0",
+          }}
+        >
           <h3 className="text-lg md:text-xl font-semibold text-[#21252d] flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#527ceb] to-[#6762b3] flex items-center justify-center">
               <Eye className="w-4 h-4 text-white" />
@@ -605,7 +612,8 @@ const WelcomeForm = () => {
             Crear nueva contraseña
           </h3>
           <p className="text-sm text-gray-600 mt-2">
-            Tu contraseña actual es temporal. Por seguridad, debes cambiarla ahora por una personalizada.
+            Tu contraseña actual es temporal. Por seguridad, debes cambiarla
+            ahora por una personalizada.
           </p>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -769,32 +777,46 @@ const WelcomeForm = () => {
               className="max-w-2xl w-full max-h-[85vh] rounded-2xl bg-white p-5 md:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.16)] flex flex-col"
             >
               <h4 className="text-xl font-semibold text-[#21252d]">
-                Aviso de privacidad (versión completa)
+                Términos y Condiciones de Uso
               </h4>
-              <div className="mt-3 space-y-2 text-sm text-gray-700 flex-1 overflow-y-auto pr-2"
-                style={{ maxHeight: 'calc(85vh - 180px)' }}>
+              <div
+                className="mt-3 space-y-2 text-sm text-gray-700 flex-1 overflow-y-auto pr-2"
+                style={{ maxHeight: "calc(85vh - 180px)" }}
+              >
                 <p>
-                  Responsable: Tu institución educativa. Finalidades: brindar
-                  acompañamiento psicológico, gestionar citas, generar
-                  estadísticas agregadas y reportes institucionales. Datos
-                  tratados: identificación, contacto y académicos; resultados de
-                  evaluaciones psicológicas. Base de tratamiento: consentimiento
-                  y cumplimiento de obligaciones institucionales.
+                  Bienvenido al Sistema Neuroflora, una plataforma educativa
+                  desarrollada por el Instituto Tecnológico Nacional de México,
+                  Campus Tuxtepec. Este sitio web y sistema está diseñado para
+                  proporcionar herramientas educativas y de apoyo psicológico a
+                  estudiantes, facilitando la detección temprana de condiciones
+                  como ansiedad y depresión a través de cuestionarios y tests
+                  validados.
                 </p>
                 <p>
-                  Conservación: por el periodo necesario para las finalidades
-                  señaladas o lo establecido por normativa interna. Derechos
-                  ARCO: puedes solicitar acceso, rectificación, cancelación u
-                  oposición escribiendo al área correspondiente.
+                  El Sistema maneja datos personales de estudiantes, incluyendo
+                  información sensible relacionada con su salud mental, con el
+                  objetivo de promover el bienestar académico y emocional. Al
+                  acceder, registrarse o utilizar el Sistema, aceptas cumplir
+                  con estos Términos y Condiciones de Uso, así como con nuestro
+                  Aviso de Privacidad integrado en este documento.
                 </p>
                 <p>
-                  Transferencias: no se realizan a terceros ajenos sin tu
-                  consentimiento, salvo requerimientos legales o situaciones de
-                  riesgo inminente para tu integridad o la de terceros.
+                  Estos Términos se aplican a todos los usuarios, incluyendo
+                  estudiantes, tutores, personal autorizado y cualquier otra
+                  persona que acceda al Sistema. El Instituto se reserva el
+                  derecho de modificar estos Términos en cualquier momento,
+                  notificando los cambios a través del Sistema o por correo
+                  electrónico.Estos Términos se aplican a todos los usuarios,
+                  incluyendo estudiantes, tutores, personal autorizado y
+                  cualquier otra persona que acceda al Sistema. El Instituto se
+                  reserva el derecho de modificar estos Términos en cualquier
+                  momento, notificando los cambios a través del Sistema o por
+                  correo electrónico.
                 </p>
                 <p>
-                  Seguridad: se aplican medidas administrativas, técnicas y
-                  físicas para proteger tus datos.
+                  Las modificaciones entrarán en vigor inmediatamente después de
+                  su publicación, y el uso continuado del Sistema implica la
+                  aceptación de las mismas.
                 </p>
               </div>
 
