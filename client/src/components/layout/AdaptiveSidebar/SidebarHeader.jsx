@@ -6,7 +6,7 @@ const SidebarHeader = ({ isCollapsed, onToggle }) => {
     <div className="flex items-center justify-between p-4 border-b border-[#2b333c]/30">
       {!isCollapsed && (
         <h1 className="text-xl font-bold text-[#f7f7f7]">
-          Sistema Psicológico
+          NeuroFlora
         </h1>
       )}
       <button

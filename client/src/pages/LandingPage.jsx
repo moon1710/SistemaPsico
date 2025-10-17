@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { ROUTES } from "../utils/constants";
 import "../index.css";
+import Footer from "../components/layout/Footer";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const LandingPage = () => {
       <section className="hero-section">
         <div className="hero-bg-img"></div>
         <div className="hero-content">
-          <p className="hero-badge">Sistema Psicológico Integral</p>
+          <p className="hero-badge">NeuroFlora</p>
           <h1 className="hero-title">
             Salud emocional <span className="accent">para todos</span>
           </h1>
@@ -196,8 +197,10 @@ const LandingPage = () => {
         </Link>
       </section>
 
-      {/* Footer */}
-      <footer className="footer">
+
+      <Footer />
+      {/* Footer 
+            <footer className="footer">
         <div className="footer-inner">
           <div className="footer-main">
             <div>
@@ -273,6 +276,7 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
+      */}
     </div>
   );
 };

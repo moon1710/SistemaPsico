@@ -23,7 +23,8 @@
     "dotenv": "^17.2.2",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.4",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "react-icons": "^5.5.0"
   },
   "name": "sistemapsico",
   "version": "1.0.0",

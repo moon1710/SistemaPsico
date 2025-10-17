@@ -154,7 +154,7 @@ const LoginPage = () => {
       <section className="login-section-left">
         <div className="login-form-container">
           <h1 className="login-title">
-            Tu centro de control para bienestar estudiantil.
+            Tu centro de control para el cuidado mental.
           </h1>
           <p className="login-desc">
             Ingresa tus credenciales para acceder al sistema psicológico.
@@ -294,12 +294,12 @@ const LoginPage = () => {
         <div className="login-badge">Sistema Seguro y Confiable</div>
 
         <div className="login-right-content">
-          <h2>Cuidando el Bienestar Estudiantil</h2>
+          <h2>Cuidando el nuestra comunidad</h2>
           <p>
             Plataforma integral para psicólogos, orientadores y estudiantes.
             Construyendo comunidades educativas más saludables y resilientes.
           </p>
-          <span className="login-highlight">La salud mental es prioridad</span>
+          <span className="login-highlight">Eres nuestra prioridad</span>
         </div>
 
         <div className="login-status-list">
