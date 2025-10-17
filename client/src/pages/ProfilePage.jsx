@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import userService from '../services/userService';
+import Avatar from '../components/ui/Avatar';
 import {
   User,
   Mail,
@@ -9,7 +10,6 @@ import {
   Calendar,
   Shield,
   Edit3,
-  Camera,
   Save,
   X,
   CheckCircle,
@@ -20,10 +20,8 @@ import {
 
 const ProfilePage = () => {
   const { user, updateProfile: updateAuthProfile } = useAuth();
-  const fileInputRef = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [formData, setFormData] = useState({
     nombre: user?.nombre || '',
@@ -63,6 +61,7 @@ const ProfilePage = () => {
     };
     return colors[role] || "bg-gray-100 text-gray-800 border-gray-200";
   };
+
 
   const getRoleLabel = (role) => {
     const labels = {
@@ -170,56 +169,6 @@ const ProfilePage = () => {
     setIsEditing(false);
   };
 
-  const handlePhotoClick = () => {
-    if (!isUploadingPhoto) {
-      fileInputRef.current?.click();
-    }
-  };
-
-  const handlePhotoChange = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-      setMessage({ type: 'error', text: 'Solo se permiten archivos de imagen' });
-      return;
-    }
-
-    // Validar tamaño (5MB máximo)
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage({ type: 'error', text: 'La imagen no puede ser mayor a 5MB' });
-      return;
-    }
-
-    setIsUploadingPhoto(true);
-    setMessage({ type: '', text: '' });
-
-    try {
-      const result = await userService.uploadProfilePhoto(file);
-
-      if (result.success) {
-        // Actualizar el contexto de autenticación para refrescar la foto
-        if (updateAuthProfile) {
-          await updateAuthProfile();
-        }
-
-        setMessage({ type: 'success', text: 'Foto actualizada correctamente' });
-        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-      } else {
-        setMessage({ type: 'error', text: result.error || 'Error actualizando la foto' });
-      }
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-      setMessage({ type: 'error', text: 'Error subiendo la foto. Inténtalo de nuevo.' });
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-
-    // Limpiar input
-    event.target.value = '';
-  };
-
   const getActiveRole = () => {
     if (user?.instituciones && user.instituciones.length > 0) {
       return user.instituciones[0].rol;
@@ -233,6 +182,7 @@ const ProfilePage = () => {
     }
     return 'No asignada';
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -261,43 +211,15 @@ const ProfilePage = () => {
 
         {/* Profile Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          {/* Header con foto y info básica */}
+          {/* Header con avatar y info básica */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-12">
             <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
-              <div className="relative">
-                <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden">
-                  {user?.foto ? (
-                    <img
-                      src={user.foto}
-                      alt="Foto de perfil"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-4xl font-bold text-gray-700">
-                      {user?.nombre?.charAt(0)}{user?.apellidoPaterno?.charAt(0)}
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={handlePhotoClick}
-                  disabled={isUploadingPhoto}
-                  className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 disabled:bg-gray-400 transition-colors shadow-lg"
-                  title="Cambiar foto de perfil"
-                >
-                  {isUploadingPhoto ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Camera className="w-4 h-4" />
-                  )}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                />
-              </div>
+              <Avatar
+                user={user}
+                size="xl"
+                showRoleBadge={true}
+                role={getActiveRole()}
+              />
 
               <div className="text-center sm:text-left text-white">
                 <h2 className="text-3xl font-bold mb-2">

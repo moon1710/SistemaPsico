@@ -356,9 +356,14 @@ const RecursosPage = () => {
           <p className={subtleText}>
             Nuestro equipo puede acompañarte paso a paso.
           </p>
-          <Link to={ROUTES.AGENDAR_CITA} className={`inline-block mt-4 ${cta}`}>
+          <a
+            href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2B-xvZKl6KLUb7H0jvcNNBNdXAhGO9X2G0Qwl0DOMBFDzykmYM1Kv0MOHSs0vPrWkUZTDyy2QQ"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-block mt-4 ${cta}`}
+          >
             Agendar cita con psicología
-          </Link>
+          </a>
         </motion.div>
       </div>
     </div>

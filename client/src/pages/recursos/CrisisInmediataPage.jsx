@@ -334,14 +334,16 @@ const CrisisInmediataPage = () => {
           ¿Necesitas más apoyo?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link
-            to={ROUTES.AGENDAR_CITA}
+          <a
+            href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2B-xvZKl6KLUb7H0jvcNNBNdXAhGO9X2G0Qwl0DOMBFDzykmYM1Kv0MOHSs0vPrWkUZTDyy2QQ"
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition-colors text-center"
           >
             <Calendar className="w-6 h-6 mx-auto mb-2" />
             <p className="font-semibold">Agendar Cita</p>
             <p className="text-sm opacity-90">Con nuestro equipo de psicología</p>
-          </Link>
+          </a>
           <Link
             to={ROUTES.PRIMEROS_AUXILIOS}
             className="bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 transition-colors text-center"

@@ -14,8 +14,7 @@ export const onboardingSteps = [
       "Recursos educativos",
     ],
     media: {
-      // replace with your asset path if available
-      image: "/illustrations/onboarding-welcome.svg",
+      image: "/src/assets/onBoarding/capturaDashBoard.png",
       description: "Interfaz principal del sistema",
     },
   },
@@ -33,7 +32,7 @@ export const onboardingSteps = [
       "Estadísticas personales",
     ],
     media: {
-      image: "/illustrations/onboarding-dashboard.svg",
+      image: "/src/assets/onBoarding/capturaDashBoard.png",
       description: "Vista del panel principal",
     },
   },
@@ -44,33 +43,10 @@ export const onboardingSteps = [
     icon: "Brain",
     description:
       "Realiza cuestionarios de forma sencilla y obtén resultados claros con sugerencias prácticas.",
-    features: [
-      "Ansiedad y depresión",
-      "Estrés y bienestar",
-      "Personalidad y habilidades",
-      "Resultados con recomendaciones",
-    ],
+    features: ["Ansiedad y depresión", "Estrés y bienestar"],
     media: {
-      image: "/illustrations/onboarding-quizzes.svg",
+      image: "/src/assets/onBoarding/capturaQuiz.png",
       description: "Ejemplo de evaluación",
-    },
-  },
-  {
-    id: "results",
-    title: "Resultados y tendencias",
-    subtitle: "Seguimiento de tu progreso",
-    icon: "ClipboardList",
-    description:
-      "Explora tu historial, identifica patrones y exporta reportes cuando los necesites.",
-    features: [
-      "Histórico completo",
-      "Gráficas temporales",
-      "Comparaciones por periodo",
-      "Exportación de reportes",
-    ],
-    media: {
-      image: "/illustrations/onboarding-results.svg",
-      description: "Resultados y análisis",
     },
   },
   {
@@ -87,7 +63,7 @@ export const onboardingSteps = [
       "Comunidad y acompañamiento",
     ],
     media: {
-      image: "/illustrations/onboarding-support.svg",
+      image: "/src/assets/onBoarding/capturaRecursos.png",
       description: "Red de apoyo y recursos",
     },
   },

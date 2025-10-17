@@ -418,8 +418,10 @@ const PrimerosAuxiliosPage = () => {
               <p className="text-sm text-gray-600">Técnicas de respiración</p>
             </div>
           </Link>
-          <Link
-            to={ROUTES.AGENDAR_CITA}
+          <a
+            href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2B-xvZKl6KLUb7H0jvcNNBNdXAhGO9X2G0Qwl0DOMBFDzykmYM1Kv0MOHSs0vPrWkUZTDyy2QQ"
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-white p-4 rounded-lg hover:shadow-md transition-shadow flex items-center gap-3"
           >
             <Calendar className="w-6 h-6 text-green-500" />
@@ -427,7 +429,7 @@ const PrimerosAuxiliosPage = () => {
               <p className="font-semibold">Si necesitas hablar</p>
               <p className="text-sm text-gray-600">Agenda una cita</p>
             </div>
-          </Link>
+          </a>
         </div>
       </motion.div>
     </div>

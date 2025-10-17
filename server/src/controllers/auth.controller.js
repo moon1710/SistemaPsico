@@ -76,6 +76,11 @@ const sanitizeUser = (user) => ({
   apellidoMaterno: user.apellidoMaterno,
   nombreCompleto: user.nombreCompleto,
   email: user.email,
+  telefono: user.telefono,
+  direccion: user.direccion,
+  genero: user.genero,
+  fechaNacimiento: user.fechaNacimiento,
+  foto: user.foto,
   status: user.status,
   emailVerificado: user.emailVerificado,
   createdAt: user.createdAt,
@@ -530,6 +535,7 @@ const updateProfile = async (req, res) => {
       nombre,
       apellidoPaterno,
       apellidoMaterno,
+      email,
       telefono,
       direccion,
       genero,
@@ -538,7 +544,7 @@ const updateProfile = async (req, res) => {
 
     // Verificar que el usuario existe
     const [userRows] = await pool.execute(
-      "SELECT id FROM usuarios WHERE id = ?",
+      "SELECT id, email FROM usuarios WHERE id = ?",
       [userId]
     );
 
@@ -548,6 +554,20 @@ const updateProfile = async (req, res) => {
         .json({ success: false, message: "Usuario no encontrado" });
     }
 
+    // Si se está actualizando el email, verificar que no exista otro usuario con ese email
+    if (email && email !== userRows[0].email) {
+      const [existingEmailRows] = await pool.execute(
+        "SELECT id FROM usuarios WHERE email = ? AND id != ?",
+        [email, userId]
+      );
+
+      if (existingEmailRows.length > 0) {
+        return res
+          .status(409)
+          .json({ success: false, message: "Ya existe un usuario con ese email" });
+      }
+    }
+
     // Detectar qué columnas existen
     const DB_NAME = process.env.MYSQL_DATABASE || "sistema_educativo";
     const [colsRows] = await pool.execute(
@@ -555,7 +575,7 @@ const updateProfile = async (req, res) => {
        FROM INFORMATION_SCHEMA.COLUMNS
        WHERE TABLE_SCHEMA = ?
          AND TABLE_NAME   = 'usuarios'
-         AND COLUMN_NAME IN ('nombre','apellidoPaterno','apellidoMaterno','telefono','direccion','genero','fechaNacimiento','nombreCompleto','updatedAt')`,
+         AND COLUMN_NAME IN ('nombre','apellidoPaterno','apellidoMaterno','email','telefono','direccion','genero','fechaNacimiento','nombreCompleto','updatedAt')`,
       [DB_NAME]
     );
     const columns = new Set(colsRows.map((r) => r.COLUMN_NAME));
@@ -575,6 +595,10 @@ const updateProfile = async (req, res) => {
     if (columns.has("apellidoMaterno") && typeof apellidoMaterno !== "undefined") {
       sets.push("apellidoMaterno = ?");
       params.push(apellidoMaterno ? String(apellidoMaterno).trim() : null);
+    }
+    if (columns.has("email") && email) {
+      sets.push("email = ?");
+      params.push(String(email).trim());
     }
     if (columns.has("telefono") && typeof telefono !== "undefined") {
       sets.push("telefono = ?");

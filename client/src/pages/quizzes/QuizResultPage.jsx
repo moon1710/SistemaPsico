@@ -147,7 +147,7 @@ const QuizResultPage = () => {
           description: "Habla con nuestro equipo de psicología",
           icon: CalendarDaysIcon,
           color: "orange",
-          action: () => navigate(ROUTES.AGENDAR_CITA),
+          action: () => window.open('https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2B-xvZKl6KLUb7H0jvcNNBNdXAhGO9X2G0Qwl0DOMBFDzykmYM1Kv0MOHSs0vPrWkUZTDyy2QQ', '_blank'),
           priority: true
         },
         {
@@ -171,7 +171,7 @@ const QuizResultPage = () => {
           description: "Apoyo profesional inmediato disponible",
           icon: PhoneIcon,
           color: "red",
-          action: () => navigate(ROUTES.AGENDAR_CITA),
+          action: () => window.open('https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2B-xvZKl6KLUb7H0jvcNNBNdXAhGO9X2G0Qwl0DOMBFDzykmYM1Kv0MOHSs0vPrWkUZTDyy2QQ', '_blank'),
           priority: true,
           urgent: true
         },

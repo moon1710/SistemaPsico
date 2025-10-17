@@ -734,8 +734,10 @@ Muchas gracias por su comprensión.
           ¿Qué hacer después de pedir ayuda?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link
-            to={ROUTES.AGENDAR_CITA}
+          <a
+            href="https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ2B-xvZKl6KLUb7H0jvcNNBNdXAhGO9X2G0Qwl0DOMBFDzykmYM1Kv0MOHSs0vPrWkUZTDyy2QQ"
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-white p-4 rounded-lg hover:shadow-md transition-shadow flex items-center gap-3"
           >
             <Calendar className="w-6 h-6 text-green-500" />
@@ -743,7 +745,7 @@ Muchas gracias por su comprensión.
               <p className="font-semibold">Agendar Cita Profesional</p>
               <p className="text-sm text-gray-600">Con psicología del campus</p>
             </div>
-          </Link>
+          </a>
           <Link
             to={ROUTES.RESPIRACION_GUIADA}
             className="bg-white p-4 rounded-lg hover:shadow-md transition-shadow flex items-center gap-3"

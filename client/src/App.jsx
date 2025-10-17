@@ -53,6 +53,7 @@ import AnalyticsPage from "./pages/quizzes/AnalyticsPage";
 
 //AppointmentPages
 import BookAppointmentPage from "./pages/citas/BookAppointmentPage";
+import GoogleCalendarRedirect from "./components/redirects/GoogleCalendarRedirect";
 import StudentAppointmentsPage from "./pages/citas/StudentAppointmentsPage";
 import AgendaPage from "./pages/citas/AgendaPage";
 import AvailabilityPage from "./pages/citas/AvailabilityPage";
@@ -233,9 +234,7 @@ function App() {
         path={ROUTES.AGENDAR_CITA}
         element={
           <ProtectedRoute requiredRoles={['ESTUDIANTE']}>
-            <Layout>
-              <BookAppointmentPage />
-            </Layout>
+            <GoogleCalendarRedirect />
           </ProtectedRoute>
         }
       />

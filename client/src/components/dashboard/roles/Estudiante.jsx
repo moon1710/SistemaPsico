@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import StatCard from "../StatCard";
 import { Card, CardContent } from "../../../components/ui/Card";
 import {
@@ -14,7 +15,7 @@ import {
   Activity,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { API_CONFIG, STORAGE_KEYS } from "../../../utils/constants";
+import { API_CONFIG, STORAGE_KEYS, ROUTES } from "../../../utils/constants";
 
 const glass =
   "rounded-2xl bg-white/70 backdrop-blur-md border border-white/40 shadow-[0_8px_28px_rgba(0,0,0,0.08)]";
@@ -191,28 +192,34 @@ const Estudiante = () => {
                   </div>
                 </div>
 
-                <div
-                  className={
-                    listHover + " cursor-pointer flex items-center gap-2"
-                  }
-                >
-                  <Wind className="w-4 h-4 text-[#527ceb]" />
-                  <p className="font-medium text-[#21252d]">
-                    Ejercicios de Respiración
-                  </p>
-                  <ChevronRight className="w-4 h-4 text-[#6762b3] ml-auto" />
-                </div>
+                <div className="space-y-2">
+                  <Link
+                    to={ROUTES.RESPIRACION_GUIADA}
+                    className={
+                      listHover +
+                      " cursor-pointer flex items-center gap-2 transition-all"
+                    }
+                  >
+                    <Wind className="w-4 h-4 text-[#527ceb]" />
+                    <p className="font-medium text-[#21252d]">
+                      Ejercicios de Respiración
+                    </p>
+                    <ChevronRight className="w-4 h-4 text-[#6762b3] ml-auto" />
+                  </Link>
 
-                <div
-                  className={
-                    listHover + " cursor-pointer flex items-center gap-2"
-                  }
-                >
-                  <Activity className="w-4 h-4 text-[#6762b3]" />
-                  <p className="font-medium text-[#21252d]">
-                    Técnicas de Relajación
-                  </p>
-                  <ChevronRight className="w-4 h-4 text-[#6762b3] ml-auto" />
+                  <Link
+                    to={ROUTES.RELAJACION_MUSCULAR}
+                    className={
+                      listHover +
+                      " cursor-pointer flex items-center gap-2 transition-all"
+                    }
+                  >
+                    <Activity className="w-4 h-4 text-[#6762b3]" />
+                    <p className="font-medium text-[#21252d]">
+                      Técnicas de Relajación
+                    </p>
+                    <ChevronRight className="w-4 h-4 text-[#6762b3] ml-auto" />
+                  </Link>
                 </div>
 
                 {dashboardData?.psicologo && (
