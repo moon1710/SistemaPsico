@@ -51,22 +51,6 @@ const createProfileValidation = (userRole) => {
       .withMessage("El estado debe ser texto de máximo 100 caracteres")
   );
 
-  validations.push(
-    body("codigoPostal")
-      .optional()
-      .isString()
-      .isLength({ max: 10 })
-      .withMessage("El código postal debe ser texto de máximo 10 caracteres")
-  );
-
-  validations.push(
-    body("colonia")
-      .optional()
-      .isString()
-      .isLength({ max: 100 })
-      .withMessage("La colonia debe ser texto de máximo 100 caracteres")
-  );
-
   // Campos específicos para estudiantes
   if (isStudent) {
     validations.push(

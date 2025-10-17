@@ -71,6 +71,74 @@ export default function UserForm({ role, onSubmit }) {
             </div>
           </>
         )}
+
+        {/* Campos generales para todos los roles */}
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">
+            Sexo asignado al nacer
+          </label>
+          <select
+            name="genero"
+            onChange={handleChange}
+            className={input}
+            required
+          >
+            <option value="">Seleccionar...</option>
+            <option value="MASCULINO">Masculino</option>
+            <option value="FEMENINO">Femenino</option>
+            <option value="NO_BINARIO">No binario</option>
+            <option value="PREFIERO_NO_DECIR">Prefiero no decir</option>
+          </select>
+        </div>
+
+        {/* Dirección */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Ciudad
+            </label>
+            <input
+              name="ciudad"
+              placeholder="Ciudad"
+              onChange={handleChange}
+              className={input}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Estado
+            </label>
+            <input
+              name="estado"
+              placeholder="Estado"
+              onChange={handleChange}
+              className={input}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Código Postal
+            </label>
+            <input
+              name="codigoPostal"
+              placeholder="12345"
+              onChange={handleChange}
+              className={input}
+              maxLength="10"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Colonia
+            </label>
+            <input
+              name="colonia"
+              placeholder="Colonia"
+              onChange={handleChange}
+              className={input}
+            />
+          </div>
+        </div>
       </div>
 
       <button

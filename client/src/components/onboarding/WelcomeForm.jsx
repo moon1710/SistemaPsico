@@ -22,10 +22,12 @@ const WelcomeForm = () => {
 
   const [formData, setFormData] = useState({
     telefono: "",
-    // fechaNacimiento: "", // Comentado temporalmente
-    // genero: "", // Comentado temporalmente
-    // ciudad: "", // Comentado temporalmente
-    // estado: "", // Comentado temporalmente
+    fechaNacimiento: "",
+    genero: "",
+    ciudad: "",
+    estado: "",
+    codigoPostal: "",
+    colonia: "",
     ...(userRole === "ESTUDIANTE" && {
       semestre: "",
       grupo: "",
@@ -240,8 +242,6 @@ const WelcomeForm = () => {
               )}
             </div>
 
-            {/* Comentado temporalmente - Fecha de nacimiento */}
-            {/*
             <div>
               <label className="block text-sm text-gray-600 mb-1">
                 Fecha de nacimiento {userRole === "ESTUDIANTE" && "*"}
@@ -262,13 +262,10 @@ const WelcomeForm = () => {
                 </p>
               )}
             </div>
-            */}
 
-            {/* Comentado temporalmente - Género */}
-            {/*
             <div>
               <label className="block text-sm text-gray-600 mb-1">
-                Género {userRole === "ESTUDIANTE" && "*"}
+                Sexo asignado al nacer {userRole === "ESTUDIANTE" && "*"}
               </label>
               <select
                 className={`${inputBase} ${
@@ -279,20 +276,16 @@ const WelcomeForm = () => {
                 onChange={handleInputChange}
                 required={userRole === "ESTUDIANTE"}
               >
-                <option value="">Selecciona</option>
+                <option value="">Seleccionar...</option>
                 <option value="MASCULINO">Masculino</option>
                 <option value="FEMENINO">Femenino</option>
-                <option value="NO_BINARIO">No binario</option>
                 <option value="PREFIERO_NO_DECIR">Prefiero no decir</option>
               </select>
               {formErrors.genero && (
                 <p className="text-red-600 text-sm mt-1">{formErrors.genero}</p>
               )}
             </div>
-            */}
 
-            {/* Comentado temporalmente - Estado */}
-            {/*
             <div>
               <label className="block text-sm text-gray-600 mb-1">
                 Estado {userRole === "ESTUDIANTE" && "*"}
@@ -302,7 +295,7 @@ const WelcomeForm = () => {
                   formErrors.estado ? "border-red-400 bg-red-50" : ""
                 }`}
                 name="estado"
-                placeholder="Puebla"
+                placeholder="Oaxaca"
                 value={formData.estado}
                 onChange={handleInputChange}
                 required={userRole === "ESTUDIANTE"}
@@ -311,11 +304,8 @@ const WelcomeForm = () => {
                 <p className="text-red-600 text-sm mt-1">{formErrors.estado}</p>
               )}
             </div>
-            */}
 
-            {/* Comentado temporalmente - Ciudad */}
-            {/*
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm text-gray-600 mb-1">
                 Ciudad {userRole === "ESTUDIANTE" && "*"}
               </label>
@@ -324,7 +314,7 @@ const WelcomeForm = () => {
                   formErrors.ciudad ? "border-red-400 bg-red-50" : ""
                 }`}
                 name="ciudad"
-                placeholder="Puebla de Zaragoza"
+                placeholder="Tu cuidad"
                 value={formData.ciudad}
                 onChange={handleInputChange}
                 required={userRole === "ESTUDIANTE"}
@@ -333,7 +323,43 @@ const WelcomeForm = () => {
                 <p className="text-red-600 text-sm mt-1">{formErrors.ciudad}</p>
               )}
             </div>
-            */}
+
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">
+                Código Postal
+              </label>
+              <input
+                className={`${inputBase} ${
+                  formErrors.codigoPostal ? "border-red-400 bg-red-50" : ""
+                }`}
+                name="codigoPostal"
+                placeholder="72000"
+                value={formData.codigoPostal}
+                onChange={handleInputChange}
+                maxLength="10"
+              />
+              {formErrors.codigoPostal && (
+                <p className="text-red-600 text-sm mt-1">{formErrors.codigoPostal}</p>
+              )}
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-600 mb-1">
+                Colonia
+              </label>
+              <input
+                className={`${inputBase} ${
+                  formErrors.colonia ? "border-red-400 bg-red-50" : ""
+                }`}
+                name="colonia"
+                placeholder="Centro Histórico"
+                value={formData.colonia}
+                onChange={handleInputChange}
+              />
+              {formErrors.colonia && (
+                <p className="text-red-600 text-sm mt-1">{formErrors.colonia}</p>
+              )}
+            </div>
           </div>
         </div>
 

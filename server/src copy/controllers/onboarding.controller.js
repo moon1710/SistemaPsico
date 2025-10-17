@@ -44,8 +44,6 @@ const completeProfile = async (req, res) => {
       genero,
       ciudad,
       estado,
-      codigoPostal,
-      colonia,
       // Campos específicos para estudiantes
       semestre,
       grupo,
@@ -95,14 +93,6 @@ const completeProfile = async (req, res) => {
     if (estado) {
       updateFields.push("estado = ?");
       updateValues.push(estado);
-    }
-    if (codigoPostal) {
-      updateFields.push("codigoPostal = ?");
-      updateValues.push(codigoPostal);
-    }
-    if (colonia) {
-      updateFields.push("colonia = ?");
-      updateValues.push(colonia);
     }
 
     // Campos específicos para estudiantes
@@ -284,7 +274,7 @@ const getProfileData = async (req, res) => {
     const userId = req.user.id;
 
     const [userRows] = await pool.execute(
-      `SELECT telefono, fechaNacimiento, genero, ciudad, estado, codigoPostal, colonia, matricula,
+      `SELECT telefono, fechaNacimiento, genero, ciudad, estado, matricula, 
               semestre, grupo, turno, trabajaActualmente, lugarTrabajo,
               nombrePadre, telefonoPadre, nombreMadre, telefonoMadre,
               contactoEmergenciaNombre, contactoEmergenciaTelefono, contactoEmergenciaRelacion,
@@ -292,7 +282,7 @@ const getProfileData = async (req, res) => {
               pasatiempos, deportesPractica, idiomasHabla, tieneBeca, tipoBeca,
               participaActividades, numeroEmpleado, cedulaProfesional, departamento,
               especialidades, telefonoEmergencia, perfilCompletado
-       FROM usuarios
+       FROM usuarios 
        WHERE id = ?`,
       [userId]
     );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   FaLinkedin,
   FaGithub,
@@ -22,6 +22,17 @@ import placeholderImg from "../../assets/members/placeholder.svg";
 const TeamCard = ({ member, isPastMember = false }) => {
   const { nombre, foto, carrera, descripcion, linkedin, github, contacto, rol, skills, periodo } =
     member;
+
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [isTextTruncated, setIsTextTruncated] = useState(false);
+  const descriptionRef = useRef(null);
+
+  useEffect(() => {
+    if (descriptionRef.current && descripcion) {
+      const element = descriptionRef.current;
+      setIsTextTruncated(element.scrollHeight > element.clientHeight);
+    }
+  }, [descripcion]);
 
   // Skill icons mapping
   const getSkillIcon = (skill) => {
@@ -105,9 +116,28 @@ const TeamCard = ({ member, isPastMember = false }) => {
       )}
 
       {descripcion && (
-        <p className="text-sm text-gray-600 leading-relaxed mb-4 px-1 line-clamp-3">
-          {descripcion}
-        </p>
+        <div className="relative mb-4 px-1">
+          <p
+            ref={descriptionRef}
+            className="text-sm text-gray-600 leading-relaxed line-clamp-3"
+            onMouseEnter={() => isTextTruncated && setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+            style={{ cursor: isTextTruncated ? 'help' : 'default' }}
+          >
+            {descripcion}
+          </p>
+
+          {/* Tooltip */}
+          {showTooltip && isTextTruncated && (
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50">
+              <div className="bg-gray-900 text-white text-sm rounded-lg py-2 px-3 max-w-xs whitespace-normal shadow-lg">
+                <div className="text-xs leading-relaxed">{descripcion}</div>
+                {/* Arrow */}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Social Links */}
