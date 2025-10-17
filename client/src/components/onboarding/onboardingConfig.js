@@ -14,7 +14,7 @@ export const onboardingSteps = [
       "Recursos educativos",
     ],
     media: {
-      image: "/src/assets/onBoarding/capturaDashBoard.png",
+      image: "/src/assets/onBoarding/welcome.jpeg",
       description: "Interfaz principal del sistema",
     },
   },

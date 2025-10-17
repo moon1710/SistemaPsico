@@ -119,7 +119,7 @@ const TeamCard = ({ member, isPastMember = false }) => {
         <div className="relative mb-4 px-1">
           <p
             ref={descriptionRef}
-            className="text-sm text-gray-600 leading-relaxed line-clamp-3"
+            className="text-sm text-gray-600 leading-relaxed line-clamp-3 transition-colors duration-200 hover:text-gray-800"
             onMouseEnter={() => isTextTruncated && setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
             style={{ cursor: isTextTruncated ? 'help' : 'default' }}
@@ -127,13 +127,15 @@ const TeamCard = ({ member, isPastMember = false }) => {
             {descripcion}
           </p>
 
-          {/* Tooltip */}
+          {/* Enhanced Tooltip */}
           {showTooltip && isTextTruncated && (
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50">
-              <div className="bg-gray-900 text-white text-sm rounded-lg py-2 px-3 max-w-xs whitespace-normal shadow-lg">
-                <div className="text-xs leading-relaxed">{descripcion}</div>
-                {/* Arrow */}
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 z-50 animate-in fade-in duration-200">
+              <div className="bg-white border border-gray-200 text-gray-700 text-sm rounded-xl py-3 px-4 max-w-sm whitespace-normal shadow-xl backdrop-blur-sm">
+                <div className="text-sm leading-relaxed font-medium">{descripcion}</div>
+                {/* Enhanced Arrow */}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+                  <div className="w-3 h-3 bg-white border-r border-b border-gray-200 transform rotate-45 -mt-1.5"></div>
+                </div>
               </div>
             </div>
           )}

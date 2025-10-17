@@ -1,14 +1,17 @@
-import placeholderImg from '../assets/members/placeholder.svg';
-
+import andrea from "../assets/members/andrea.png";
+import angel from "../assets/members/angel.png";
+import chris from "../assets/members/chris.png";
+import karol from "../assets/members/karol.jpg";
+import mon from "../assets/members/mon.png";
 // CURRENT TEAM MEMBERS DATA
 // TEAM MEMBERS DATA
 export const teamMembers = [
   {
     id: 1,
     nombre: "Monserat López Caballero",
-    foto: "/members/monserat.jpg",
+    foto: mon,
     carrera: "Ingeniera en Sistemas Computacionales",
-    linkedin: "",
+    linkedin: "https://www.linkedin.com/in/monserrat-caballero-26b233353",
     github: "https://github.com/moon1710",
     contacto: "moncab.dev@gmail.com",
     descripcion:
@@ -17,7 +20,7 @@ export const teamMembers = [
   {
     id: 2,
     nombre: "Christian de Jesús Zaleta Roque",
-    foto: "/members/christian.jpg",
+    foto: chris,
     carrera: "Ingeniero en Sistemas Computacionales",
     linkedin: "",
     github: "https://github.com/ZaletaRoqueChris",
@@ -28,7 +31,7 @@ export const teamMembers = [
   {
     id: 3,
     nombre: "Karol Quevedo Hernández",
-    foto: "/members/karol.jpg",
+    foto: karol,
     carrera: "Ingeniera en Sistemas Computacionales",
     linkedin: "",
     github: "https://github.com/karol783",
@@ -39,7 +42,7 @@ export const teamMembers = [
   {
     id: 4,
     nombre: "Andrea Rodríguez Navarrete",
-    foto: "/members/andrea.jpg",
+    foto: andrea,
     carrera: "Ingeniera en Sistemas Computacionales",
     linkedin: "",
     github: "https://github.com/Andy-2311",
@@ -50,7 +53,7 @@ export const teamMembers = [
   {
     id: 5,
     nombre: "Angel Abel Martínez Menéndez",
-    foto: "/members/abel.jpg",
+    foto: angel,
     carrera: "Ingeniero en Sistemas Computacionales",
     linkedin: "",
     github: "https://github.com/abel190504",
@@ -59,7 +62,6 @@ export const teamMembers = [
       "Integrante del área técnica con interés en desarrollo web y bases de datos. Ha apoyado en tareas de frontend y en pruebas funcionales del sistema, contribuyendo al control de calidad y la validación de funcionalidades. Mantiene una actitud colaborativa y disposición constante por mejorar sus habilidades en programación y buenas prácticas de desarrollo.",
   },
 ];
-
 
 // PAST TEAM MEMBERS DATA
 export const pastMembers = [
