@@ -1,41 +1,42 @@
-//client/src/utils/constants.js
+// client/src/utils/constants.js
 
-// Configuration for the API - Smart environment detection
+// Detecta la URL base del backend según entorno
 function getApiUrl() {
-  // Check if we're running locally
-  const isLocalhost = window.location.hostname === 'localhost' ||
-                     window.location.hostname === '127.0.0.1';
+  const host = window.location.hostname;
 
-  // Check if we're in a tunnel
-  const isTunnel = window.location.hostname.includes('devtunnels.ms') ||
-                  window.location.hostname.includes('ngrok.io') ||
-                  window.location.hostname.includes('localtunnel.me') ||
-                  window.location.hostname.includes('tunnelmole.com') ||
-                  window.location.hostname.includes('serveo.net');
+  // Desarrollo local
+  const isLocalhost = host === "localhost" || host === "127.0.0.1";
+  if (isLocalhost) return "http://localhost:4000";
 
-  // If running locally, always use localhost
-  if (isLocalhost) {
-    console.log("🏠 Running locally - using localhost backend");
-    return "http://localhost:4000";
-  }
+  // Túneles (dev)
+  const isTunnel =
+    host.includes("devtunnels.ms") ||
+    host.includes("ngrok.io") ||
+    host.includes("localtunnel.me") ||
+    host.includes("tunnelmole.com") ||
+    host.includes("serveo.net");
 
-  // If in tunnel, use the tunnel URL
-  if (isTunnel && import.meta.env.VITE_API_URL) {
-    console.log("🌐 Running in tunnel - using tunnel backend:", import.meta.env.VITE_API_URL);
-    return import.meta.env.VITE_API_URL;
-  }
+  // Si hay VITE_API_URL explícito, respétalo
+  const envUrl = (import.meta.env.VITE_API_URL || "").trim();
+  if (isTunnel && envUrl) return envUrl;
+  if (envUrl) return envUrl;
 
-  // Fallback to env var or localhost
-  const fallback = import.meta.env.VITE_API_URL || "http://localhost:4000";
-  console.log("⚙️ Using fallback backend:", fallback);
-  return fallback;
+  // Producción sin variable → usa proxy relativo por Nginx
+  // (evita CORS y contenido mixto)
+  return "/api";
 }
 
 const BACKEND_URL = getApiUrl().replace(/\/$/, "");
 
+// Si BACKEND_URL es absoluto (http/https), agrega "/api".
+// Si es relativo ("/api"), NO añadir otro "/api".
+const API_BASE = BACKEND_URL.startsWith("http")
+  ? `${BACKEND_URL}/api`
+  : BACKEND_URL;
+
 export const API_CONFIG = {
-  BASE_URL: BACKEND_URL,
-  API_BASE: `${BACKEND_URL}/api`,
+  BASE_URL: BACKEND_URL, // p.ej: "http://localhost:4000" o "/api"
+  API_BASE: API_BASE, // p.ej: "http://localhost:4000/api" o "/api"
   TIMEOUT: 10000,
 };
 
@@ -143,12 +144,10 @@ export const ROUTES = {
   QUIZ_CONTESTAR_DETALLE: "/quiz/contestar/:quizId",
   QUIZ_RESULTADO: "/quiz/resultado",
   MIS_RESULTADOS: "/quiz/mis-resultados",
-  QUIZ_RESULTADOS_ADMIN: "/quizzes/resultados", // para psicólogo/orientador/admin
-  QUIZ_ANALYTICS_ADMIN: "/quizzes/analytics", // opcional
+  QUIZ_RESULTADOS_ADMIN: "/quizzes/resultados",
+  QUIZ_ANALYTICS_ADMIN: "/quizzes/analytics",
 
   // === APPOINTMENT ROUTES ===
-
-  // Student appointment routes
   AGENDAR_CITA: "/agendar-cita",
   CITA_DETALLE: "/cita/:id",
 
@@ -161,24 +160,6 @@ export const ROUTES = {
   REPORTES_CITAS: "/citas/reportes",
 };
 
-// Application messages
-export const MESSAGES = {
-  LOGIN_SUCCESS: "Inicio de sesión exitoso",
-  LOGIN_ERROR: "Credenciales incorrectas",
-  LOGOUT_SUCCESS: "Sesión cerrada correctamente",
-  NETWORK_ERROR: "Error de conexión. Verifica tu internet.",
-  UNAUTHORIZED: "No tienes permisos para acceder a esta sección",
-  SESSION_EXPIRED: "Tu sesión ha expirado. Inicia sesión nuevamente.",
-
-  // Appointment messages
-  APPOINTMENT_REQUESTED: "Cita solicitada exitosamente",
-  APPOINTMENT_CANCELLED: "Cita cancelada exitosamente",
-  APPOINTMENT_CONFIRMED: "Cita confirmada exitosamente",
-  APPOINTMENT_ERROR: "Error al procesar la cita",
-  PSYCHOLOGIST_UNAVAILABLE: "El psicólogo no está disponible en ese horario",
-  INVALID_APPOINTMENT_TIME: "Horario de cita inválido",
-};
-
 // UI Configuration
 export const UI_CONFIG = {
   SIDEBAR_WIDTH: "256px",
@@ -189,11 +170,11 @@ export const UI_CONFIG = {
 
 // Appointment configuration
 export const APPOINTMENT_CONFIG = {
-  MAX_ADVANCE_BOOKING_DAYS: 90, // Maximum days in advance to book
-  MIN_ADVANCE_BOOKING_HOURS: 2, // Minimum hours in advance to book
-  DEFAULT_DURATION: 60, // Default appointment duration in minutes
-  AVAILABLE_DURATIONS: [30, 45, 60, 90], // Available duration options
-  CANCELLATION_DEADLINE_HOURS: 24, // Hours before appointment when cancellation is not allowed
+  MAX_ADVANCE_BOOKING_DAYS: 90,
+  MIN_ADVANCE_BOOKING_HOURS: 2,
+  DEFAULT_DURATION: 60,
+  AVAILABLE_DURATIONS: [30, 45, 60, 90],
+  CANCELLATION_DEADLINE_HOURS: 24,
 };
 
 // Days of week for availability

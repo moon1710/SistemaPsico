@@ -1,29 +1,25 @@
+// client/src/services/api.js
 import axios from "axios";
+import { API_CONFIG, STORAGE_KEYS } from "../utils/constants";
 
-// Create an Axios instance
+// Instancia central de Axios
 const api = axios.create({
-  // The Vite proxy will handle redirecting this to http://localhost:4000/api
-  baseURL: "/api",
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: API_CONFIG.API_BASE, // '/api' en prod; 'http://localhost:4000/api' en dev si así lo configuras
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+  timeout: API_CONFIG.TIMEOUT || 10000,
 });
 
-/*
-  Add a request interceptor to include the token in all requests.
-  The token is retrieved from localStorage, where it should be stored after login.
-*/
+// Interceptor para token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    const token =
+      localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) ||
+      localStorage.getItem("token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default api;
