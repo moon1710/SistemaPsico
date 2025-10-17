@@ -47,8 +47,8 @@ const corsOptions = {
     // In production, only allow specific domains if CORS_STRICT is enabled
     if (process.env.NODE_ENV === 'production' && process.env.CORS_STRICT === 'true') {
       // Only allow explicitly configured origins in strict mode
-      const msg = `CORS: Origin not allowed in strict mode: ${origin}`;
-      console.warn(msg);
+      const msg = `Origin not allowed in strict mode: ${origin}`;
+      console.warn(`CORS: ${msg}`);
       return callback(new Error(msg), false);
     }
 
@@ -75,18 +75,18 @@ const corsOptions = {
     // Check against development patterns
     for (const pattern of developmentPatterns) {
       if (pattern.test(origin)) {
-        console.log(`✅ CORS: Allowing development/tunnel origin: ${origin}`);
+        console.log(`CORS: Allowing development origin: ${origin}`);
         return callback(null, true);
       }
     }
 
     // Log rejected origins for debugging
-    const msg = `CORS: Origin not allowed: ${origin}`;
-    console.warn(msg);
+    const msg = `Origin not allowed: ${origin}`;
+    console.warn(`CORS: ${msg}`);
 
     // In development, log but allow
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`⚠️  Allowing in development mode: ${origin}`);
+      console.log(`CORS: Allowing development mode origin: ${origin}`);
       return callback(null, true);
     }
 
@@ -116,15 +116,9 @@ app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 if (process.env.NODE_ENV !== "production") {
   app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    // Log útil para depurar preflight
+    console.log(`${req.method} ${req.path}`);
     if (req.method === "OPTIONS") {
-      console.log("Preflight from:", req.headers.origin);
-      console.log("Req-Method:", req.headers["access-control-request-method"]);
-      console.log(
-        "Req-Headers:",
-        req.headers["access-control-request-headers"]
-      );
+      console.log(`CORS Preflight: ${req.headers.origin} -> ${req.headers["access-control-request-method"]} ${req.path}`);
     }
     next();
   });
@@ -172,7 +166,7 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
-  console.error("Error no capturado:", error.message);
+  console.error("Uncaught error:", error.message);
   if (error.message === "No permitido por CORS") {
     return res
       .status(403)

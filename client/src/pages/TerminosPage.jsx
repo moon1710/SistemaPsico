@@ -1,308 +1,231 @@
-// client/src/pages/TerminosPage.jsx
-import React from "react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle, FileText } from "lucide-react";
 
-const TerminosPage = () => {
-  // Índice de contenidos
-  const sections = [
-    { id: "introduccion", title: "1. Introducción y Alcance" },
-    { id: "responsable", title: "2. Responsable del Tratamiento" },
-    { id: "datos", title: "3. Datos Personales que Recabamos" },
-    { id: "finalidades", title: "4. Finalidades del Tratamiento" },
-    { id: "transferencias", title: "5. Transferencia de Datos" },
-    { id: "seguridad", title: "6. Medidas de Seguridad" },
-    { id: "arco", title: "7. Derechos ARCO y Procedimiento" },
-    { id: "modificaciones", title: "8. Modificaciones al Aviso" },
-    { id: "legislacion", title: "9. Legislación Aplicable" },
-    { id: "contacto", title: "10. Contacto" },
-  ];
+const TermsModal = ({ onAccept, onDecline }) => {
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
+      setHasScrolledToBottom(true);
+    }
+  };
+
+  const handleAccept = () => {
+    if (acceptTerms && hasScrolledToBottom) onAccept();
+  };
 
   return (
-    <main className="container mx-auto px-4 py-12 sm:px-6 lg:px-8 max-w-4xl bg-white shadow-xl rounded-xl">
-      <h1 className="text-4xl font-extrabold text-indigo-800 mb-6 border-b-2 border-indigo-200 pb-2">
-        Términos y Condiciones — Sistema Psicológico Neuroflora
-      </h1>
-
-      <p className="text-sm text-gray-500 mb-8">
-        Última actualización:{" "}
-        <span className="font-semibold">16 de octubre de 2025</span>.
-      </p>
-
-      {/* ÍNDICE */}
-      <nav className="p-4 mb-10 bg-indigo-50 rounded-lg border border-indigo-200">
-        <h2 className="text-xl font-bold text-indigo-700 mb-3">
-          Índice de Contenidos
-        </h2>
-        <ul className="list-disc list-inside space-y-1 text-indigo-600">
-          {sections.map((section) => (
-            <li key={section.id}>
-              <a
-                href={`#${section.id}`}
-                className="hover:text-indigo-800 transition duration-150 text-base"
-              >
-                {section.title}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {/* 1. INTRODUCCIÓN */}
-      <section id="introduccion" className="mb-10 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          1. Introducción y Alcance
-        </h2>
-        <p className="text-gray-700 leading-relaxed">
-          En Neuroflora, respetamos tu privacidad y protegemos tus datos
-          personales en cumplimiento con la{" "}
-          <strong>
-            Ley Federal de Protección de Datos Personales en Posesión de los
-            Particulares (LFPDPPP, 2010)
-          </strong>{" "}
-          y la{" "}
-          <strong>
-            Ley General de Protección de Datos Personales en Posesión de Sujetos
-            Obligados (LGPDPSO, 2017)
-          </strong>
-          . El Instituto Tecnológico Nacional de México, Campus Tuxtepec, pone a
-          disposición de los usuarios este Aviso de Privacidad para informar
-          sobre el tratamiento y protección de los datos personales recabados a
-          través del sistema Neuroflora.
-        </p>
-      </section>
-
-      {/* 2. RESPONSABLE */}
-      <section id="responsable" className="mb-10 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          2. Responsable del Tratamiento
-        </h2>
-        <p className="text-gray-700 leading-relaxed mb-3">
-          <strong>
-            Instituto Tecnológico Nacional de México, Campus Tuxtepec
-          </strong>
-        </p>
-        <ul className="text-gray-700 space-y-1 ml-4 list-disc">
-          <li>
-            <strong>Dirección:</strong> Calzada Dr. Víctor Bravo Ahuja Num. 561,
-            Col. Predio el Paraíso, C.P. 68350, San Juan Bautista Tuxtepec,
-            Oaxaca.
-          </li>
-          <li>
-            <strong>Correo de contacto:</strong>{" "}
-            <a
-              href="mailto:cyd_tuxtepec@tecnm.mx"
-              className="text-indigo-700 font-semibold hover:underline"
-            >
-              cyd_tuxtepec@tecnm.mx
-            </a>
-          </li>
-        </ul>
-        <p className="text-gray-700 leading-relaxed mt-3">
-          El Instituto es responsable del tratamiento y resguardo de los datos
-          personales recabados mediante el sistema Neuroflora.
-        </p>
-      </section>
-
-      {/* 3. DATOS PERSONALES */}
-      <section id="datos" className="mb-10 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          3. Datos Personales que Recabamos
-        </h2>
-        <p className="text-gray-700 mb-3">
-          El sistema podrá solicitar y almacenar los siguientes datos:
-        </p>
-        <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
-          <li>
-            <strong>Identificación y contacto:</strong> Nombre completo, fecha
-            de nacimiento, género, teléfono, dirección (calle, ciudad, estado),
-            correo electrónico.
-          </li>
-          <li>
-            <strong>Datos académicos:</strong> Carrera y semestre.
-          </li>
-          <li>
-            <strong>Evaluaciones psicológicas:</strong> Respuestas y resultados
-            de cuestionarios psicológicos de ansiedad y depresión.
-          </li>
-        </ul>
-        <p className="text-gray-700 mt-4">
-          <strong>Nota:</strong> Los resultados de los cuestionarios son
-          considerados <strong>datos sensibles</strong>, conforme a la
-          legislación vigente.
-        </p>
-      </section>
-
-      {/* 4. FINALIDADES */}
-      <section id="finalidades" className="mb-10 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          4. Finalidades del Tratamiento
-        </h2>
-
-        <h3 className="text-xl font-semibold text-gray-700 mt-2 mb-2">
-          4.1. Primarias
-        </h3>
-        <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
-          <li>Permitir el acceso y correcto funcionamiento del sistema.</li>
-          <li>
-            Generar reportes de apoyo para la detección de ansiedad y depresión.
-          </li>
-          <li>
-            Facilitar el seguimiento académico y psicológico por tutores y
-            personal autorizado.
-          </li>
-        </ul>
-
-        <h3 className="text-xl font-semibold text-gray-700 mt-6 mb-2">
-          4.2. Secundarias (opcionales)
-        </h3>
-        <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
-          <li>Elaborar estadísticas e informes con información anonimizada.</li>
-          <li>Mejorar el sistema y sus funcionalidades.</li>
-        </ul>
-      </section>
-
-      {/* 5. TRANSFERENCIAS */}
-      <section id="transferencias" className="mb-10 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          5. Transferencia de Datos
-        </h2>
-        <p className="text-gray-700 leading-relaxed mb-3">
-          Los datos personales no serán transferidos a terceros sin
-          consentimiento previo del titular, salvo en los casos previstos por la
-          ley. La información podrá compartirse únicamente con tutores y
-          personal autorizado de la institución para fines académicos y de
-          apoyo.
-        </p>
-      </section>
-
-      {/* 6. SEGURIDAD */}
-      <section id="seguridad" className="mb-10 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          6. Medidas de Seguridad
-        </h2>
-        <p className="text-gray-700 mb-3">
-          El sistema implementa medidas de seguridad administrativas, técnicas y
-          físicas para proteger la información:
-        </p>
-        <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
-          <li>Cifrado de datos sensibles.</li>
-          <li>Acceso restringido a usuarios autorizados.</li>
-          <li>Autenticación mediante contraseñas seguras.</li>
-          <li>Registro de accesos y auditorías periódicas.</li>
-        </ul>
-      </section>
-
-      {/* 7. ARCO */}
-      <section id="arco" className="mb-10 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          7. Derechos ARCO y Procedimiento
-        </h2>
-        <p className="text-gray-700 mb-4 leading-relaxed">
-          El usuario puede ejercer sus derechos de{" "}
-          <strong>Acceso, Rectificación, Cancelación u Oposición (ARCO)</strong>{" "}
-          sobre sus datos personales mediante una solicitud enviada al correo:{" "}
-          <a
-            href="mailto:cyd_tuxtepec@tecnm.mx"
-            className="text-indigo-700 font-semibold hover:underline"
-          >
-            cyd_tuxtepec@tecnm.mx
-          </a>
-          .
-        </p>
-        <p className="text-gray-700 mb-2">La solicitud deberá incluir:</p>
-        <ul className="list-disc list-inside space-y-2 text-gray-700 ml-2">
-          <li>Nombre completo del titular.</li>
-          <li>Descripción clara de la petición.</li>
-          <li>Un medio de contacto para dar respuesta.</li>
-        </ul>
-      </section>
-
-      {/* 8. MODIFICACIONES */}
-      <section id="modificaciones" className="mb-10 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          8. Modificaciones al Aviso
-        </h2>
-        <p className="text-gray-700 leading-relaxed">
-          Este Aviso de Privacidad podrá actualizarse en cualquier momento. Las
-          modificaciones serán publicadas directamente en el sistema Neuroflora
-          y entrarán en vigor desde su publicación.
-        </p>
-      </section>
-
-      {/* 9. LEGISLACIÓN */}
-      <section id="legislacion" className="mb-10 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          9. Legislación Aplicable
-        </h2>
-        <div className="space-y-4 text-gray-700">
-          <div>
-            <p className="font-semibold mb-1">
-              Ley General de Protección de Datos Personales en Posesión de
-              Sujetos Obligados (LGPDPSO, 2017)
-            </p>
-            <ul className="list-disc list-inside ml-2 space-y-1">
-              <li>
-                Artículo 3 (fracciones IX y XIII): define datos personales y
-                sensibles.
-              </li>
-              <li>
-                Artículo 16: principios de licitud, finalidad, lealtad,
-                consentimiento, calidad, proporcionalidad e información.
-              </li>
-              <li>
-                Artículo 18: seguridad de datos mediante medidas
-                administrativas, técnicas y físicas.
-              </li>
-              <li>
-                Artículo 22: obligación de contar con Aviso de Privacidad.
-              </li>
-              <li>
-                Artículo 31: medidas de confidencialidad, integridad y
-                disponibilidad.
-              </li>
-              <li>Artículo 64: sanciones por incumplimiento.</li>
-            </ul>
-          </div>
-          <div>
-            <p className="font-semibold mb-1">
-              Ley Federal de Protección de Datos Personales en Posesión de los
-              Particulares (LFPDPPP, 2010)
-            </p>
-            <ul className="list-disc list-inside ml-2 space-y-1">
-              <li>Artículo 8: consentimiento del titular.</li>
-              <li>
-                Artículo 12: prohibición de usos distintos a lo señalado en el
-                aviso.
-              </li>
-              <li>
-                Artículo 15: contenido obligatorio del Aviso de Privacidad.
-              </li>
-              <li>Artículo 19: medidas de seguridad obligatorias.</li>
-              <li>
-                Artículo 20: uso restringido por encargados del tratamiento.
-              </li>
-            </ul>
+    <div className="max-w-4xl mx-auto pb-4">
+      {/* Header */}
+      <div className="mb-6">
+        <div
+          className="rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-gray-100 p-5 md:p-6"
+          style={{
+            background: "linear-gradient(135deg, #527ceb 0%, #6762b3 100%)",
+            color: "white",
+            border: "1px solid rgba(255,255,255,0.2)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold">
+                Términos y Política de Privacidad
+              </h2>
+              <p className="text-white/90 mt-1 text-sm md:text-base">
+                Lee y acepta para continuar usando el Sistema
+              </p>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* 10. CONTACTO */}
-      <section id="contacto" className="mb-2 pt-4">
-        <h2 className="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">
-          10. Contacto
-        </h2>
-        <p className="text-gray-700 leading-relaxed">
-          Para cualquier duda o aclaración relacionada con este Aviso de
-          Privacidad, por favor escribe a:{" "}
-          <a
-            href="mailto:cyd_tuxtepec@tecnm.mx"
-            className="text-indigo-700 font-semibold hover:underline"
+      {/* Terms Content */}
+      <div className="rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-gray-100 p-5 md:p-6">
+        <div
+          className="max-h-96 overflow-y-auto pr-2 text-sm text-gray-700 leading-relaxed space-y-4"
+          onScroll={handleScroll}
+        >
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                ¡Bienvenido(a) al Sistema Neuroflora!
+              </h3>
+              <p>
+                Antes de continuar, te pedimos leer y aceptar nuestros{" "}
+                <strong>Términos y Condiciones</strong> y{" "}
+                <strong>Política de Privacidad</strong>. Aquí te explicamos lo
+                esencial:
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                ¿Qué es Neuroflora?
+              </h4>
+              <p>
+                Es una plataforma educativa del Instituto Tecnológico Nacional
+                de México, Campus Tuxtepec, diseñada para apoyar tu bienestar
+                académico y emocional mediante cuestionarios de ansiedad y
+                depresión.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                ¿Qué datos recopilamos?
+              </h4>
+              <p>
+                Información como tu nombre, correo institucional, carrera,
+                semestre y<strong> respuestas a los cuestionarios</strong>.
+                Estos últimos son <strong>datos sensibles</strong>, ya que están
+                relacionados con tu salud mental.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                ¿Para qué usamos tus datos?
+              </h4>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  Para permitirte acceder al Sistema y obtener resultados de los
+                  cuestionarios.
+                </li>
+                <li>
+                  Para que tutores y personal autorizado te brinden seguimiento
+                  académico y psicológico.
+                </li>
+                <li>
+                  Opcionalmente, para crear{" "}
+                  <strong>estadísticas anónimas</strong> que mejoren el Sistema.
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                ¿Cómo protegemos tus datos?
+              </h4>
+              <p>
+                Usamos <strong>cifrado</strong>,{" "}
+                <strong>acceso restringido</strong> y{" "}
+                <strong>auditorías periódicas</strong> para garantizar la
+                seguridad de tu información.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Tus derechos (ARCO)
+              </h4>
+              <p>
+                Puedes acceder, corregir, cancelar u oponerte al uso de tus
+                datos enviando una solicitud a{" "}
+                <a
+                  href="mailto:cyd_tuxtepec@tecnm.mx"
+                  className="text-[#527ceb] underline"
+                >
+                  cyd_tuxtepec@tecnm.mx
+                </a>
+                .
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">Importante</h4>
+              <p>
+                Los cuestionarios son <strong>herramientas educativas</strong>,
+                no un diagnóstico médico. Si los resultados sugieren problemas
+                de salud mental, te recomendamos buscar ayuda profesional.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">Confirmación</h4>
+              <p>
+                Al hacer clic en <strong>“Aceptar”</strong>, confirmas que has
+                leído y aceptas los Términos y Condiciones y la Política de
+                Privacidad. Si no estás de acuerdo, selecciona{" "}
+                <strong>“Cancelar”</strong> y no podrás usar el Sistema.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        {!hasScrolledToBottom && (
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700 text-center">
+              Por favor, desplázate hasta el final para continuar
+            </p>
+          </div>
+        )}
+
+        {/* Acceptance checkbox */}
+        {hasScrolledToBottom && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg"
           >
-            cyd_tuxtepec@tecnm.mx
-          </a>
-        </p>
-      </section>
-    </main>
+            <label className="flex items-start gap-3 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#527ceb] focus:ring-[#527ceb]"
+              />
+              <span>
+                He leído completamente y acepto los Términos y Condiciones y la
+                Política de Privacidad, así como el tratamiento de mis datos
+                personales para los fines descritos. Entiendo que puedo ejercer
+                mis derechos ARCO en cualquier momento.
+              </span>
+            </label>
+          </motion.div>
+        )}
+
+        {/* Action buttons */}
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={onDecline}
+            className="flex-1 py-3 px-4 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-all"
+          >
+            Cancelar
+          </button>
+          <motion.button
+            whileHover={{
+              scale: acceptTerms && hasScrolledToBottom ? 1.01 : 1,
+            }}
+            whileTap={{ scale: acceptTerms && hasScrolledToBottom ? 0.99 : 1 }}
+            onClick={handleAccept}
+            disabled={!acceptTerms || !hasScrolledToBottom}
+            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+              acceptTerms && hasScrolledToBottom
+                ? "bg-gradient-to-r from-[#527ceb] to-[#6762b3] text-white hover:from-[#019fd2] hover:to-[#48b0f7]"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            {acceptTerms && hasScrolledToBottom ? (
+              <span className="flex items-center justify-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Aceptar y continuar
+              </span>
+            ) : (
+              "Aceptar y continuar"
+            )}
+          </motion.button>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default TerminosPage;
+export default TermsModal;

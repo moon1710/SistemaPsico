@@ -220,7 +220,7 @@ export function AuthProvider({ children }) {
     try {
       await authService.logout?.();
     } catch (e) {
-      console.warn("logout (server) falló, limpiando local igual");
+      console.warn("Server logout failed, clearing local session");
     } finally {
       setToken(null);
       _clearUserAndInstitution();
@@ -232,15 +232,12 @@ export function AuthProvider({ children }) {
 
   const updateProfile = async () => {
     try {
-      console.log('🔄 Actualizando perfil en contexto...');
       // Recargar el perfil del usuario desde el servidor
       const res = await authService.getProfile?.();
-      console.log('📄 Respuesta del servidor:', res);
 
       if (res?.success && res.data) {
         // Actualizar el usuario en el contexto con los datos más recientes
         const updatedUser = { ...(user || {}), ...res.data };
-        console.log('👤 Usuario actualizado:', updatedUser);
         _setUserAndDefaultInstitution(updatedUser);
 
         // Actualizar también en localStorage

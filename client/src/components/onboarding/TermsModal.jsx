@@ -37,7 +37,9 @@ const TermsModal = ({ onAccept, onDecline }) => {
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold">Términos y Condiciones</h2>
+              <h2 className="text-2xl md:text-3xl font-bold">
+                Términos y Condiciones
+              </h2>
               <p className="text-white/90 mt-1 text-sm md:text-base">
                 Lee y acepta nuestros términos para continuar
               </p>
@@ -58,83 +60,103 @@ const TermsModal = ({ onAccept, onDecline }) => {
                 Bienvenido al Sistema Neuroflora
               </h3>
               <p>
-                Una plataforma educativa desarrollada por el Instituto Tecnológico Nacional de México,
-                Campus Tuxtepec. Este sitio web y sistema está diseñado para proporcionar herramientas
-                educativas y de apoyo psicológico a estudiantes, facilitando la detección temprana de
-                condiciones como ansiedad y depresión a través de cuestionarios y tests validados.
+                Una plataforma educativa desarrollada por el Instituto
+                Tecnológico Nacional de México, Campus Tuxtepec. Este sitio web
+                y sistema está diseñado para proporcionar herramientas
+                educativas y de apoyo psicológico a estudiantes, facilitando la
+                detección temprana de condiciones como ansiedad y depresión a
+                través de cuestionarios y tests validados.
               </p>
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Manejo de Datos Personales</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Te explicamos lo esencial
+              </h4>
               <p>
-                El Sistema maneja datos personales de estudiantes, incluyendo información sensible
-                relacionada con su salud mental, con el objetivo de promover el bienestar académico y
-                emocional. Al acceder, registrarse o utilizar el Sistema, aceptas cumplir con estos
-                Términos y Condiciones de Uso, así como con nuestro Aviso de Privacidad integrado en
-                este documento.
+                <b>¿Qué es Neuroflora?</b>
+                <p>
+                  Es una plataforma educativa del Instituto Tecnológico Nacional
+                  de México, Campus Tuxtepec, diseñada para apoyar tu bienestar
+                  académico y emocional mediante cuestionarios de ansiedad y
+                  depresión.
+                </p>
               </p>
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Aplicabilidad</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Aplicabilidad
+              </h4>
               <p>
-                Estos Términos se aplican a todos los usuarios, incluyendo estudiantes, tutores,
-                personal autorizado y cualquier otra persona que acceda al Sistema. El Instituto se
-                reserva el derecho de modificar estos Términos en cualquier momento, notificando los
-                cambios a través del Sistema o por correo electrónico.
+                Estos Términos se aplican a todos los usuarios, incluyendo
+                estudiantes, tutores, personal autorizado y cualquier otra
+                persona que acceda al Sistema. El Instituto se reserva el
+                derecho de modificar estos Términos en cualquier momento,
+                notificando los cambios a través del Sistema o por correo
+                electrónico.
               </p>
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Responsable del Tratamiento</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Responsable del Tratamiento
+              </h4>
               <p>
                 <strong>Responsable:</strong> Tu institución educativa.
               </p>
               <p>
-                <strong>Finalidades:</strong> Brindar acompañamiento psicológico, gestionar citas,
-                generar estadísticas agregadas y reportes institucionales.
+                <strong>Finalidades:</strong> Brindar acompañamiento
+                psicológico, gestionar citas, generar estadísticas agregadas y
+                reportes institucionales.
               </p>
               <p>
-                <strong>Datos tratados:</strong> Identificación, contacto y académicos; resultados de
-                evaluaciones psicológicas.
+                <strong>Datos tratados:</strong> Identificación, contacto y
+                académicos; resultados de evaluaciones psicológicas.
               </p>
               <p>
-                <strong>Base de tratamiento:</strong> Consentimiento y cumplimiento de obligaciones
-                institucionales.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Conservación y Derechos</h4>
-              <p>
-                <strong>Conservación:</strong> Por el periodo necesario para las finalidades señaladas
-                o lo establecido por normativa interna.
-              </p>
-              <p>
-                <strong>Derechos ARCO:</strong> Puedes solicitar acceso, rectificación, cancelación u
-                oposición escribiendo al área correspondiente.
+                <strong>Base de tratamiento:</strong> Consentimiento y
+                cumplimiento de obligaciones institucionales.
               </p>
             </div>
 
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Transferencias y Seguridad</h4>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Conservación y Derechos
+              </h4>
               <p>
-                <strong>Transferencias:</strong> No se realizan a terceros ajenos sin tu consentimiento,
-                salvo requerimientos legales o situaciones de riesgo inminente para tu integridad o la
-                de terceros.
+                <strong>Conservación:</strong> Por el periodo necesario para las
+                finalidades señaladas o lo establecido por normativa interna.
               </p>
               <p>
-                <strong>Seguridad:</strong> Se aplican medidas administrativas, técnicas y físicas para
-                proteger tus datos.
+                <strong>Derechos ARCO:</strong> Puedes solicitar acceso,
+                rectificación, cancelación u oposición escribiendo al área
+                correspondiente.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Transferencias y Seguridad
+              </h4>
+              <p>
+                <strong>Transferencias:</strong> No se realizan a terceros
+                ajenos sin tu consentimiento, salvo requerimientos legales o
+                situaciones de riesgo inminente para tu integridad o la de
+                terceros.
+              </p>
+              <p>
+                <strong>Seguridad:</strong> Se aplican medidas administrativas,
+                técnicas y físicas para proteger tus datos.
               </p>
             </div>
 
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">Vigencia</h4>
               <p>
-                Las modificaciones entrarán en vigor inmediatamente después de su publicación, y el uso
-                continuado del Sistema implica la aceptación de las mismas.
+                Las modificaciones entrarán en vigor inmediatamente después de
+                su publicación, y el uso continuado del Sistema implica la
+                aceptación de las mismas.
               </p>
             </div>
           </div>
@@ -164,9 +186,10 @@ const TermsModal = ({ onAccept, onDecline }) => {
                 className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#527ceb] focus:ring-[#527ceb]"
               />
               <span>
-                He leído completamente y acepto los términos y condiciones de uso, así como el
-                tratamiento de mis datos personales para los fines descritos. Entiendo que puedo
-                ejercer mis derechos ARCO en cualquier momento.
+                He leído completamente y acepto los términos y condiciones de
+                uso, así como el tratamiento de mis datos personales para los
+                fines descritos. Entiendo que puedo ejercer mis derechos ARCO en
+                cualquier momento.
               </span>
             </label>
           </motion.div>
@@ -181,7 +204,9 @@ const TermsModal = ({ onAccept, onDecline }) => {
             No acepto
           </button>
           <motion.button
-            whileHover={{ scale: acceptTerms && hasScrolledToBottom ? 1.01 : 1 }}
+            whileHover={{
+              scale: acceptTerms && hasScrolledToBottom ? 1.01 : 1,
+            }}
             whileTap={{ scale: acceptTerms && hasScrolledToBottom ? 0.99 : 1 }}
             onClick={handleAccept}
             disabled={!acceptTerms || !hasScrolledToBottom}

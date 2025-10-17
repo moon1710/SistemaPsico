@@ -38,37 +38,25 @@ export const OnboardingProvider = ({ children }) => {
       // LÓGICA: Si ya se completó el onboarding (localStorage) O si el perfil está completado, no mostrar
       const shouldHideOnboarding = onboardingCompletedInStorage || profileCompleted;
 
-      console.log('🔍 [OnboardingContext] Verificando estado:', {
-        userId: user.id,
-        perfilCompletado: user.perfilCompletado,
-        profileCompleted,
-        onboardingCompletedInStorage,
-        shouldHideOnboarding,
-        shouldShowModal: !shouldHideOnboarding
-      });
 
       if (!shouldHideOnboarding) {
         // Perfil NO completado Y no hay registro en localStorage -> mostrar modal
         setIsFirstTime(true);
         setShowOnboarding(true);
         setOnboardingCompleted(false);
-        console.log('📝 [OnboardingContext] Mostrando modal de onboarding');
       } else {
         // Perfil completado O ya se completó antes -> no mostrar modal
         setIsFirstTime(false);
         setShowOnboarding(false);
         setOnboardingCompleted(true);
-        console.log('✅ [OnboardingContext] Onboarding ya completado, ocultando modal');
 
         // Sincronización automática: si la BD dice completado pero localStorage no, actualizar localStorage
         if (profileCompleted && !onboardingCompletedInStorage) {
-          console.log('🔄 [OnboardingContext] Sincronizando: BD dice completado, actualizando localStorage');
           localStorage.setItem(storageKey, "true");
         }
 
         // Si el localStorage dice que está completado pero la BD no, puede ser un caso edge
         if (onboardingCompletedInStorage && !profileCompleted) {
-          console.log('⚠️ [OnboardingContext] Inconsistencia: localStorage dice completado pero BD no');
         }
       }
     }
@@ -94,7 +82,6 @@ export const OnboardingProvider = ({ children }) => {
         if (result.success && result.data?.user) {
           const freshUser = result.data.user;
           setUser(freshUser);
-          console.log('🔄 [OnboardingContext] Usuario refrescado desde servidor:', freshUser);
 
           // También actualizar localStorage
           localStorage.setItem('user_data', JSON.stringify(freshUser));
@@ -102,7 +89,7 @@ export const OnboardingProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error('❌ [OnboardingContext] Error refrescando usuario:', error);
+      console.error('Error refreshing user profile:', error.message);
     }
     return null;
   };
@@ -112,7 +99,6 @@ export const OnboardingProvider = ({ children }) => {
     if (user?.id) {
       const storageKey = getStorageKey();
       localStorage.removeItem(storageKey);
-      console.log('🧹 [OnboardingContext] Cache limpiado para usuario:', user.id);
 
       // Forzar re-evaluación basada en datos actuales de la BD
       const profileCompleted = user.perfilCompletado === 1 || user.perfilCompletado === true;
@@ -132,11 +118,9 @@ export const OnboardingProvider = ({ children }) => {
       setIsFirstTime(false);
 
       // IMPORTANTE: Obtener datos frescos del servidor en lugar de solo actualizar localmente
-      console.log('🔄 [OnboardingContext] Refrescando datos del usuario desde servidor...');
       const freshUser = await refreshUserProfile();
 
       if (freshUser) {
-        console.log('✅ [OnboardingContext] Usuario actualizado con datos frescos');
       } else {
         // Fallback: actualizar localmente si falla la petición
         const updatedUser = {
@@ -144,7 +128,6 @@ export const OnboardingProvider = ({ children }) => {
           perfilCompletado: 1
         };
         setUser(updatedUser);
-        console.log('⚠️ [OnboardingContext] Fallback: Usuario actualizado localmente');
       }
     }
   };

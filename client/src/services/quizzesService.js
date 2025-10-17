@@ -61,15 +61,62 @@ export const quizzesApi = {
     institutionId,
     codigo,
     severidad,
+    searchTerm,
+    startDate,
+    endDate,
+    sortBy,
+    sortOrder,
     page = 1,
     pageSize = 20,
   }) => {
     const qs = new URLSearchParams();
     if (codigo) qs.set("codigo", codigo);
     if (severidad) qs.set("severidad", severidad);
+    if (searchTerm) qs.set("searchTerm", searchTerm);
+    if (startDate) qs.set("startDate", startDate);
+    if (endDate) qs.set("endDate", endDate);
+    if (sortBy) qs.set("sortBy", sortBy);
+    if (sortOrder) qs.set("sortOrder", sortOrder);
     if (page) qs.set("page", page);
     if (pageSize) qs.set("pageSize", pageSize);
     return authFetch(`/quizzes/resultados?${qs.toString()}`, { institutionId });
+  },
+
+  getResultsStats: ({ institutionId }) => {
+    return authFetch("/quizzes/resultados/stats", { institutionId });
+  },
+
+  exportResults: ({
+    institutionId,
+    codigo,
+    severidad,
+    searchTerm,
+    startDate,
+    endDate,
+  }) => {
+    const qs = new URLSearchParams();
+    if (codigo) qs.set("codigo", codigo);
+    if (severidad) qs.set("severidad", severidad);
+    if (searchTerm) qs.set("searchTerm", searchTerm);
+    if (startDate) qs.set("startDate", startDate);
+    if (endDate) qs.set("endDate", endDate);
+
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    const url = `${API_CONFIG.API_BASE}/quizzes/resultados/export?${qs.toString()}`;
+
+    return fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-institution-id': String(institutionId)
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Error exporting data');
+      }
+      return response.blob();
+    });
   },
   analytics: ({ institutionId, codigo, desde, hasta, semestre, genero, carrera }) => {
     const qs = new URLSearchParams();

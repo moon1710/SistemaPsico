@@ -45,13 +45,11 @@ const autoAssignPsychologist = async (conn, studentId, institucionId) => {
           [tutorAlumnoId, institucionId, studentId, psychologistId]
         );
 
-        console.log(`✅ Psicólogo ${psychologistId} asignado automáticamente al estudiante ${studentId}`);
       }
     } else {
-      console.log(`⚠️ No hay psicólogos disponibles en la institución ${institucionId} para asignar al estudiante ${studentId}`);
     }
   } catch (error) {
-    console.error('❌ Error asignando psicólogo automáticamente:', error);
+    console.error('Error auto-assigning psychologist:', error.message);
     // No lanzamos el error para que no afecte el registro del estudiante
   }
 };
@@ -213,7 +211,6 @@ const register = async (req, res) => {
       try {
         await autoAssignPsychologist(conn, id, institucionId);
       } catch (error) {
-        console.error('⚠️  Error en autoAssignPsychologist (no crítico):', error);
         // No lanzamos el error para que no afecte el registro
       }
     }
@@ -223,9 +220,8 @@ const register = async (req, res) => {
     // Crear notificación de bienvenida después del commit exitoso
     try {
       // await crearNotificacionBienvenida(id, nombreCompleto, rol);
-      console.log('✅ Notificación de bienvenida omitida temporalmente');
     } catch (error) {
-      console.error('Error creando notificación de bienvenida:', error);
+      console.error('Error creating welcome notification:', error.message);
       // No afecta el registro del usuario
     }
 
@@ -294,7 +290,6 @@ const login = async (req, res) => {
 
     const { email, password } = req.body;
 
-    console.log('🔐 Intento de login:', { email, passwordLength: password?.length });
 
     // Permitir login con email O número de control
     const [userRows] = await pool.execute(
@@ -308,10 +303,8 @@ const login = async (req, res) => {
       [email, email]
     );
 
-    console.log('👥 Usuarios encontrados:', userRows.length);
 
     if (userRows.length === 0) {
-      console.log('❌ Usuario no encontrado:', email);
       return res
         .status(401)
         .json({
@@ -324,10 +317,8 @@ const login = async (req, res) => {
     const user = userRows[0];
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-    console.log('🔑 Validación de contraseña:', isPasswordValid);
 
     if (!isPasswordValid) {
-      console.log('❌ Contraseña incorrecta para usuario:', user.email);
       return res
         .status(401)
         .json({
@@ -429,7 +420,7 @@ const logout = async (req, res) => {
   try {
     res.json({ success: true, message: "Sesión cerrada exitosamente" });
     const roles = (req.user?.instituciones || []).map((m) => m.rol).join(", ");
-    console.log(`✅ Logout: ${req.user?.email} [${roles || "sin-rol"}]`);
+    console.log(`User logged out: ${req.user?.email}`);
   } catch (error) {
     console.error("Error en logout:", error);
     res
@@ -777,7 +768,7 @@ const cambiarPassword = async (req, res) => {
       [newPasswordHash, userId]
     );
 
-    console.log(`✅ Contraseña cambiada para usuario: ${userId}`);
+    console.log(`Password changed for user: ${userId}`);
 
     res.json({
       success: true,
