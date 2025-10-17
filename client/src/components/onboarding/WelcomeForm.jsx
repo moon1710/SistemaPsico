@@ -44,7 +44,7 @@ const WelcomeForm = () => {
       departamento: "",
       telefonoEmergencia: "",
     }),
-    aceptaTerminos: false, // <- requerido
+    aceptaTerminos: true, // <- Términos ya aceptados previamente
     // Campos para cambio de contraseña
     newPassword: "",
     confirmPassword: "",
@@ -68,10 +68,7 @@ const WelcomeForm = () => {
     setFormErrors({});
     setSubmitError("");
 
-    if (!formData.aceptaTerminos) {
-      setSubmitError("Debes aceptar el aviso de privacidad para continuar.");
-      return;
-    }
+    // Términos ya aceptados en paso previo, no necesitamos verificar aquí
 
     // Validaciones de contraseña
     const errors = {};
@@ -701,40 +698,7 @@ const WelcomeForm = () => {
           </div>
         </div>
 
-        {/* Aviso de Privacidad (resumen + checkbox requerido) */}
-        <div className={`${card} p-5`}>
-          <h3 className="text-lg md:text-xl font-semibold text-[#21252d]">
-            Aviso de privacidad
-          </h3>
-          <p className="text-sm text-gray-600 mt-2">
-            Tus datos se utilizan para fines académicos y de apoyo psicológico
-            dentro de tu institución. Se almacenan de manera segura y no se
-            comparten con terceros ajenos sin tu consentimiento, salvo
-            obligaciones legales o emergencias de riesgo.
-          </p>
-          <button
-            type="button"
-            onClick={() => setShowPrivacy(true)}
-            className="mt-3 text-sm font-medium text-[#527ceb] hover:underline"
-          >
-            Ver aviso completo
-          </button>
-
-          <label className="mt-4 flex items-start gap-3 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              name="aceptaTerminos"
-              checked={formData.aceptaTerminos}
-              onChange={handleInputChange}
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#527ceb] focus:ring-[#527ceb]"
-              required
-            />
-            <span>
-              He leído el aviso de privacidad y acepto el tratamiento de mis
-              datos personales para los fines descritos. *
-            </span>
-          </label>
-        </div>
+        {/* Terms already accepted in previous step */}
 
         {/* CTA */}
         <div className="pt-1">

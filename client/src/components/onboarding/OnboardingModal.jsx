@@ -4,11 +4,19 @@ import { X } from "lucide-react";
 import { useOnboarding } from "../../contexts/OnboardingContext";
 import TutorialSteps from "./TutorialSteps";
 import WelcomeForm from "./WelcomeForm";
+import TermsModal from "./TermsModal";
 import { onboardingSteps } from "./onboardingConfig";
 
 const OnboardingModal = () => {
-  const { showOnboarding, currentStep, closeOnboarding, user } =
-    useOnboarding();
+  const {
+    showOnboarding,
+    currentStep,
+    closeOnboarding,
+    termsAccepted,
+    acceptTerms,
+    declineTerms,
+    user
+  } = useOnboarding();
   if (!showOnboarding) return null;
 
   const isLastStep = currentStep >= onboardingSteps.length;
@@ -72,12 +80,18 @@ const OnboardingModal = () => {
           >
             <div className="min-w-0">
               <h1 className="font-bold text-white text-[clamp(20px,2.6vw,30px)] leading-tight truncate">
-                {isLastStep ? "Completar perfil" : "Inicio guiado"}
+                {!termsAccepted
+                  ? "Términos y Condiciones"
+                  : isLastStep
+                    ? "Completar perfil"
+                    : "Inicio guiado"}
               </h1>
               <p className="text-white/85 mt-1 text-sm md:text-base">
-                {isLastStep
-                  ? `Revisa y acepta el aviso para continuar`
-                  : `Paso ${currentStep + 1} de ${onboardingSteps.length}`}
+                {!termsAccepted
+                  ? "Lee y acepta nuestros términos para continuar"
+                  : isLastStep
+                    ? `Revisa y acepta el aviso para continuar`
+                    : `Paso ${currentStep + 1} de ${onboardingSteps.length}`}
               </p>
             </div>
 
@@ -90,7 +104,7 @@ const OnboardingModal = () => {
             </button>
           </div>
 
-          {!isLastStep && (
+          {!isLastStep && termsAccepted && (
             <div className="px-4 md:px-6 pt-2">
               <div className="h-1.5 w-full rounded-full bg-white/25 overflow-hidden">
                 <motion.div
@@ -118,7 +132,13 @@ const OnboardingModal = () => {
           >
             <div className="p-4 md:p-6">
               <div className="min-h-full">
-                {isLastStep ? <WelcomeForm /> : <TutorialSteps />}
+                {!termsAccepted ? (
+                  <TermsModal onAccept={acceptTerms} onDecline={declineTerms} />
+                ) : isLastStep ? (
+                  <WelcomeForm />
+                ) : (
+                  <TutorialSteps />
+                )}
               </div>
             </div>
           </div>

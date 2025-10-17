@@ -18,6 +18,7 @@ export const OnboardingProvider = ({ children }) => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Clave para localStorage basada en el usuario
   const getStorageKey = () => {
@@ -178,11 +179,23 @@ export const OnboardingProvider = ({ children }) => {
     setShowOnboarding(false);
   };
 
+  // Aceptar términos y condiciones
+  const acceptTerms = () => {
+    setTermsAccepted(true);
+  };
+
+  // Rechazar términos y condiciones
+  const declineTerms = () => {
+    setShowOnboarding(false);
+    setTermsAccepted(false);
+  };
+
   const value = {
     isFirstTime,
     showOnboarding,
     currentStep,
     onboardingCompleted,
+    termsAccepted,
     completeOnboarding,
     resetOnboarding,
     clearOnboardingCache,  // Nueva función para limpiar cache
@@ -191,6 +204,8 @@ export const OnboardingProvider = ({ children }) => {
     prevStep,
     goToStep,
     closeOnboarding,
+    acceptTerms,
+    declineTerms,
     user,
   };
 

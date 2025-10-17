@@ -209,12 +209,6 @@ const QuizResultPage = () => {
       number: "800-911-2000",
       description: "Apoyo en crisis las 24 horas",
       color: "blue"
-    },
-    {
-      name: "Psicología Campus",
-      number: "664-123-4567",
-      description: "Centro de Bienestar TecNM",
-      color: "green"
     }
   ];
 
@@ -423,7 +417,7 @@ const QuizResultPage = () => {
             Para un diagnóstico profesional, consulta con nuestro equipo de psicología.
           </p>
           <p className="mt-2">
-            Tu bienestar es importante para nosotros. 💙
+            Tu bienestar es importante para nosotros.
           </p>
         </motion.div>
       </div>
