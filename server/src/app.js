@@ -131,7 +131,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/health", (req, res) => {
+app.get("/api/health", (req, res) => {
   res.json({
     success: true,
     message: "Servidor funcionando correctamente",
@@ -166,24 +166,24 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
-  console.error("Uncaught error:", error.message);
+  console.error("💥 Uncaught error:", error.stack || error);
   if (error.message === "No permitido por CORS") {
     return res
       .status(403)
       .json({ success: false, message: "Acceso bloqueado por CORS" });
   }
   if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        message: "JSON inválido en el cuerpo de la petición",
-      });
+    return res.status(400).json({
+      success: false,
+      message: "JSON inválido en el cuerpo de la petición",
+    });
   }
   res.status(500).json({
     success: false,
     message: "Error interno del servidor",
-    ...(process.env.NODE_ENV !== "production" && { error: error.message }),
+    ...(process.env.NODE_ENV !== "production" && {
+      error: String(error.message || error),
+    }),
   });
 });
 
