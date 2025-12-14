@@ -4,11 +4,23 @@
 function getApiUrl() {
   const host = window.location.hostname;
 
-  // Desarrollo local
+  // Si hay VITE_API_URL explícito, úsalo siempre
+  const envUrl = (import.meta.env.VITE_API_URL || "").trim();
+  if (envUrl) return envUrl;
+
+  // Localhost
   const isLocalhost = host === "localhost" || host === "127.0.0.1";
   if (isLocalhost) return "http://localhost:4000";
 
-  // Túneles (dev)
+  // LAN (si el frontend se abre como 192.168.x.x, el backend está en el mismo host)
+  const isLan =
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host) ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host);
+
+  if (isLan) return `http://${host}:4000`;
+
+  // Túneles (si lo usas)
   const isTunnel =
     host.includes("devtunnels.ms") ||
     host.includes("ngrok.io") ||
@@ -16,13 +28,9 @@ function getApiUrl() {
     host.includes("tunnelmole.com") ||
     host.includes("serveo.net");
 
-  // Si hay VITE_API_URL explícito, respétalo
-  const envUrl = (import.meta.env.VITE_API_URL || "").trim();
   if (isTunnel && envUrl) return envUrl;
-  if (envUrl) return envUrl;
 
-  // Producción sin variable → usa proxy relativo por Nginx
-  // (evita CORS y contenido mixto)
+  // Producción: usa proxy relativo (Nginx) SOLO si lo tienes configurado
   return "/api";
 }
 

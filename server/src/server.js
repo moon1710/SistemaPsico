@@ -5,7 +5,7 @@ const app = require("./app");
 const http = require("http");
 
 const PORT = process.env.PORT || 4000;
-const HOST = process.env.HOST || "127.0.0.1";
+const HOST = process.env.HOST || "0.0.0.0";
 
 const REQUIRED_ENV = ["JWT_SECRET", "DB_HOST", "DB_NAME", "DB_USER", "DB_PASS"];
 for (const key of REQUIRED_ENV) {

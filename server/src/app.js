@@ -1,7 +1,8 @@
 // app.js (servidor Express)
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+const path = require("path");
 
 const authRoutes = require("./routes/auth.routes");
 const quizzesRoutes = require("./routes/quizzes.routes");
@@ -19,117 +20,154 @@ const canalizacionesRoutes = require("./routes/canalizaciones.routes");
 
 const app = express();
 
+/* =========================
+   Helpers
+========================= */
+
+const toBool = (v) => String(v || "").toLowerCase() === "true";
+
+function parseCsvEnv(name) {
+  return (process.env[name] || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function isPrivateLanHostname(hostname) {
+  // localhost / loopback
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0"
+  )
+    return true;
+
+  // 192.168.x.x
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+
+  // 10.x.x.x
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+
+  // 172.16.0.0 – 172.31.255.255
+  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname))
+    return true;
+
+  return false;
+}
+
+function isAllowedOrigin(origin, allowedList, allowLan) {
+  try {
+    const u = new URL(origin);
+    const normalized = `${u.protocol}//${u.host}`; // protocol + host:port
+
+    if (allowedList.includes(origin)) return true;
+    if (allowedList.includes(normalized)) return true;
+
+    if (!allowLan) return false;
+    return isPrivateLanHostname(u.hostname);
+  } catch {
+    // si origin es raro, lo bloqueamos
+    return false;
+  }
+}
+
+/* =========================
+   CORS (LAN friendly)
+========================= */
+
+const allowedOrigins = [
+  // defaults (dev)
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+  ...parseCsvEnv("ALLOWED_ORIGINS"),
+];
+
+const isProd = process.env.NODE_ENV === "production";
+const corsStrict = toBool(process.env.CORS_STRICT);
+const allowLan = !isProd || !corsStrict; // en prod+strict NO permitimos LAN por defecto
+
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+  origin(origin, callback) {
+    // Postman/curl o apps nativas pueden venir sin Origin
     if (!origin) return callback(null, true);
 
-    // Parse allowed origins from environment (comma-separated)
-    const envAllowedOrigins = process.env.ALLOWED_ORIGINS
-      ? process.env.ALLOWED_ORIGINS.split(',').map(url => url.trim())
-      : [];
+    const ok = isAllowedOrigin(origin, allowedOrigins, allowLan);
 
-    // Default allowed origins
-    const defaultAllowedOrigins = [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      "http://localhost:5174",
-      "http://127.0.0.1:5173",
-      "http://127.0.0.1:5174",
-    ];
+    if (ok) return callback(null, true);
 
-    const allowedOrigins = [...defaultAllowedOrigins, ...envAllowedOrigins];
+    const msg = `CORS blocked: ${origin}`;
+    console.warn(msg, {
+      NODE_ENV: process.env.NODE_ENV,
+      CORS_STRICT: process.env.CORS_STRICT,
+      allowLan,
+      allowedOrigins,
+    });
 
-    // Check if origin is in allowed list
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    // In production, only allow specific domains if CORS_STRICT is enabled
-    if (process.env.NODE_ENV === 'production' && process.env.CORS_STRICT === 'true') {
-      // Only allow explicitly configured origins in strict mode
-      const msg = `Origin not allowed in strict mode: ${origin}`;
-      console.warn(`CORS: ${msg}`);
-      return callback(new Error(msg), false);
-    }
-
-    // Allow common development and tunneling patterns
-    const developmentPatterns = [
-      /^https?:\/\/localhost:\d+$/,
-      /^https?:\/\/127\.0\.0\.1:\d+$/,
-      /^https?:\/\/0\.0\.0\.0:\d+$/,
-      /^https?:\/\/.*\.ngrok\.io$/,
-      /^https?:\/\/.*\.tunnelmole\.com$/,
-      /^https?:\/\/.*\.localtunnel\.me$/,
-      /^https?:\/\/.*\.serveo\.net$/,
-      /^https?:\/\/.*\.pagekite\.me$/,
-      /^https?:\/\/.*\.devtunnels\.ms$/,
-      /^https?:\/\/.*\.githubpreview\.dev$/,
-      /^https?:\/\/.*\.cloudflare\.com$/,
-      /^https?:\/\/.*\.vercel\.app$/,
-      /^https?:\/\/.*\.netlify\.app$/,
-      /^https?:\/\/.*\.herokuapp\.com$/,
-      /^https?:\/\/.*\.railway\.app$/,
-      /^https?:\/\/.*\.render\.com$/,
-    ];
-
-    // Check against development patterns
-    for (const pattern of developmentPatterns) {
-      if (pattern.test(origin)) {
-        console.log(`CORS: Allowing development origin: ${origin}`);
-        return callback(null, true);
-      }
-    }
-
-    // Log rejected origins for debugging
-    const msg = `Origin not allowed: ${origin}`;
-    console.warn(`CORS: ${msg}`);
-
-    // In development, log but allow
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`CORS: Allowing development mode origin: ${origin}`);
-      return callback(null, true);
-    }
-
-    // Reject in production if not matched
+    // Express-cors espera error para bloquear
     return callback(new Error(msg), false);
   },
+
   credentials: true,
-  optionsSuccessStatus: 200,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
     "Authorization",
     "X-Requested-With",
-    "x-institution-id", // ⬅️ necesario para tus requests
-    "x-institucion-id", // ⬅️ alias que usas en el middleware
+    "x-institution-id",
+    "x-institucion-id",
     "Origin",
     "Accept",
   ],
+  exposedHeaders: ["Content-Length"],
+  optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
-// Maneja explícitamente preflight por si acaso
 app.options("*", cors(corsOptions));
+
+/* =========================
+   Parsers
+========================= */
 
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
-if (process.env.NODE_ENV !== "production") {
+/* =========================
+   Basic security headers
+========================= */
+
+app.disable("x-powered-by");
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  // Nota: X-XSS-Protection está obsoleto en navegadores modernos, pero no estorba.
+  res.setHeader("X-XSS-Protection", "0");
+  next();
+});
+
+/* =========================
+   Dev logging
+========================= */
+
+if (!isProd) {
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`);
     if (req.method === "OPTIONS") {
-      console.log(`CORS Preflight: ${req.headers.origin} -> ${req.headers["access-control-request-method"]} ${req.path}`);
+      console.log(
+        `Preflight: origin=${req.headers.origin} -> ${req.headers["access-control-request-method"]} ${req.path}`
+      );
     }
     next();
   });
 }
 
-app.use((req, res, next) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("X-XSS-Protection", "1; mode=block");
-  next();
-});
+/* =========================
+   Health
+========================= */
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -139,6 +177,10 @@ app.get("/api/health", (req, res) => {
     environment: process.env.NODE_ENV || "development",
   });
 });
+
+/* =========================
+   Routes
+========================= */
 
 app.use("/api/auth", authRoutes);
 app.use("/api/quizzes", quizzesRoutes);
@@ -154,8 +196,15 @@ app.use("/api/reports", reportsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/canalizaciones", canalizacionesRoutes);
 
-// Serve static files from uploads
-app.use('/uploads', express.static('uploads'));
+/* =========================
+   Static uploads
+========================= */
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+/* =========================
+   404
+========================= */
 
 app.use((req, res) => {
   res.status(404).json({
@@ -165,25 +214,35 @@ app.use((req, res) => {
   });
 });
 
+/* =========================
+   Error handler
+========================= */
+
 app.use((error, req, res, next) => {
-  console.error("💥 Uncaught error:", error.stack || error);
-  if (error.message === "No permitido por CORS") {
-    return res
-      .status(403)
-      .json({ success: false, message: "Acceso bloqueado por CORS" });
+  // CORS errors usually land here
+  const msg = String(error?.message || "");
+
+  if (msg.startsWith("CORS blocked:")) {
+    return res.status(403).json({
+      success: false,
+      message: "Acceso bloqueado por CORS",
+      detail: !isProd ? msg : undefined,
+    });
   }
+
   if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
     return res.status(400).json({
       success: false,
       message: "JSON inválido en el cuerpo de la petición",
     });
   }
-  res.status(500).json({
+
+  console.error("💥 Uncaught error:", error.stack || error);
+
+  return res.status(500).json({
     success: false,
     message: "Error interno del servidor",
-    ...(process.env.NODE_ENV !== "production" && {
-      error: String(error.message || error),
-    }),
+    ...(isProd ? {} : { error: msg }),
   });
 });
 
