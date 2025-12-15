@@ -264,13 +264,23 @@ export function AuthProvider({ children }) {
     return (user?.instituciones || []).some((m) => normalizeRole(m.rol) === r);
   };
 
-  const hasAnyRole = (roles = []) => {
-    const set = new Set(roles.map(normalizeRole));
-    if (set.has(normalizeRole(activeRole))) return true;
-    return (user?.instituciones || []).some((m) =>
-      set.has(normalizeRole(m.rol))
-    );
-  };
+const hasAnyRole = (roles = []) => {
+  const required = new Set(roles.map(normalizeRole));
+
+  const effectiveRoles = new Set(
+    [
+      user?.rol,
+      ...(user?.roles || []),
+      activeRole,
+      ...(user?.instituciones || []).map((i) => i.rol),
+    ]
+      .filter(Boolean)
+      .map(normalizeRole)
+  );
+
+  return [...effectiveRoles].some((r) => required.has(r));
+};
+
 
   const canAccessInstitution = (institucionId) => {
     // Si usas super admin nacional global en algún lugar:

@@ -2,6 +2,7 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "../../utils/constants";
+import { normalizeRole } from "../../utils/roles";
 
 // Componente de loading mientras se verifica la autenticación
 const LoadingScreen = () => (
@@ -22,10 +23,11 @@ const ProtectedRoute = ({
   fallbackPath = ROUTES.LOGIN,
   skipOnboardingCheck = false, // Nueva prop para saltar verificación de onboarding
 }) => {
-  const { isAuthenticated, isLoading, user, activeRole, hasAnyRole } = useAuth();
+  const { isAuthenticated, isLoading, user, activeRole, hasAnyRole } =
+    useAuth();
   const location = useLocation();
 
-  console.log('🛡️ [PROTECTED_ROUTE] Verificando acceso:', {
+  console.log("🛡️ [PROTECTED_ROUTE] Verificando acceso:", {
     path: location.pathname,
     isAuthenticated,
     isLoading,
@@ -34,35 +36,50 @@ const ProtectedRoute = ({
     userInstituciones: user?.instituciones,
     requiredRoles,
     fallbackPath,
-    perfilCompletado: user?.perfilCompletado
+    perfilCompletado: user?.perfilCompletado,
   });
 
   // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {
-    console.log('⏳ [PROTECTED_ROUTE] Mostrando loading screen');
+    console.log("⏳ [PROTECTED_ROUTE] Mostrando loading screen");
     return <LoadingScreen />;
   }
 
   // Si no está autenticado, redirigir al login
   if (!isAuthenticated) {
-    console.log('❌ [PROTECTED_ROUTE] Usuario no autenticado, redirigiendo a:', fallbackPath);
+    console.log(
+      "❌ [PROTECTED_ROUTE] Usuario no autenticado, redirigiendo a:",
+      fallbackPath
+    );
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
   // Verificar si el usuario necesita completar el onboarding
   if (!skipOnboardingCheck && user && !user.perfilCompletado) {
-    console.log('🚧 [PROTECTED_ROUTE] Usuario necesita completar onboarding');
+    console.log("🚧 [PROTECTED_ROUTE] Usuario necesita completar onboarding");
     // El OnboardingModal se encargará de mostrarse automáticamente
     // Pero aquí podemos bloquear la navegación hasta que se complete
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              className="w-8 h-8 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Completa tu Perfil</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Completa tu Perfil
+          </h2>
           <p className="text-gray-600 mb-4">
             Antes de continuar, necesitas completar la información de tu perfil.
           </p>
@@ -76,30 +93,59 @@ const ProtectedRoute = ({
 
   // Si se especificaron roles requeridos, verificar que el usuario los tenga
   if (requiredRoles && requiredRoles.length > 0) {
-    const hasRequiredRole = hasAnyRole(requiredRoles);
+    const effectiveRoles = Array.from(
+      new Set(
+        [
+          user?.rol,
+          ...(user?.roles || []),
+          activeRole,
+          ...(user?.instituciones || []).map((i) => i.rol),
+        ]
+          .filter(Boolean)
+          .map(normalizeRole)
+      )
+    );
 
-    console.log('🔍 [PROTECTED_ROUTE] Verificando roles:', {
+    const hasRequiredRole = requiredRoles
+      .map(normalizeRole)
+      .some((role) => effectiveRoles.includes(role));
+
+    console.log("🔐 [ROLE_CHECK]", {
       requiredRoles,
+      effectiveRoles,
       hasRequiredRole,
-      activeRole,
-      userInstituciones: user?.instituciones
     });
 
     if (!hasRequiredRole) {
-      console.log('❌ [PROTECTED_ROUTE] Usuario no tiene los roles requeridos');
+      console.log("❌ [PROTECTED_ROUTE] Usuario no tiene los roles requeridos");
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="text-center max-w-md mx-auto p-6">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="w-8 h-8 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Acceso Denegado</h2>
-            <p className="text-gray-600 mb-4">No tienes permisos para acceder a esta sección.</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Acceso Denegado
+            </h2>
+            <p className="text-gray-600 mb-4">
+              No tienes permisos para acceder a esta sección.
+            </p>
             <p className="text-sm text-gray-500 mb-4">
-              Rol requerido: {requiredRoles.join(', ')}<br/>
-              Tu rol: {activeRole || 'No definido'}
+              Rol requerido: {requiredRoles.join(", ")}
+              <br />
+              Tu rol: {activeRole || user?.rol || "No definido"}
             </p>
             <button
               onClick={() => window.history.back()}
@@ -114,7 +160,7 @@ const ProtectedRoute = ({
   }
 
   // Si todo está bien, renderizar el componente hijo
-  console.log('✅ [PROTECTED_ROUTE] Acceso autorizado, renderizando children');
+  console.log("✅ [PROTECTED_ROUTE] Acceso autorizado, renderizando children");
   return children;
 };
 

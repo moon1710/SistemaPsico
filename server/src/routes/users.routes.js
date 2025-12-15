@@ -7,25 +7,41 @@ const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-// Middleware to ensure admin roles for institution
 const ensureInstitucionAdmin = (req, res, next) => {
-  const userRoles = (req.user?.instituciones || []).map(inst => inst.rol);
-  const adminRoles = ['ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL'];
+  const roles = req.user?.roles || [];
+  const adminRoles = [
+    "ADMIN_INSTITUCION",
+    "SUPER_ADMIN_INSTITUCION",
+    "SUPER_ADMIN_NACIONAL",
+  ];
 
-  if (!userRoles.some(role => adminRoles.includes(role))) {
+  if (!roles.some((r) => adminRoles.includes(r))) {
     return res.status(403).json({
       success: false,
-      message: "Acceso denegado. Requiere permisos de administrador."
+      message: "Acceso denegado. Requiere permisos de administrador.",
+      code: "INSUFFICIENT_ROLE",
+      current: roles,
     });
   }
   next();
 };
 
-// Get current user's institution
+
 const getCurrentInstitution = (req) => {
+  // Si viene contexto (header/query/body), úsalo:
+  const ctx =
+    req.headers["x-institucion-id"] ||
+    req.query.institucionId ||
+    req.body?.institucionId;
+
+  if (ctx) return String(ctx);
+
+  // Si no, usa la primera membresía activa
   const instituciones = req.user?.instituciones || [];
-  // Try to find the first institution (for now, since users typically belong to one institution)
-  return instituciones[0]?.institucionId || null;
+  const firstActive = instituciones.find(
+    (i) => i.isMembershipActiva && i.isInstitucionActiva
+  );
+  return firstActive?.institucionId || null;
 };
 
 // Configure multer for photo uploads

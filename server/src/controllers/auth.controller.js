@@ -1,66 +1,69 @@
-//controllers/auth.controller
-
+// controllers/auth.controller.js
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { validationResult } = require("express-validator");
 const { pool } = require("../db");
-const { crearNotificacionBienvenida } = require("./notifications.controller");
+// const { crearNotificacionBienvenida } = require("./notifications.controller");
 
-const isInstitutionActive = (s) => ["ACTIVO", "ACTIVA", "ACTIVE"].includes(s);
+const uniq = (arr) => [...new Set((arr || []).filter(Boolean))];
+
+const isInstitutionActive = (s) =>
+  ["ACTIVO", "ACTIVA", "ACTIVE"].includes(String(s || "").toUpperCase());
 
 /** Asignar psicólogo automáticamente a estudiante */
 const autoAssignPsychologist = async (conn, studentId, institucionId) => {
   try {
-    // Buscar psicólogos activos en la institución
     const [psychologists] = await conn.execute(
       `SELECT u.id
        FROM usuarios u
        JOIN usuario_institucion ui ON u.id = ui.usuarioId
        WHERE ui.institucionId = ?
-       AND ui.rolInstitucion = 'PSICOLOGO'
-       AND ui.activo = 1
-       AND u.status = 'ACTIVO'
+         AND ui.rolInstitucion = 'PSICOLOGO'
+         AND ui.activo = 1
+         AND u.status = 'ACTIVO'
        ORDER BY RAND()
        LIMIT 1`,
       [institucionId]
     );
 
-    if (psychologists.length > 0) {
-      const psychologistId = psychologists[0].id;
+    if (psychologists.length === 0) return;
 
-      // Verificar que no exista ya una asignación
-      const [existing] = await conn.execute(
-        `SELECT 1 FROM tutores_alumnos
-         WHERE alumnoId = ? AND activo = 1 LIMIT 1`,
-        [studentId]
-      );
+    const psychologistId = psychologists[0].id;
 
-      if (existing.length === 0) {
-        // Crear la asignación
-        const tutorAlumnoId = crypto.randomUUID();
-        await conn.execute(
-          `INSERT INTO tutores_alumnos (id, institucionId, alumnoId, tutorId, activo)
-           VALUES (?, ?, ?, ?, 1)`,
-          [tutorAlumnoId, institucionId, studentId, psychologistId]
-        );
+    const [existing] = await conn.execute(
+      `SELECT 1
+       FROM tutores_alumnos
+       WHERE alumnoId = ? AND activo = 1
+       LIMIT 1`,
+      [studentId]
+    );
 
-      }
-    } else {
-    }
+    if (existing.length > 0) return;
+
+    const tutorAlumnoId = crypto.randomUUID();
+    await conn.execute(
+      `INSERT INTO tutores_alumnos (id, institucionId, alumnoId, tutorId, activo)
+       VALUES (?, ?, ?, ?, 1)`,
+      [tutorAlumnoId, institucionId, studentId, psychologistId]
+    );
   } catch (error) {
-    console.error('Error auto-assigning psychologist:', error.message);
-    // No lanzamos el error para que no afecte el registro del estudiante
+    console.error("Error auto-assigning psychologist:", error.message);
   }
 };
-/** Generar JWT */
+
+/** Generar JWT (compatible con SUPER_ADMIN_NACIONAL) */
 const generateToken = (user) => {
   const payload = {
     id: user.id,
     email: user.email,
-    instituciones: user.instituciones || [], // 👈 arreglo de { institucionId, rol }
+    rolGlobal:
+      user.rol === "SUPER_ADMIN_NACIONAL" ? "SUPER_ADMIN_NACIONAL" : undefined,
+    instituciones: user.instituciones || [], // array de { institucionId, rol, ... }
+    roles: user.roles || undefined, // opcional para UI
     iat: Math.floor(Date.now() / 1000),
   };
+
   return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || "8h",
   });
@@ -84,22 +87,26 @@ const sanitizeUser = (user) => ({
   createdAt: user.createdAt,
   lastLogin: user.lastLogin,
   perfilCompletado: user.perfilCompletado,
-  instituciones: user.instituciones || [], // 👈 arreglo
+  requiereCambioPassword: user.requiereCambioPassword,
+
+  // ✅ para super admin / permisos
+  rol: user.rol, // "SUPER_ADMIN_NACIONAL" si aplica
+  roles: user.roles || undefined,
+
+  instituciones: user.instituciones || [],
 });
 
-/** REGISTER */
+/** REGISTER (por defecto: registro público SOLO ESTUDIANTE) */
 const register = async (req, res) => {
   const conn = await pool.getConnection();
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Datos de entrada inválidos",
-          errors: errors.array(),
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Datos de entrada inválidos",
+        errors: errors.array(),
+      });
     }
 
     const {
@@ -108,96 +115,97 @@ const register = async (req, res) => {
       apellidoMaterno = null,
       email,
       password,
-      rol,
       institucionId = null,
       carreraId = null,
     } = req.body;
 
-    // Si NO es super admin nacional, debe venir institución válida y activa
-    if (rol !== "SUPER_ADMIN_NACIONAL") {
-      const [instRows] = await pool.execute(
-        "SELECT id, status FROM instituciones WHERE id = ?",
-        [String(institucionId)]
-      );
-      if (instRows.length === 0) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Institución inválida",
-            code: "INSTITUTION_INVALID",
-          });
-      }
-      if (!isInstitutionActive(instRows[0].status)) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Institución inactiva",
-            code: "INSTITUTION_INACTIVE",
-          });
-      }
+    // ✅ Seguridad: registro público NO debe permitir escoger rol admin
+    // Si quieres permitirlo temporalmente en dev:
+    // PUBLIC_REGISTER_ALLOW_ROLES=true
+    let rol = "ESTUDIANTE";
+    if (
+      String(process.env.PUBLIC_REGISTER_ALLOW_ROLES || "").toLowerCase() ===
+      "true"
+    ) {
+      // en dev puedes mandar rol, pero igual bloquea SUPER_ADMIN_NACIONAL por aquí
+      if (req.body.rol && req.body.rol !== "SUPER_ADMIN_NACIONAL")
+        rol = req.body.rol;
+    }
+
+    // Registro público requiere institución válida
+    const [instRows] = await pool.execute(
+      "SELECT id, status FROM instituciones WHERE id = ?",
+      [String(institucionId)]
+    );
+
+    if (instRows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Institución inválida",
+        code: "INSTITUTION_INVALID",
+      });
+    }
+
+    if (!isInstitutionActive(instRows[0].status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Institución inactiva",
+        code: "INSTITUTION_INACTIVE",
+      });
     }
 
     // Unicidad de email
     const [existsRows] = await pool.execute(
       "SELECT id FROM usuarios WHERE email = ?",
-      [email]
+      [String(email).trim()]
     );
     if (existsRows.length > 0) {
-      return res
-        .status(409)
-        .json({
-          success: false,
-          message: "Ya existe un usuario con ese email",
-          code: "DUPLICATE_EMAIL",
-        });
+      return res.status(409).json({
+        success: false,
+        message: "Ya existe un usuario con ese email",
+        code: "DUPLICATE_EMAIL",
+      });
     }
 
     await conn.beginTransaction();
 
     const id = crypto.randomUUID();
     const passwordHash = await bcrypt.hash(password, 12);
-    const nombreCompleto = `${nombre} ${apellidoPaterno}${
-      apellidoMaterno ? " " + apellidoMaterno : ""
-    }`;
+    const nombreCompleto = `${String(nombre).trim()} ${String(
+      apellidoPaterno
+    ).trim()}${
+      apellidoMaterno ? " " + String(apellidoMaterno).trim() : ""
+    }`.trim();
 
+    // ✅ Importante: en registro público NO setear rol global.
+    // rol global se reserva para SUPER_ADMIN_NACIONAL via proceso interno.
     await conn.execute(
       `INSERT INTO usuarios 
         (id, carreraId, email, emailVerificado, passwordHash, 
          nombre, apellidoPaterno, apellidoMaterno, nombreCompleto, 
-         status, requiereCambioPassword, perfilCompletado, lastLogin, createdAt, updatedAt)
+         status, requiereCambioPassword, perfilCompletado, lastLogin, createdAt, updatedAt, rol)
        VALUES
-        (?, ?, ?, 1, ?, ?, ?, ?, ?, 'ACTIVO', 0, 0, NULL, NOW(3), NOW(3))`,
+        (?, ?, ?, 1, ?, ?, ?, ?, ?, 'ACTIVO', 0, 0, NULL, NOW(3), NOW(3), NULL)`,
       [
         id,
         carreraId,
-        email,
+        String(email).trim(),
         passwordHash,
-        nombre,
-        apellidoPaterno,
-        apellidoMaterno,
+        String(nombre).trim(),
+        String(apellidoPaterno).trim(),
+        apellidoMaterno ? String(apellidoMaterno).trim() : null,
         nombreCompleto,
       ]
     );
 
-    // Solo crea membresía si aplica
-    if (rol !== "SUPER_ADMIN_NACIONAL" && institucionId) {
-      // Evitar duplicados por si el endpoint se reintenta
-      const [dup] = await conn.execute(
-        `SELECT 1 FROM usuario_institucion WHERE usuarioId = ? AND institucionId = ? AND activo = 1 LIMIT 1`,
-        [id, institucionId]
-      );
-      if (dup.length === 0) {
-        await conn.execute(
-          `INSERT INTO usuario_institucion (usuarioId, institucionId, rolInstitucion, activo)
-           VALUES (?, ?, ?, 1)`,
-          [id, institucionId, rol]
-        );
-      }
-    }
+    // Crear membresía
+    await conn.execute(
+      `INSERT INTO usuario_institucion (usuarioId, institucionId, rolInstitucion, activo)
+       VALUES (?, ?, ?, 1)`,
+      [id, String(institucionId), rol]
+    );
 
-    // Traer instituciones (si el nacional no tiene, regresará array vacío — está bien)
+    // Traer instituciones
     const [instituciones] = await conn.execute(
       `SELECT ui.institucionId, i.nombre, ui.rolInstitucion
        FROM usuario_institucion ui
@@ -208,41 +216,32 @@ const register = async (req, res) => {
 
     // Asignar psicólogo automáticamente si es estudiante
     if (rol === "ESTUDIANTE" && institucionId) {
-      try {
-        await autoAssignPsychologist(conn, id, institucionId);
-      } catch (error) {
-        // No lanzamos el error para que no afecte el registro
-      }
+      await autoAssignPsychologist(conn, id, institucionId);
     }
 
     await conn.commit();
 
-    // Crear notificación de bienvenida después del commit exitoso
-    try {
-      // await crearNotificacionBienvenida(id, nombreCompleto, rol);
-    } catch (error) {
-      console.error('Error creating welcome notification:', error.message);
-      // No afecta el registro del usuario
-    }
+    // Notificación bienvenida (opcional)
+    // try { await crearNotificacionBienvenida(id, nombreCompleto, rol); } catch {}
 
-    const user = {
+    const shapedUser = {
       id,
-      nombre,
-      apellidoPaterno,
-      apellidoMaterno,
+      nombre: String(nombre).trim(),
+      apellidoPaterno: String(apellidoPaterno).trim(),
+      apellidoMaterno: apellidoMaterno ? String(apellidoMaterno).trim() : null,
       nombreCompleto,
-      email,
+      email: String(email).trim(),
       status: "ACTIVO",
       emailVerificado: 1,
       perfilCompletado: 0,
-      instituciones: instituciones.map((i) => ({
-        institucionId: String(i.institucionId),
-        institucionNombre: i.nombre,
-        rol: i.rolInstitucion,
-      })),
+      requiereCambioPassword: 0,
+      rol: undefined,
+      instituciones: payloadInstituciones,
     };
 
-    const token = generateToken(user);
+    shapedUser.roles = shapedUser.instituciones.map((m) => m.rol);
+
+    const token = generateToken(shapedUser);
 
     return res.status(201).json({
       success: true,
@@ -251,7 +250,7 @@ const register = async (req, res) => {
         accessToken: token,
         tokenType: "Bearer",
         expiresIn: process.env.JWT_EXPIRES_IN || "8h",
-        user: sanitizeUser(user),
+        user: sanitizeUser(shapedUser),
       },
     });
   } catch (error) {
@@ -262,82 +261,87 @@ const register = async (req, res) => {
       "❌ Error en register:",
       error?.sqlMessage || error?.message || error
     );
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error interno del servidor",
-        code: "INTERNAL_ERROR",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+      code: "INTERNAL_ERROR",
+    });
   } finally {
     if (conn) conn.release();
   }
 };
 
-/** LOGIN */
+/** LOGIN (incluye SUPER_ADMIN_NACIONAL global) */
 const login = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Datos de entrada inválidos",
-          errors: errors.array(),
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Datos de entrada inválidos",
+        errors: errors.array(),
+      });
     }
 
     const { email, password } = req.body;
 
-
-    // Permitir login con email O número de control
+    // ✅ Permitir login con email O matrícula
+    // ✅ Traer rol global para SUPER_ADMIN_NACIONAL
     const [userRows] = await pool.execute(
       `SELECT u.id, u.nombre, u.apellidoPaterno, u.apellidoMaterno,
               u.nombreCompleto, u.email, u.passwordHash,
               u.status, u.emailVerificado, u.createdAt,
               u.lastLogin, u.perfilCompletado, u.matricula,
-              u.requiereCambioPassword
+              u.requiereCambioPassword,
+              u.rol AS rolGlobal
        FROM usuarios u
-       WHERE (u.email = ? OR u.matricula = ?) AND u.status = 'ACTIVO'`,
-      [email, email]
+       WHERE (u.email = ? OR u.matricula = ?)`,
+      [String(email).trim(), String(email).trim()]
     );
 
-
     if (userRows.length === 0) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "Credenciales inválidas",
-          code: "INVALID_CREDENTIALS",
-        });
+      return res.status(401).json({
+        success: false,
+        message: "Credenciales inválidas",
+        code: "INVALID_CREDENTIALS",
+      });
     }
 
     const user = userRows[0];
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-
-    if (!isPasswordValid) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "Credenciales inválidas",
-          code: "INVALID_CREDENTIALS",
-        });
+    // ✅ Bloqueo por status global (pero super admin también debe estar ACTIVO)
+    if (String(user.status || "").toUpperCase() !== "ACTIVO") {
+      return res.status(403).json({
+        success: false,
+        message: "Usuario inactivo",
+        code: "USER_INACTIVE",
+      });
     }
 
-    // Membresías
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Credenciales inválidas",
+        code: "INVALID_CREDENTIALS",
+      });
+    }
+
+    const isSuperAdminNacional =
+      String(user.rolGlobal || "") === "SUPER_ADMIN_NACIONAL";
+
+    // Membresías (puede ser vacío para super admin)
     const [rows] = await pool.execute(
-      `SELECT ui.institucionId, i.nombre, ui.rolInstitucion, i.status AS institucionStatus, ui.activo as membershipActiva
+      `SELECT ui.institucionId, i.nombre, ui.rolInstitucion,
+              i.status AS institucionStatus,
+              ui.activo as membershipActiva
        FROM usuario_institucion ui
        JOIN instituciones i ON ui.institucionId = i.id
        WHERE ui.usuarioId = ?`,
       [user.id]
     );
 
-    const instituciones = rows.map((r) => ({
+    const institucionesFull = (rows || []).map((r) => ({
       institucionId: String(r.institucionId),
       institucionNombre: r.nombre,
       rol: r.rolInstitucion,
@@ -345,26 +349,31 @@ const login = async (req, res) => {
       membershipStatus: r.membershipActiva ? "ACTIVO" : "INACTIVO",
     }));
 
-    const activas = instituciones.filter(
+    const activas = institucionesFull.filter(
       (x) =>
         isInstitutionActive(x.institucionStatus) &&
         x.membershipStatus === "ACTIVO"
     );
 
-    if (activas.length === 0) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Usuario sin institución activa",
-          code: "NO_INSTITUTION",
-        });
+    // ✅ Solo bloquear si NO es super admin nacional
+    if (activas.length === 0 && !isSuperAdminNacional) {
+      return res.status(403).json({
+        success: false,
+        message: "Usuario sin institución activa",
+        code: "NO_INSTITUTION",
+      });
     }
 
-    // Si prefieres no exponer inactivas a la UI, cámbialo a "const payloadInstituciones = activas;"
-    const payloadInstituciones = instituciones.map(
+    // Si no quieres exponer inactivas a UI, usa activas aquí.
+    const payloadInstituciones = institucionesFull.map(
       ({ institucionStatus, membershipStatus, ...rest }) => rest
     );
+
+    // ✅ Rol principal para UI (evita "rol desconocido")
+    const primaryRole =
+      (isSuperAdminNacional ? "SUPER_ADMIN_NACIONAL" : null) ||
+      payloadInstituciones?.[0]?.rol ||
+      null;
 
     const shapedUser = {
       id: user.id,
@@ -380,8 +389,19 @@ const login = async (req, res) => {
       lastLogin: user.lastLogin,
       perfilCompletado: user.perfilCompletado,
       requiereCambioPassword: user.requiereCambioPassword,
+
+      // ✅ rol global si aplica
+      rol: primaryRole || undefined,
+
       instituciones: payloadInstituciones,
     };
+
+    // ✅ roles agregados (útil para frontend y consistencia)
+shapedUser.roles = uniq([
+  ...(primaryRole ? [primaryRole] : []),
+  ...payloadInstituciones.map((m) => m.rol),
+]);
+
 
     const token = generateToken(shapedUser);
 
@@ -390,7 +410,7 @@ const login = async (req, res) => {
       [user.id]
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: "Inicio de sesión exitoso",
       data: {
@@ -405,13 +425,11 @@ const login = async (req, res) => {
       "Error en login:",
       error?.sqlMessage || error?.message || error
     );
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error interno del servidor",
-        code: "INTERNAL_ERROR",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+      code: "INTERNAL_ERROR",
+    });
   }
 };
 
@@ -419,7 +437,6 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
   try {
     res.json({ success: true, message: "Sesión cerrada exitosamente" });
-    const roles = (req.user?.instituciones || []).map((m) => m.rol).join(", ");
     console.log(`User logged out: ${req.user?.email}`);
   } catch (error) {
     console.error("Error en logout:", error);
@@ -439,7 +456,8 @@ const getProfile = async (req, res) => {
               u.apellidoMaterno, u.nombreCompleto, u.email, u.status,
               u.emailVerificado, u.requiereCambioPassword, u.createdAt,
               u.lastLogin, u.perfilCompletado, u.telefono, u.direccion,
-              u.genero, u.fechaNacimiento, u.foto
+              u.genero, u.fechaNacimiento, u.foto,
+              u.rol AS rolGlobal
        FROM usuarios u
        WHERE u.id = ?`,
       [userId]
@@ -452,22 +470,36 @@ const getProfile = async (req, res) => {
     }
 
     const base = userRows[0];
+    const isSuperAdminNacional =
+      String(base.rolGlobal || "") === "SUPER_ADMIN_NACIONAL";
 
     const [rows] = await pool.execute(
-      `SELECT ui.institucionId, i.nombre, ui.rolInstitucion, i.status AS institucionStatus, ui.activo as membershipActiva
+      `SELECT ui.institucionId, i.nombre, ui.rolInstitucion,
+              i.status AS institucionStatus,
+              ui.activo as membershipActiva
        FROM usuario_institucion ui
        JOIN instituciones i ON ui.institucionId = i.id
        WHERE ui.usuarioId = ?`,
       [userId]
     );
 
-    const instituciones = rows.map((r) => ({
+    const instituciones = (rows || []).map((r) => ({
       institucionId: String(r.institucionId),
       institucionNombre: r.nombre,
       rol: r.rolInstitucion,
       institucionStatus: r.institucionStatus,
       membershipStatus: r.membershipActiva ? "ACTIVO" : "INACTIVO",
     }));
+
+    const payloadInstituciones = instituciones.map(
+      ({ institucionStatus, membershipStatus, ...rest }) => rest
+    );
+
+    const primaryRole =
+      (isSuperAdminNacional ? "SUPER_ADMIN_NACIONAL" : null) ||
+      payloadInstituciones?.[0]?.rol ||
+      null;
+
 
     const shapedUser = {
       id: base.id,
@@ -487,15 +519,24 @@ const getProfile = async (req, res) => {
       genero: base.genero,
       fechaNacimiento: base.fechaNacimiento,
       foto: base.foto,
+
+      rol: primaryRole || undefined,
+
       instituciones: instituciones.map(
         ({ institucionStatus, membershipStatus, ...rest }) => rest
       ),
     };
 
-    res.json({ success: true, data: sanitizeUser(shapedUser) });
+    shapedUser.roles = uniq([
+      ...(primaryRole ? [primaryRole] : []),
+      ...payloadInstituciones.map((m) => m.rol),
+    ]);
+
+
+    return res.json({ success: true, data: sanitizeUser(shapedUser) });
   } catch (error) {
     console.error("Error obteniendo perfil:", error);
-    res
+    return res
       .status(500)
       .json({ success: false, message: "Error interno del servidor" });
   }
@@ -504,14 +545,14 @@ const getProfile = async (req, res) => {
 /** VERIFY_TOKEN */
 const verifyToken = async (req, res) => {
   try {
-    res.json({
+    return res.json({
       success: true,
       message: "Token válido",
       data: { user: sanitizeUser(req.user), isValid: true },
     });
   } catch (error) {
     console.error("Error verificando token:", error);
-    res
+    return res
       .status(500)
       .json({ success: false, message: "Error interno del servidor" });
   }
@@ -533,8 +574,7 @@ const updateProfile = async (req, res) => {
       fechaNacimiento,
     } = req.body;
 
-    // Verificar que el usuario existe
-    const [userRows] = await pool.execute(
+    const [userRows] = await conn.execute(
       "SELECT id, email FROM usuarios WHERE id = ?",
       [userId]
     );
@@ -545,33 +585,36 @@ const updateProfile = async (req, res) => {
         .json({ success: false, message: "Usuario no encontrado" });
     }
 
-    // Si se está actualizando el email, verificar que no exista otro usuario con ese email
-    if (email && email !== userRows[0].email) {
-      const [existingEmailRows] = await pool.execute(
+    if (email && String(email).trim() !== String(userRows[0].email).trim()) {
+      const [existingEmailRows] = await conn.execute(
         "SELECT id FROM usuarios WHERE email = ? AND id != ?",
-        [email, userId]
+        [String(email).trim(), userId]
       );
 
       if (existingEmailRows.length > 0) {
-        return res
-          .status(409)
-          .json({ success: false, message: "Ya existe un usuario con ese email" });
+        return res.status(409).json({
+          success: false,
+          message: "Ya existe un usuario con ese email",
+          code: "DUPLICATE_EMAIL",
+        });
       }
     }
 
-    // Detectar qué columnas existen
-    const DB_NAME = process.env.MYSQL_DATABASE || "sistema_educativo";
-    const [colsRows] = await pool.execute(
+    // ✅ soporta DB_NAME o MYSQL_DATABASE
+    const DB_NAME =
+      process.env.DB_NAME || process.env.MYSQL_DATABASE || "sistema_educativo";
+
+    const [colsRows] = await conn.execute(
       `SELECT COLUMN_NAME
        FROM INFORMATION_SCHEMA.COLUMNS
        WHERE TABLE_SCHEMA = ?
          AND TABLE_NAME   = 'usuarios'
-         AND COLUMN_NAME IN ('nombre','apellidoPaterno','apellidoMaterno','email','telefono','direccion','genero','fechaNacimiento','nombreCompleto','updatedAt')`,
+         AND COLUMN_NAME IN ('nombre','apellidoPaterno','apellidoMaterno','email','telefono','direccion','genero','fechaNacimiento','nombreCompleto','updatedAt','perfilCompletado')`,
       [DB_NAME]
     );
+
     const columns = new Set(colsRows.map((r) => r.COLUMN_NAME));
 
-    // Construir SET dinámico
     const sets = [];
     const params = [];
 
@@ -583,7 +626,10 @@ const updateProfile = async (req, res) => {
       sets.push("apellidoPaterno = ?");
       params.push(String(apellidoPaterno).trim());
     }
-    if (columns.has("apellidoMaterno") && typeof apellidoMaterno !== "undefined") {
+    if (
+      columns.has("apellidoMaterno") &&
+      typeof apellidoMaterno !== "undefined"
+    ) {
       sets.push("apellidoMaterno = ?");
       params.push(apellidoMaterno ? String(apellidoMaterno).trim() : null);
     }
@@ -603,7 +649,10 @@ const updateProfile = async (req, res) => {
       sets.push("genero = ?");
       params.push(genero ? String(genero).trim() : null);
     }
-    if (columns.has("fechaNacimiento") && typeof fechaNacimiento !== "undefined") {
+    if (
+      columns.has("fechaNacimiento") &&
+      typeof fechaNacimiento !== "undefined"
+    ) {
       if (fechaNacimiento) {
         const d = new Date(fechaNacimiento);
         const ymd = Number.isNaN(d.getTime())
@@ -616,21 +665,34 @@ const updateProfile = async (req, res) => {
       }
     }
 
-    // Actualizar nombreCompleto si existen nombre y apellidos
-    if (columns.has("nombreCompleto") && nombre && apellidoPaterno) {
-      const nombreCompleto = apellidoMaterno
-        ? `${nombre} ${apellidoPaterno} ${apellidoMaterno}`
-        : `${nombre} ${apellidoPaterno}`;
+    if (
+      columns.has("nombreCompleto") &&
+      (nombre || apellidoPaterno || typeof apellidoMaterno !== "undefined")
+    ) {
+      // reconstruir usando los valores nuevos si vienen, o usando req.user
+      const n = nombre ? String(nombre).trim() : req.user.nombre || "";
+      const ap = apellidoPaterno
+        ? String(apellidoPaterno).trim()
+        : req.user.apellidoPaterno || "";
+      const am =
+        typeof apellidoMaterno !== "undefined"
+          ? apellidoMaterno
+            ? String(apellidoMaterno).trim()
+            : null
+          : req.user.apellidoMaterno || null;
+
+      const nc = `${n} ${ap}${am ? " " + am : ""}`.trim();
       sets.push("nombreCompleto = ?");
-      params.push(nombreCompleto.trim());
+      params.push(nc);
+    }
+
+    if (columns.has("perfilCompletado")) {
+      sets.push("perfilCompletado = 1");
     }
 
     if (columns.has("updatedAt")) {
       sets.push("updatedAt = NOW()");
     }
-
-    // Marcar perfil como completado
-    sets.push("perfilCompletado = 1");
 
     if (sets.length === 0) {
       return res.json({
@@ -643,34 +705,33 @@ const updateProfile = async (req, res) => {
     const sql = `UPDATE usuarios SET ${sets.join(", ")} WHERE id = ? LIMIT 1`;
     params.push(userId);
 
-    const [result] = await pool.execute(sql, params);
-
-    if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Usuario no encontrado" });
-    }
+    await conn.execute(sql, params);
 
     // Obtener el usuario actualizado
-    const [updatedUserRows] = await pool.execute(
+    const [updatedUserRows] = await conn.execute(
       `SELECT u.id, u.nombre, u.apellidoPaterno, u.apellidoMaterno,
               u.nombreCompleto, u.email, u.status, u.emailVerificado,
               u.createdAt, u.lastLogin, u.perfilCompletado, u.telefono,
-              u.direccion, u.genero, u.fechaNacimiento, u.foto
-       FROM usuarios u WHERE u.id = ?`,
+              u.direccion, u.genero, u.fechaNacimiento, u.foto,
+              u.requiereCambioPassword,
+              u.rol AS rolGlobal
+       FROM usuarios u
+       WHERE u.id = ?`,
       [userId]
     );
 
     if (updatedUserRows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Error obteniendo usuario actualizado" });
+      return res.status(404).json({
+        success: false,
+        message: "Error obteniendo usuario actualizado",
+      });
     }
 
     const updatedUser = updatedUserRows[0];
+    const isSuperAdminNacional =
+      String(updatedUser.rolGlobal || "") === "SUPER_ADMIN_NACIONAL";
 
-    // Obtener instituciones del usuario
-    const [instRows] = await pool.execute(
+    const [instRows] = await conn.execute(
       `SELECT ui.institucionId, i.nombre, ui.rolInstitucion
        FROM usuario_institucion ui
        JOIN instituciones i ON ui.institucionId = i.id
@@ -684,14 +745,20 @@ const updateProfile = async (req, res) => {
       rol: r.rolInstitucion,
     }));
 
-    res.json({
+    updatedUser.rol = isSuperAdminNacional ? "SUPER_ADMIN_NACIONAL" : undefined;
+    updatedUser.roles = [
+      ...(isSuperAdminNacional ? ["SUPER_ADMIN_NACIONAL"] : []),
+      ...updatedUser.instituciones.map((m) => m.rol),
+    ];
+
+    return res.json({
       success: true,
       message: "Perfil actualizado correctamente",
       data: sanitizeUser(updatedUser),
     });
   } catch (error) {
     console.error("Error actualizando perfil:", error);
-    res
+    return res
       .status(500)
       .json({ success: false, message: "Error interno del servidor" });
   } finally {
@@ -699,68 +766,65 @@ const updateProfile = async (req, res) => {
   }
 };
 
-/**
- * Cambiar contraseña del usuario
- */
+/** Cambiar contraseña del usuario */
 const cambiarPassword = async (req, res) => {
   let conn;
-
   try {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user.id;
 
-    // Validaciones básicas
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
         success: false,
-        message: "Se requiere contraseña actual y nueva contraseña"
+        message: "Se requiere contraseña actual y nueva contraseña",
       });
     }
 
     if (newPassword.length < 8) {
       return res.status(400).json({
         success: false,
-        message: "La nueva contraseña debe tener al menos 8 caracteres"
+        message: "La nueva contraseña debe tener al menos 8 caracteres",
       });
     }
 
     if (currentPassword === newPassword) {
       return res.status(400).json({
         success: false,
-        message: "La nueva contraseña debe ser diferente a la actual"
+        message: "La nueva contraseña debe ser diferente a la actual",
       });
     }
 
     conn = await pool.getConnection();
 
-    // Obtener usuario actual
     const [userRows] = await conn.execute(
-      `SELECT passwordHash, requiereCambioPassword FROM usuarios WHERE id = ? AND status = 'ACTIVO'`,
+      `SELECT passwordHash, requiereCambioPassword
+       FROM usuarios
+       WHERE id = ? AND status = 'ACTIVO'`,
       [userId]
     );
 
     if (userRows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "Usuario no encontrado"
+        message: "Usuario no encontrado",
       });
     }
 
     const user = userRows[0];
 
-    // Verificar contraseña actual
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash
+    );
     if (!isCurrentPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: "La contraseña actual es incorrecta"
+        message: "La contraseña actual es incorrecta",
       });
     }
 
-    // Hash de la nueva contraseña
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    const newPasswordHash = await bcrypt.hash(newPassword, 12);
 
-    // Actualizar contraseña y marcar que ya no requiere cambio
     await conn.execute(
       `UPDATE usuarios
        SET passwordHash = ?, requiereCambioPassword = FALSE, updatedAt = NOW()
@@ -768,22 +832,17 @@ const cambiarPassword = async (req, res) => {
       [newPasswordHash, userId]
     );
 
-    console.log(`Password changed for user: ${userId}`);
-
-    res.json({
+    return res.json({
       success: true,
       message: "Contraseña cambiada exitosamente",
-      data: {
-        requiereCambioPassword: false
-      }
+      data: { requiereCambioPassword: false },
     });
-
   } catch (error) {
     console.error("Error cambiando contraseña:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Error interno del servidor",
-      ...(process.env.NODE_ENV !== "production" && { error: error.message })
+      ...(process.env.NODE_ENV !== "production" && { error: error.message }),
     });
   } finally {
     if (conn) conn.release();
