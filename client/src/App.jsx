@@ -17,6 +17,7 @@ import ProtectedRoute, {
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import SolicitarInstitucionPage from "./pages/SolicitarInstitucionPage";
 
 //Paginas de Info
 import AboutUsPage from "./pages/AboutUsPage";
@@ -110,6 +111,10 @@ function App() {
       />
 
       {/* Públicas ABIERTAS */}
+      <Route
+        path="/solicitar-institucion"
+        element={<SolicitarInstitucionPage />}
+      />
       <Route
         path={ROUTES.ABOUTUS}
         element={

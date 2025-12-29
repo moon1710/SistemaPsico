@@ -88,10 +88,10 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to={ROUTES.DOCUMENTACION}
+                  to="/solicitar-institucion"
                   className="hover:text-[#48b0f7] transition-colors"
                 >
-                  Capacitación
+                  Solicitar Institución
                 </Link>
               </li>
             </ul>

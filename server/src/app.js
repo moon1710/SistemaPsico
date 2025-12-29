@@ -16,6 +16,7 @@ const estudiantesRoutes = require("./routes/estudiantes.routes");
 const reportsRoutes = require("./routes/reports.routes");
 const chatRoutes = require("./routes/chat.routes");
 const canalizacionesRoutes = require("./routes/canalizaciones.routes");
+const publicRoutes = require("./routes/public.routes");
 
 const app = express();
 
@@ -140,6 +141,10 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// Rutas públicas (sin autenticación)
+app.use("/api/public", publicRoutes);
+
+// Rutas protegidas
 app.use("/api/auth", authRoutes);
 app.use("/api/quizzes", quizzesRoutes);
 app.use("/api/citas", citasRoutes);
