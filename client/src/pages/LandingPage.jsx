@@ -15,13 +15,16 @@ import {
 import { ROUTES } from "../utils/constants";
 import "../index.css";
 import Footer from "../components/layout/Footer";
+import debugLogger from "../utils/debugLogger";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
   React.useEffect(() => {
+    debugLogger.log('LANDING: Auth state changed', { isAuthenticated });
     if (isAuthenticated) {
+      debugLogger.log('LANDING: Redirecting to dashboard');
       navigate(ROUTES.DASHBOARD);
     }
   }, [isAuthenticated, navigate]);
@@ -32,7 +35,7 @@ const LandingPage = () => {
       <section className="hero-section">
         <div className="hero-bg-img"></div>
         <div className="hero-content">
-          <p className="hero-badge">NeuroFlora</p>
+          <p className="hero-badge">pp</p>
           <h1 className="hero-title">
             Salud emocional <span className="accent">para todos</span>
           </h1>
@@ -196,7 +199,6 @@ const LandingPage = () => {
           <button className="cta-btn-alt">Comenzar Ahora</button>
         </Link>
       </section>
-
 
       <Footer />
       {/* Footer 

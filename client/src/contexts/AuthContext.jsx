@@ -8,6 +8,7 @@ import React, {
 import authService from "../services/authService"; // <- ya lo usabas
 import { normalizeRole } from "../utils/roles";
 import { STORAGE_KEYS } from "../utils/constants";
+import debugLogger from "../utils/debugLogger";
 
 const ACTIVE_KEY = "activeInstitutionId:v1";
 const TOKEN_KEY = "authToken:v1";
@@ -38,12 +39,18 @@ export function AuthProvider({ children }) {
   // Carga inicial: token + usuario desde storage y verifica
   useEffect(() => {
     (async () => {
+      debugLogger.log('AUTH_INIT: Starting auth initialization');
       setIsLoading(true);
       setStatus("loading");
       try {
         const storedToken =
           authService.getToken?.() || localStorage.getItem(TOKEN_KEY);
         const storedUser = authService.getCurrentUser?.() || null;
+        debugLogger.log('AUTH_INIT: Storage check', {
+          hasStoredToken: !!storedToken,
+          hasStoredUser: !!storedUser,
+          userRol: storedUser?.rol
+        });
 
         if (storedToken && storedUser) {
           // intenta verificar
@@ -157,10 +164,21 @@ export function AuthProvider({ children }) {
     setIsLoading(true);
     setError(null);
     try {
+      debugLogger.log('LOGIN: Starting login process', { email: credentials.email });
       const res = await authService.login(credentials);
+      debugLogger.log('LOGIN: Auth service response', { success: res?.success, hasData: !!res?.data });
+
       if (res?.success) {
         const u = res.data?.user;
         const t = res.data?.accessToken || res.data?.token; // soporta ambos
+        debugLogger.log('LOGIN: User and token info', {
+          hasUser: !!u,
+          userRol: u?.rol,
+          hasToken: !!t,
+          instituciones: u?.instituciones?.length || 0,
+          userObject: u
+        });
+
         if (u) _setUserAndDefaultInstitution(u);
         if (t) setToken(t);
         setIsAuthenticated(true);
@@ -168,6 +186,7 @@ export function AuthProvider({ children }) {
 
         // Verificar estado del usuario para redirecciones
         const redirectPath = determineRedirectPath(u);
+        debugLogger.log('LOGIN: Redirect path determined', { redirectPath, userRol: u?.rol });
         return {
           success: true,
           user: u,
@@ -258,15 +277,27 @@ export function AuthProvider({ children }) {
   // ---- Utils (compat) ----
   const hasRole = (role) => {
     const r = normalizeRole(role);
+
+    // Check global rol first (for SUPER_ADMIN_NACIONAL)
+    if (normalizeRole(user?.rol) === r) return true;
+
     // por rol activo
     if (normalizeRole(activeRole) === r) return true;
+
     // o por cualquiera de sus membresías
     return (user?.instituciones || []).some((m) => normalizeRole(m.rol) === r);
   };
 
   const hasAnyRole = (roles = []) => {
     const set = new Set(roles.map(normalizeRole));
+
+    // Check global rol first (for SUPER_ADMIN_NACIONAL)
+    if (set.has(normalizeRole(user?.rol))) return true;
+
+    // Check activeRole
     if (set.has(normalizeRole(activeRole))) return true;
+
+    // Check institution-based roles
     return (user?.instituciones || []).some((m) =>
       set.has(normalizeRole(m.rol))
     );

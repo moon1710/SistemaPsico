@@ -22,7 +22,15 @@ const AdaptiveSidebar = ({ user, onLogout, isCollapsed, onToggle }) => {
   const menuItems = [...baseItems, ...roleSpecificItems.filter(canSee)];
 
   // DEBUG (borra si quieres)
-  console.log("[Sidebar] role:", resolvedRole, "items:", menuItems.map(i => i.label));
+  console.log("🔧 SIDEBAR DEBUG:", {
+    activeRole,
+    userRol: user?.rol,
+    resolvedRole,
+    normalizedActiveRole: normalizeRole(activeRole),
+    normalizedUserRol: normalizeRole(user?.rol),
+    menuItemsCount: menuItems.length,
+    menuItems: menuItems.map(i => i.label)
+  });
 
   return (
     <div

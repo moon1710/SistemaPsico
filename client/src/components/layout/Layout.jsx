@@ -11,6 +11,14 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Debug logging
+  console.log('🏗️ LAYOUT DEBUG:', {
+    user,
+    userRol: user?.rol,
+    isAuthenticated,
+    isLoading
+  });
+
   // Verificar autenticación
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

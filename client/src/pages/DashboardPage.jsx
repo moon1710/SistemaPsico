@@ -4,7 +4,14 @@ import RoleRenderer from "../components/dashboard/RoleRenderer";
 // import WhoamI from "../components/debug/WhoamI"
 
 const DashboardPage = () => {
-  const user = useAuth();
+  const { user } = useAuth();
+
+  // Debug logging
+  console.log('📊 DASHBOARD DEBUG:', {
+    user,
+    userRol: user?.rol,
+    userType: typeof user
+  });
 
   return (
     <div className="space-y-6">

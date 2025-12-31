@@ -84,6 +84,8 @@ const sanitizeUser = (user) => ({
   createdAt: user.createdAt,
   lastLogin: user.lastLogin,
   perfilCompletado: user.perfilCompletado,
+  // Include rol for SUPER_ADMIN_NACIONAL users
+  rol: user.rol,
   instituciones: user.instituciones || [], // 👈 arreglo
 });
 
@@ -297,7 +299,7 @@ const login = async (req, res) => {
               u.nombreCompleto, u.email, u.passwordHash,
               u.status, u.emailVerificado, u.createdAt,
               u.lastLogin, u.perfilCompletado, u.matricula,
-              u.requiereCambioPassword
+              u.requiereCambioPassword, u.rol
        FROM usuarios u
        WHERE (u.email = ? OR u.matricula = ?) AND u.status = 'ACTIVO'`,
       [email, email]
@@ -351,7 +353,9 @@ const login = async (req, res) => {
         x.membershipStatus === "ACTIVO"
     );
 
-    if (activas.length === 0) {
+    // Solo verificar instituciones activas si NO es super admin nacional
+    const isSuperAdminNacional = String(user.rol || "") === "SUPER_ADMIN_NACIONAL";
+    if (activas.length === 0 && !isSuperAdminNacional) {
       return res
         .status(403)
         .json({
@@ -380,6 +384,8 @@ const login = async (req, res) => {
       lastLogin: user.lastLogin,
       perfilCompletado: user.perfilCompletado,
       requiereCambioPassword: user.requiereCambioPassword,
+      // Include global rol for SUPER_ADMIN_NACIONAL
+      rol: isSuperAdminNacional ? user.rol : undefined,
       instituciones: payloadInstituciones,
     };
 

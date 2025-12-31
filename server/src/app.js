@@ -16,6 +16,7 @@ const estudiantesRoutes = require("./routes/estudiantes.routes");
 const reportsRoutes = require("./routes/reports.routes");
 const chatRoutes = require("./routes/chat.routes");
 const canalizacionesRoutes = require("./routes/canalizaciones.routes");
+const institutionsRoutes = require("./routes/institutions.routes");
 const publicRoutes = require("./routes/public.routes");
 
 const app = express();
@@ -158,6 +159,7 @@ app.use("/api/estudiantes", estudiantesRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/canalizaciones", canalizacionesRoutes);
+app.use("/api/institutions", institutionsRoutes);
 
 // Serve static files from uploads
 app.use('/uploads', express.static('uploads'));
