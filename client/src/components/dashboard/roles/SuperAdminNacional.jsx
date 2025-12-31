@@ -1,16 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import StatCard from "../StatCard";
 import { Card, CardContent } from "../../../components/ui/Card";
-import { Users, FileText, AlertCircle } from "lucide-react";
+import { Users, FileText, AlertCircle, Building } from "lucide-react";
+import InstitutionManagement from "../../admin/InstitutionManagement";
 
 const SuperAdminNacional = () => {
-  return (
+  const [activeView, setActiveView] = useState('dashboard');
+
+  const renderDashboard = () => (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Instituciones Activas"
           value="24"
-          icon={Users}
+          icon={Building}
           color="bg-blue-500"
           trend="8"
         />
@@ -80,6 +83,45 @@ const SuperAdminNacional = () => {
         </Card>
       </div>
     </>
+  );
+
+  return (
+    <div>
+      {/* Navigation Tabs */}
+      <div className="mb-6">
+        <nav className="flex space-x-4">
+          <button
+            onClick={() => setActiveView('dashboard')}
+            className={`
+              px-4 py-2 text-sm font-medium rounded-lg transition-colors
+              ${activeView === 'dashboard'
+                ? 'bg-blue-500 text-white shadow-sm'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }
+            `}
+          >
+            Dashboard
+          </button>
+          <button
+            onClick={() => setActiveView('institutions')}
+            className={`
+              px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2
+              ${activeView === 'institutions'
+                ? 'bg-blue-500 text-white shadow-sm'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }
+            `}
+          >
+            <Building className="h-4 w-4" />
+            Gestión de Instituciones
+          </button>
+        </nav>
+      </div>
+
+      {/* Content */}
+      {activeView === 'dashboard' && renderDashboard()}
+      {activeView === 'institutions' && <InstitutionManagement />}
+    </div>
   );
 };
 

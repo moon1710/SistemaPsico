@@ -20,9 +20,19 @@ const Fallback = () => (
 );
 
 const RoleRenderer = ({ rol }) => {
-  const { activeRole } = useAuth();
+  const { activeRole, user } = useAuth();
   const resolved = normalizeRole(rol || activeRole);
   const Cmp = ROLE_COMPONENTS[resolved];
+
+  // Debug logging
+  console.log('🎭 ROLE_RENDERER DEBUG:', {
+    propRol: rol,
+    activeRole,
+    userRol: user?.rol,
+    resolved,
+    hasComponent: !!Cmp,
+    availableRoles: Object.keys(ROLE_COMPONENTS)
+  });
 
   if (!Cmp) return <EmptyState role={resolved} />;
 

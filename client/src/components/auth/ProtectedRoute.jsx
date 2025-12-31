@@ -99,7 +99,7 @@ const ProtectedRoute = ({
             <p className="text-gray-600 mb-4">No tienes permisos para acceder a esta sección.</p>
             <p className="text-sm text-gray-500 mb-4">
               Rol requerido: {requiredRoles.join(', ')}<br/>
-              Tu rol: {activeRole || 'No definido'}
+              Tu rol: {user?.rol || activeRole || 'No definido'}
             </p>
             <button
               onClick={() => window.history.back()}
