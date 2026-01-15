@@ -5,67 +5,73 @@ const { pool } = require("../db");
 /**
  * Obtener todas las instituciones con filtros y búsqueda
  */
+// controllers/institutions.controller.js
 const getInstitutions = async (req, res) => {
   const conn = await pool.getConnection();
 
   try {
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-      status = '',
-      estado = '',
-      sortBy = 'status',
-      sortOrder = 'asc'
-    } = req.query;
+    console.log("🏛️ [CONTROLLER] Getting institutions with params:", req.query);
 
-    // Construir la consulta base
+    // ✅ Normaliza números (evita NaN y strings raros)
+    const pageNum = Math.max(
+      Number.parseInt(String(req.query.page || "1"), 10) || 1,
+      1
+    );
+    const limitNum = Math.min(
+      Math.max(Number.parseInt(String(req.query.limit || "10"), 10) || 10, 1),
+      100
+    );
+    const offsetNum = (pageNum - 1) * limitNum;
+
+    // Log por si vuelve a fallar
+    console.log("🏛️ [DEBUG] page/limit/offset:", pageNum, limitNum, offsetNum);
+
+    // ✅ Normaliza strings
+    const search = String(req.query.search || "").trim();
+    const status = String(req.query.status || "").trim();
+    const estado = String(req.query.estado || "").trim();
+
+    // ✅ Whitelist de sortBy (evita SQL injection y columnas invalidas)
+    const allowedSortBy = new Set(["status", "createdAt", "nombre"]);
+    const sortBy = allowedSortBy.has(String(req.query.sortBy || "status"))
+      ? String(req.query.sortBy)
+      : "status";
+    const sortOrder =
+      String(req.query.sortOrder || "asc").toLowerCase() === "desc"
+        ? "desc"
+        : "asc";
+
     let baseQuery = `
       FROM instituciones i
-      LEFT JOIN (
-        SELECT
-          institucionId,
-          COUNT(*) as totalUsuarios,
-          COUNT(CASE WHEN rol = 'ADMIN_INSTITUCION' THEN 1 END) as admins,
-          COUNT(CASE WHEN rol = 'PSICOLOGO' THEN 1 END) as psicologos,
-          COUNT(CASE WHEN rol = 'ESTUDIANTE' THEN 1 END) as estudiantes
-        FROM usuarios
-        GROUP BY institucionId
-      ) u ON i.id = u.institucionId
       WHERE 1=1
     `;
 
     const queryParams = [];
 
-    // Aplicar filtros de búsqueda
     if (search) {
       baseQuery += ` AND (
         i.nombre LIKE ? OR
         i.codigo LIKE ? OR
         i.responsableNombre LIKE ? OR
-        i.ciudad LIKE ? OR
-        i.estado LIKE ?
+        i.responsableEmail LIKE ?
       )`;
-      const searchTerm = `%${search}%`;
-      queryParams.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+      const s = `%${search}%`;
+      queryParams.push(s, s, s, s);
     }
 
-    // Filtro por status
     if (status) {
       baseQuery += ` AND i.status = ?`;
       queryParams.push(status);
     }
 
-    // Filtro por estado geográfico
     if (estado) {
       baseQuery += ` AND i.estado = ?`;
       queryParams.push(estado);
     }
 
-    // Construir ORDER BY
-    let orderClause = '';
-    if (sortBy === 'status') {
-      // Priorizar PENDIENTE_APROBACION primero
+    // ORDER BY seguro
+    let orderClause = "";
+    if (sortBy === "status") {
       orderClause = ` ORDER BY
         CASE
           WHEN i.status = 'PENDIENTE_APROBACION' THEN 1
@@ -76,23 +82,21 @@ const getInstitutions = async (req, res) => {
         END ${sortOrder},
         i.createdAt DESC
       `;
-    } else if (sortBy === 'createdAt') {
+    } else if (sortBy === "createdAt") {
       orderClause = ` ORDER BY i.createdAt ${sortOrder}`;
-    } else if (sortBy === 'nombre') {
-      orderClause = ` ORDER BY i.nombre ${sortOrder}`;
     } else {
-      orderClause = ` ORDER BY i.${sortBy} ${sortOrder}`;
+      orderClause = ` ORDER BY i.nombre ${sortOrder}`;
     }
 
-    // Obtener el total de registros
+    // Total
     const countQuery = `SELECT COUNT(*) as total ${baseQuery}`;
     const [totalResult] = await conn.execute(countQuery, queryParams);
-    const total = totalResult[0].total;
+    const total = Number(totalResult?.[0]?.total || 0);
 
-    // Calcular offset
-    const offset = (page - 1) * limit;
-
-    // Consulta principal con paginación
+    // ✅ IMPORTANTE:
+    // Para evitar "Incorrect arguments to mysqld_stmt_execute" con LIMIT/OFFSET placeholders,
+    // metemos LIMIT/OFFSET como números interpolados (ya sanitizados) en vez de "?".
+    // (Porque algunos drivers/configs de MySQL se ponen estrictos con LIMIT ? OFFSET ?)
     const dataQuery = `
       SELECT
         i.id,
@@ -101,11 +105,13 @@ const getInstitutions = async (req, res) => {
         i.nombreCorto,
         i.tipoInstitucion,
         i.nivelEducativo,
+        i.direccion,
         i.ciudad,
         i.estado,
         i.codigoPostal,
         i.telefono,
         i.emailInstitucional,
+        i.sitioWeb,
         i.responsableNombre,
         i.responsableEmail,
         i.responsableTelefono,
@@ -116,19 +122,23 @@ const getInstitutions = async (req, res) => {
         i.maxUsuarios,
         i.createdAt,
         i.updatedAt,
-        COALESCE(u.totalUsuarios, 0) as totalUsuarios,
-        COALESCE(u.admins, 0) as admins,
-        COALESCE(u.psicologos, 0) as psicologos,
-        COALESCE(u.estudiantes, 0) as estudiantes
+        NULL as descripcion,
+        NULL as logoUrl,
+        0 as totalUsuarios,
+        0 as admins,
+        0 as psicologos,
+        0 as estudiantes
       ${baseQuery}
       ${orderClause}
-      LIMIT ? OFFSET ?
+      LIMIT ${limitNum} OFFSET ${offsetNum}
     `;
 
-    queryParams.push(parseInt(limit), offset);
+    console.log("🏛️ [DEBUG] dataQuery:", dataQuery);
+    console.log("🏛️ [DEBUG] queryParams:", queryParams);
+
     const [institutions] = await conn.execute(dataQuery, queryParams);
 
-    // Calcular estadísticas generales
+    // Stats
     const [statsResult] = await conn.execute(`
       SELECT
         COUNT(*) as total,
@@ -139,32 +149,33 @@ const getInstitutions = async (req, res) => {
       FROM instituciones
     `);
 
-    const stats = statsResult[0];
+    const stats = statsResult?.[0] || {};
 
     res.json({
       success: true,
       data: {
         institutions,
         pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
+          page: pageNum,
+          limit: limitNum,
           total,
-          totalPages: Math.ceil(total / limit)
+          totalPages: Math.ceil(total / limitNum),
         },
-        stats
-      }
+        stats,
+      },
     });
-
   } catch (error) {
-    console.error("Error obteniendo instituciones:", error.message);
+    console.error("🏛️ [CONTROLLER] Error obteniendo instituciones:", error);
     res.status(500).json({
       success: false,
-      message: "Error obteniendo instituciones"
+      message: "Error obteniendo instituciones",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   } finally {
-    if (conn) conn.release();
+    conn.release();
   }
 };
+
 
 /**
  * Obtener detalles de una institución específica
@@ -530,19 +541,27 @@ const updateInstitution = async (req, res) => {
 
   try {
     const { id } = req.params;
+
     const {
       nombre,
       nombreCorto,
       telefono,
       emailInstitucional,
+      sitioWeb,
       responsableNombre,
       responsableEmail,
       responsableTelefono,
       responsableCargo,
-      maxUsuarios
+      maxUsuarios,
+      direccion,
+      ciudad,
+      estado,
+      codigoPostal,
+      mision,
+      vision,
+      valores,
     } = req.body;
 
-    // Validar datos de entrada
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -552,46 +571,69 @@ const updateInstitution = async (req, res) => {
       });
     }
 
-    const [result] = await conn.execute(`
+    const [result] = await conn.execute(
+      `
       UPDATE instituciones
       SET
         nombre = ?,
         nombreCorto = ?,
         telefono = ?,
         emailInstitucional = ?,
+        sitioWeb = ?,
         responsableNombre = ?,
         responsableEmail = ?,
         responsableTelefono = ?,
         responsableCargo = ?,
         maxUsuarios = ?,
-        updatedAt = NOW()
+        direccion = ?,
+        ciudad = ?,
+        estado = ?,
+        codigoPostal = ?,
+        mision = ?,
+        vision = ?,
+        valores = ?,
+        updatedAt = NOW(3)
       WHERE id = ?
-    `, [
-      nombre, nombreCorto, telefono, emailInstitucional,
-      responsableNombre, responsableEmail, responsableTelefono,
-      responsableCargo, maxUsuarios, id
-    ]);
+    `,
+      [
+        nombre,
+        nombreCorto,
+        telefono || null,
+        emailInstitucional || null,
+        sitioWeb || null,
+        responsableNombre,
+        responsableEmail,
+        responsableTelefono || null,
+        responsableCargo || null,
+        Number.parseInt(maxUsuarios, 10) || 1000,
+        direccion || null,
+        ciudad || null,
+        estado || null,
+        codigoPostal || null,
+        mision || null,
+        vision || null,
+        valores || null,
+        id,
+      ]
+    );
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Institución no encontrada"
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Institución no encontrada" });
     }
 
     res.json({
       success: true,
-      message: "Institución actualizada exitosamente"
+      message: "Institución actualizada exitosamente",
     });
-
   } catch (error) {
     console.error("Error actualizando institución:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Error actualizando institución"
-    });
+    res
+      .status(500)
+      .json({ success: false, message: "Error actualizando institución" });
   } finally {
-    if (conn) conn.release();
+    conn.release();
   }
 };
 

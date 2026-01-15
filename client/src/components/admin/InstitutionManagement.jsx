@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '../ui/Card';
 import InstitutionDetailModal from './InstitutionDetailModal';
+import { API_CONFIG } from '../../utils/constants';
 
 const STATUS_COLORS = {
   PENDIENTE_APROBACION: {
@@ -75,30 +76,47 @@ const InstitutionManagement = () => {
   const [availableStates, setAvailableStates] = useState([]);
 
   // Cargar datos iniciales
-  useEffect(() => {
-    loadInstitutions();
-    loadStates();
-  }, [filters, pagination.page]);
+useEffect(() => {
+  loadInstitutions();
+  loadStates();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [JSON.stringify(filters), pagination.page]);
 
   const loadInstitutions = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const queryParams = new URLSearchParams({
-        page: pagination.page,
-        limit: pagination.limit,
-        ...filters
-      });
+    const queryParams = new URLSearchParams({
+      page: String(pagination.page),
+      limit: String(pagination.limit),
+      search: filters.search || "",
+      status: filters.status || "",
+      estado: filters.estado || "",
+      sortBy: filters.sortBy || "status",
+      sortOrder: filters.sortOrder || "asc",
+    });
 
-      const response = await fetch(`/api/institutions?${queryParams}`, {
+      console.log('🏛️ Loading institutions with params:', { pagination, filters });
+
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken:v1');
+      console.log('🔑 Token found:', !!token);
+
+      const apiUrl = `${API_CONFIG.API_BASE}/institutions?${queryParams}`;
+      console.log('🌐 Full API URL:', apiUrl);
+
+      const response = await fetch(apiUrl, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
+      console.log('🏛️ Institution API response:', response.status, response.statusText);
+
       if (!response.ok) {
-        throw new Error('Error al cargar instituciones');
+        const errorData = await response.text();
+        console.error('🏛️ Institution API error:', errorData);
+        throw new Error(`Error al cargar instituciones: ${response.status} ${errorData}`);
       }
 
       const data = await response.json();
@@ -124,9 +142,10 @@ const InstitutionManagement = () => {
 
   const loadStates = async () => {
     try {
-      const response = await fetch('/api/institutions/states', {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken:v1');
+      const response = await fetch(`${API_CONFIG.API_BASE}/institutions/states`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -154,11 +173,12 @@ const InstitutionManagement = () => {
     try {
       setActionLoading(institutionId);
 
-      const response = await fetch(`/api/institutions/${institutionId}/${action}`, {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken:v1');
+      const response = await fetch(`${API_CONFIG.API_BASE}/institutions/${institutionId}/${action}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(data)
       });
@@ -184,9 +204,10 @@ const InstitutionManagement = () => {
 
   const handleViewDetails = async (institutionId) => {
     try {
-      const response = await fetch(`/api/institutions/${institutionId}`, {
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken:v1');
+      const response = await fetch(`${API_CONFIG.API_BASE}/institutions/${institutionId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 

@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import {
-  ChevronRightIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  CameraIcon,
 } from "@heroicons/react/24/outline";
 import PublicLayout from "../components/layout/PublicLayout";
 
@@ -147,13 +145,30 @@ const SolicitarInstitucionPage = () => {
     setErrors({});
 
     try {
-      const response = await fetch("/api/public/solicitar-institucion", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/public/solicitar-institucion`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      const result = await response.json();
+      // Check if response has content before parsing
+      const text = await response.text();
+      if (!text) {
+        throw new Error("Empty response from server");
+      }
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (parseError) {
+        console.error("Failed to parse response as JSON:", text);
+        throw new Error("Invalid JSON response from server");
+      }
+
+      // Check if response is not ok after parsing to get server message
+      if (!response.ok) {
+        throw new Error(result.message || `HTTP error! status: ${response.status}`);
+      }
 
       if (result.success) {
         setSolicitudData(result.data);
@@ -173,7 +188,7 @@ const SolicitarInstitucionPage = () => {
       }
     } catch (error) {
       console.error("Error enviando solicitud:", error);
-      setErrors({ general: "Error de conexión. Intente nuevamente." });
+      setErrors({ general: error.message || "Error de conexión. Intente nuevamente." });
     } finally {
       setIsLoading(false);
     }
@@ -182,92 +197,59 @@ const SolicitarInstitucionPage = () => {
   if (showSuccess) {
     return (
       <PublicLayout>
-        <div className="min-h-screen bg-[#f7f7f7]">
-          <section className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#21252d] via-[#2b333c] to-[#21252d]" />
-            <div
-              className="absolute inset-0 opacity-30"
-              style={{
-                backgroundImage:
-                  "radial-gradient(900px 260px at 30% 30%, rgba(82,124,235,.55), transparent 60%), radial-gradient(900px 260px at 75% 10%, rgba(103,98,179,.55), transparent 60%)",
-              }}
-            />
-            <div className="relative mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:px-8">
-              <div className="rounded-[22px] border border-white/15 bg-white/80 shadow-[0_18px_60px_-25px_rgba(2,6,23,.45)] backdrop-blur">
-                <div className="px-6 py-6 sm:px-8 sm:py-10">
-                  <div className="text-center">
-                    <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-[#10cfbd] to-[#019fd2] shadow-sm">
-                      <CheckCircleIcon className="h-8 w-8 text-white" />
-                    </div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+              <CheckCircleIcon className="h-10 w-10 text-green-600" />
+            </div>
 
-                    <h2 className="mt-6 text-2xl font-extrabold tracking-tight text-[#21252d]">
-                      ¡Solicitud enviada correctamente!
-                    </h2>
-                    <p className="mt-3 text-sm text-[#7c777a]">
-                      Hemos recibido tu información. Si la solicitud es
-                      aprobada, recibirás un correo con las instrucciones para
-                      completar el registro institucional.
-                    </p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              ¡Solicitud enviada!
+            </h2>
 
-                    {solicitudData && (
-                      <div className="mt-7 rounded-2xl border border-[#2b333c]/10 bg-white p-5 text-left shadow-sm">
-                        <h3 className="text-sm font-bold text-[#21252d] mb-3">
-                          Datos de tu solicitud
-                        </h3>
-                        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                          <div>
-                            <p className="text-xs font-semibold text-[#7c777a]">
-                              Campus
-                            </p>
-                            <p className="font-medium text-[#21252d]">
-                              {solicitudData.nombreCampus}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-[#7c777a]">
-                              Responsable
-                            </p>
-                            <p className="font-medium text-[#21252d]">
-                              {solicitudData.responsableNombre}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-[#7c777a]">
-                              ID
-                            </p>
-                            <p className="font-medium text-[#21252d]">
-                              {solicitudData.solicitudId}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-[#7c777a]">
-                              Estado
-                            </p>
-                            <p className="font-medium text-[#21252d]">
-                              {solicitudData.status}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+            <p className="text-gray-600 mb-6">
+              Hemos recibido tu información. Si la solicitud es aprobada,
+              recibirás un correo con las instrucciones para completar
+              el registro institucional.
+            </p>
 
-                    <div className="mt-8">
-                      <a
-                        href="/"
-                        className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#527ceb] to-[#6762b3] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 focus:outline-none focus:ring-4 focus:ring-[#48b0f7]/25"
-                      >
-                        Volver al inicio
-                      </a>
-                    </div>
+            {solicitudData && (
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  Datos de tu solicitud
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="font-medium text-gray-700">Campus: </span>
+                    <span className="text-gray-900">{solicitudData.nombreCampus}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Responsable: </span>
+                    <span className="text-gray-900">{solicitudData.responsableNombre}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">ID: </span>
+                    <span className="text-gray-900">{solicitudData.solicitudId}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Estado: </span>
+                    <span className="text-gray-900">{solicitudData.status}</span>
                   </div>
                 </div>
-
-                <div className="border-t border-[#2b333c]/10 px-6 py-4 text-center text-xs text-[#7c777a]">
-                  Si no ves el correo, revisa spam o “Promociones”.
-                </div>
               </div>
-            </div>
-          </section>
+            )}
+
+            <a
+              href="/"
+              className="inline-block w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            >
+              Volver al inicio
+            </a>
+
+            <p className="text-xs text-gray-500 mt-4">
+              Si no ves el correo, revisa la carpeta de spam o "Promociones".
+            </p>
+          </div>
         </div>
       </PublicLayout>
     );
@@ -275,786 +257,641 @@ const SolicitarInstitucionPage = () => {
 
   return (
     <PublicLayout>
-      <div className="min-h-screen bg-[#f7f7f7]">
-        {/* HERO */}
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#21252d] via-[#2b333c] to-[#21252d]" />
-          <div className="absolute -top-24 right-[-140px] h-[420px] w-[420px] rounded-full bg-[#527ceb]/35 blur-3xl" />
-          <div className="absolute top-28 left-[-140px] h-[420px] w-[420px] rounded-full bg-[#6762b3]/30 blur-3xl" />
-          <div
-            className="absolute inset-0 opacity-30"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px)",
-              backgroundSize: "42px 42px",
-              maskImage:
-                "radial-gradient(600px 260px at 50% 15%, black 55%, transparent 100%)",
-              WebkitMaskImage:
-                "radial-gradient(600px 260px at 50% 15%, black 55%, transparent 100%)",
-            }}
-          />
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 rounded-full px-4 py-2 text-sm font-medium mb-4">
+              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.53 10.53a.75.75 0 00-1.06 1.061l1.5 1.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+              </svg>
+              NeuroFlora - Solicitud Institucional
+            </div>
 
-          <div className="relative mx-auto max-w-5xl px-4 pb-12 pt-12 sm:px-6 lg:px-8">
-            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur">
-              NeuroFlora
-              <span className="h-1 w-1 rounded-full bg-white/70" />
-              Solicitud de alta
-            </span>
-
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Sign up{" "}
-              <span className="bg-gradient-to-r from-[#527ceb] via-[#6762b3] to-[#48b0f7] bg-clip-text text-transparent">
-                Institución
-              </span>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              Registro de Institución
             </h1>
 
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/70 sm:text-base">
-              Completa el formulario para solicitar el registro de tu
-              institución educativa. Nuestro equipo validará la información y te
-              contactará por correo.
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Complete el formulario para solicitar el registro de su institución educativa.
+              Validaremos la información y nos pondremos en contacto por correo electrónico.
             </p>
-
-            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur">
-                <p className="text-xs font-semibold text-white/70">
-                  Privacidad
-                </p>
-                <p className="mt-1 text-sm text-white/90">
-                  Información confidencial
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur">
-                <p className="text-xs font-semibold text-white/70">Proceso</p>
-                <p className="mt-1 text-sm text-white/90">
-                  Validación institucional
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur">
-                <p className="text-xs font-semibold text-white/70">Tiempo</p>
-                <p className="mt-1 text-sm text-white/90">2–3 minutos</p>
-              </div>
-            </div>
           </div>
-        </section>
+        </div>
 
-        {/* CONTENIDO (CARD tipo imagen) */}
-        <div className="mx-auto max-w-5xl px-4 pb-14 sm:px-6 lg:px-8">
-          <div className="rounded-[22px] border border-white/40 bg-white/80 shadow-[0_18px_60px_-25px_rgba(2,6,23,.35)] backdrop-blur">
-            {/* Top bar: title + link */}
-            <div className="flex flex-col gap-4 border-b border-[#2b333c]/10 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#21252d] text-white">
-                  <CheckCircleIcon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-[#21252d]">
-                    Sign up
-                  </p>
-                  <p className="text-xs text-[#7c777a]">
-                    Paso {currentStep} de 3
-                  </p>
-                </div>
+        {/* Main Form */}
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            {/* Form Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Solicitud de Registro
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Paso {currentStep} de {steps.length}
+                </p>
               </div>
-
-              <div className="text-xs text-[#7c777a]">
-                Already a Member?{" "}
+              <div className="text-sm text-gray-600">
+                ¿Ya tienes cuenta?{" "}
                 <a
-                  className="font-semibold text-[#527ceb] hover:text-[#48b0f7]"
                   href="/login"
+                  className="font-medium text-blue-600 hover:text-blue-500 underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                  aria-label="Iniciar sesión"
                 >
-                  Sign In
+                  Inicia sesión
                 </a>
               </div>
             </div>
 
-            {/* Stepper */}
-            <div className="px-6 pt-5">
-              <ol className="flex items-start justify-between gap-3">
-                {steps.map((s, idx) => {
-                  const done = s.id < currentStep;
-                  const active = s.id === currentStep;
+            {/* Progress Steps */}
+            <div className="px-6 py-4">
+              <nav aria-label="Progreso del formulario">
+                <ol className="flex items-center justify-between">
+                  {steps.map((step, stepIndex) => {
+                    const completed = step.id < currentStep;
+                    const current = step.id === currentStep;
 
-                  return (
-                    <li key={s.id} className="flex-1">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(s.id)}
-                        className="w-full text-left"
-                      >
-                        <div className="flex items-center gap-3">
+                    return (
+                      <li key={step.id} className="flex items-center">
+                        <div className="flex items-center">
                           <div
-                            className={[
-                              "grid h-9 w-9 place-items-center rounded-full border text-xs font-extrabold transition",
-                              done || active
-                                ? "border-transparent bg-gradient-to-br from-[#527ceb] to-[#6762b3] text-white"
-                                : "border-[#2b333c]/15 bg-white text-[#7c777a]",
-                            ].join(" ")}
+                            className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-medium ${
+                              completed
+                                ? "bg-blue-600 border-blue-600 text-white"
+                                : current
+                                ? "bg-blue-50 border-blue-600 text-blue-600"
+                                : "bg-white border-gray-300 text-gray-500"
+                            }`}
+                            aria-current={current ? "step" : undefined}
                           >
-                            {done ? "✓" : s.id}
+                            {completed ? (
+                              <CheckCircleIcon className="h-5 w-5" />
+                            ) : (
+                              <span>{step.id}</span>
+                            )}
                           </div>
-
-                          <div className="min-w-0">
-                            <p
-                              className={[
-                                "truncate text-xs font-semibold",
-                                active || done
-                                  ? "text-[#21252d]"
-                                  : "text-[#7c777a]",
-                              ].join(" ")}
-                            >
-                              {s.label}
+                          <div className="ml-3">
+                            <p className={`text-sm font-medium ${
+                              completed || current ? "text-gray-900" : "text-gray-500"
+                            }`}>
+                              {step.label}
                             </p>
                           </div>
                         </div>
-
-                        {idx < steps.length - 1 && (
-                          <div className="ml-[18px] mt-3 h-[3px] w-[calc(100%-36px)] rounded-full bg-[#f0f0f0]">
+                        {stepIndex < steps.length - 1 && (
+                          <div className="ml-6 w-16 h-0.5 bg-gray-200">
                             <div
-                              className={[
-                                "h-[3px] rounded-full transition-all",
-                                currentStep > s.id
-                                  ? "w-full bg-gradient-to-r from-[#527ceb] to-[#6762b3]"
-                                  : "w-0 bg-gradient-to-r from-[#527ceb] to-[#6762b3]",
-                              ].join(" ")}
+                              className={`h-full transition-all duration-300 ${
+                                completed ? "bg-blue-600 w-full" : "bg-gray-200 w-0"
+                              }`}
                             />
                           </div>
                         )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </nav>
             </div>
 
-            {/* Body grid */}
-            <div className="grid grid-cols-1 gap-6 px-6 pb-6 pt-6 lg:grid-cols-12">
-              {/* Left form */}
-              <div className="lg:col-span-8">
-                <div className="rounded-[18px] border border-[#2b333c]/10 bg-white p-5 shadow-sm">
-                  {/* Section header */}
-                  <div className="mb-5 flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-sm font-bold text-[#21252d]">
-                        {currentStep === 1 && "Basic Details"}
-                        {currentStep === 2 && "Contact Details"}
-                        {currentStep === 3 && "Verification"}
-                      </h2>
-                      <p className="mt-1 text-xs text-[#7c777a]">
-                        {currentStep === 1 &&
-                          "Información del campus y contacto institucional."}
-                        {currentStep === 2 &&
-                          "Datos del responsable que gestionará el alta."}
-                        {currentStep === 3 &&
-                          "Revisión final y confirmación de autorización."}
-                      </p>
-                    </div>
+            {/* Form Content */}
+            <div className="px-6 py-6">
+              <div className="max-w-2xl mx-auto">
+                {/* Section header */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {currentStep === 1 && "Datos de la Institución"}
+                    {currentStep === 2 && "Datos del Responsable"}
+                    {currentStep === 3 && "Confirmación"}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {currentStep === 1 &&
+                      "Proporcione la información básica del campus y contacto institucional."}
+                    {currentStep === 2 &&
+                      "Ingrese los datos del responsable que gestionará el registro."}
+                    {currentStep === 3 &&
+                      "Revise la información y confirme la autorización institucional."}
+                  </p>
+                </div>
 
-                    {/* “Add photo” bubble */}
-                    <div className="hidden sm:block">
-                      <div className="grid place-items-center rounded-2xl border border-[#2b333c]/10 bg-[#f0f0f0] p-4">
-                        <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-[#527ceb] to-[#6762b3] shadow-sm">
-                          <CameraIcon className="h-6 w-6 text-white" />
-                        </div>
-                        <p className="mt-2 text-[11px] font-semibold text-[#21252d]">
-                          Add Photo
+                {/* Form Fields */}
+                {currentStep === 1 && (
+                  <div className="space-y-6">
+                    <div>
+                      <label htmlFor="nombreCampus" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre del Campus *
+                      </label>
+                      <input
+                        id="nombreCampus"
+                        type="text"
+                        required
+                        value={formData.nombreCampus}
+                        onChange={(e) => handleInputChange("nombreCampus", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.nombreCampus ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Ej: Universidad Tecnológica de Guadalajara"
+                        aria-describedby={errors.nombreCampus ? "nombreCampus-error" : undefined}
+                      />
+                      {errors.nombreCampus && (
+                        <p id="nombreCampus-error" className="mt-1 text-sm text-red-600" role="alert">
+                          {errors.nombreCampus}
                         </p>
-                      </div>
+                      )}
                     </div>
-                  </div>
 
-                  {/* --- FORM CONTENT --- */}
-                  {currentStep === 1 && (
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-6">
-                        Datos de la Institución
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Nombre del Campus *
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.nombreCampus}
-                            onChange={(e) =>
-                              handleInputChange("nombreCampus", e.target.value)
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.nombreCampus ? "border-red-500" : ""
-                            }`}
-                            placeholder="Ej: Universidad Tecnológica de Guadalajara"
-                          />
-                          {errors.nombreCampus && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.nombreCampus}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Estado *
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.estado}
-                            onChange={(e) =>
-                              handleInputChange("estado", e.target.value)
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.estado ? "border-red-500" : ""
-                            }`}
-                            placeholder="Ej: Jalisco"
-                          />
-                          {errors.estado && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.estado}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Ciudad *
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.ciudad}
-                            onChange={(e) =>
-                              handleInputChange("ciudad", e.target.value)
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.ciudad ? "border-red-500" : ""
-                            }`}
-                            placeholder="Ej: Guadalajara"
-                          />
-                          {errors.ciudad && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.ciudad}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Código Postal
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.codigoPostal}
-                            onChange={(e) =>
-                              handleInputChange("codigoPostal", e.target.value)
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.codigoPostal ? "border-red-500" : ""
-                            }`}
-                            placeholder="44100"
-                            maxLength="5"
-                          />
-                          {errors.codigoPostal && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.codigoPostal}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Clave Institucional *
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.claveInstitucional}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "claveInstitucional",
-                                e.target.value
-                              )
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.claveInstitucional ? "border-red-500" : ""
-                            }`}
-                            placeholder="Ej: UTG2024"
-                          />
-                          {errors.claveInstitucional && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.claveInstitucional}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Teléfono Institucional *
-                          </label>
-                          <input
-                            type="tel"
-                            value={formData.telefonoInstitucion}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "telefonoInstitucion",
-                                e.target.value
-                              )
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.telefonoInstitucion ? "border-red-500" : ""
-                            }`}
-                            placeholder="3331234567"
-                          />
-                          {errors.telefonoInstitucion && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.telefonoInstitucion}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Extensión
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.extension}
-                            onChange={(e) =>
-                              handleInputChange("extension", e.target.value)
-                            }
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            placeholder="101"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Nombre del Director *
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.nombreDirector}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "nombreDirector",
-                                e.target.value
-                              )
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.nombreDirector ? "border-red-500" : ""
-                            }`}
-                            placeholder="Dr. Juan Pérez García"
-                          />
-                          {errors.nombreDirector && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.nombreDirector}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Correo Institucional *
-                          </label>
-                          <input
-                            type="email"
-                            value={formData.correoInstitucional}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "correoInstitucional",
-                                e.target.value
-                              )
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.correoInstitucional ? "border-red-500" : ""
-                            }`}
-                            placeholder="contacto@universidad.edu.mx"
-                          />
-                          {errors.correoInstitucional && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.correoInstitucional}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {currentStep === 2 && (
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-6">
-                        Datos del Responsable
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Nombre Completo *
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.responsableNombre}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "responsableNombre",
-                                e.target.value
-                              )
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.responsableNombre ? "border-red-500" : ""
-                            }`}
-                            placeholder="María Elena González Martínez"
-                          />
-                          {errors.responsableNombre && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.responsableNombre}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Cargo *
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.responsableCargo}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "responsableCargo",
-                                e.target.value
-                              )
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.responsableCargo ? "border-red-500" : ""
-                            }`}
-                            placeholder="Coordinadora de Bienestar Estudiantil"
-                          />
-                          {errors.responsableCargo && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.responsableCargo}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Teléfono Personal *
-                          </label>
-                          <input
-                            type="tel"
-                            value={formData.responsableTelefonoPersonal}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "responsableTelefonoPersonal",
-                                e.target.value
-                              )
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.responsableTelefonoPersonal
-                                ? "border-red-500"
-                                : ""
-                            }`}
-                            placeholder="3339876543"
-                          />
-                          {errors.responsableTelefonoPersonal && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.responsableTelefonoPersonal}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Correo Institucional *
-                          </label>
-                          <input
-                            type="email"
-                            value={formData.responsableCorreoInstitucional}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "responsableCorreoInstitucional",
-                                e.target.value
-                              )
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.responsableCorreoInstitucional
-                                ? "border-red-500"
-                                : ""
-                            }`}
-                            placeholder="maria.gonzalez@universidad.edu.mx"
-                          />
-                          {errors.responsableCorreoInstitucional && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.responsableCorreoInstitucional}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Correo Personal *
-                          </label>
-                          <input
-                            type="email"
-                            value={formData.responsableCorreoPersonal}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "responsableCorreoPersonal",
-                                e.target.value
-                              )
-                            }
-                            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                              errors.responsableCorreoPersonal
-                                ? "border-red-500"
-                                : ""
-                            }`}
-                            placeholder="maria.personal@gmail.com"
-                          />
-                          {errors.responsableCorreoPersonal && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {errors.responsableCorreoPersonal}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Comentarios Adicionales
-                          </label>
-                          <textarea
-                            value={formData.comentarios}
-                            onChange={(e) =>
-                              handleInputChange("comentarios", e.target.value)
-                            }
-                            rows={3}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            placeholder="Información adicional relevante para la solicitud..."
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {currentStep === 3 && (
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-6">
-                        Confirmación
-                      </h3>
-
-                      <div className="bg-gray-50 p-6 rounded-lg mb-6">
-                        <h4 className="font-medium text-gray-900 mb-4">
-                          Resumen de la solicitud:
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p>
-                              <strong>Campus:</strong> {formData.nombreCampus}
-                            </p>
-                            <p>
-                              <strong>Ubicación:</strong> {formData.ciudad},{" "}
-                              {formData.estado}
-                            </p>
-                            <p>
-                              <strong>Clave:</strong>{" "}
-                              {formData.claveInstitucional}
-                            </p>
-                          </div>
-                          <div>
-                            <p>
-                              <strong>Responsable:</strong>{" "}
-                              {formData.responsableNombre}
-                            </p>
-                            <p>
-                              <strong>Cargo:</strong>{" "}
-                              {formData.responsableCargo}
-                            </p>
-                            <p>
-                              <strong>Contacto:</strong>{" "}
-                              {formData.responsableCorreoInstitucional}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex items-start">
-                          <input
-                            type="checkbox"
-                            checked={formData.autorizacionConfirmada}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "autorizacionConfirmada",
-                                e.target.checked
-                              )
-                            }
-                            className={`mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
-                              errors.autorizacionConfirmada
-                                ? "border-red-500"
-                                : ""
-                            }`}
-                          />
-                          <label className="ml-3 text-sm text-gray-700">
-                            <strong>
-                              Confirmo que cuento con autorización institucional
-                              para solicitar el alta
-                            </strong>
-                          </label>
-                        </div>
-
-                        {errors.autorizacionConfirmada && (
-                          <p className="text-sm text-red-600 flex items-center">
-                            <ExclamationTriangleIcon className="w-4 h-4 mr-1" />
-                            {errors.autorizacionConfirmada}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-1">
+                          Estado *
+                        </label>
+                        <input
+                          id="estado"
+                          type="text"
+                          required
+                          value={formData.estado}
+                          onChange={(e) => handleInputChange("estado", e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.estado ? "border-red-500" : "border-gray-300"
+                          }`}
+                          placeholder="Ej: Jalisco"
+                          aria-describedby={errors.estado ? "estado-error" : undefined}
+                        />
+                        {errors.estado && (
+                          <p id="estado-error" className="mt-1 text-sm text-red-600" role="alert">
+                            {errors.estado}
                           </p>
                         )}
+                      </div>
 
-                        <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="flex">
-                            <ExclamationTriangleIcon className="h-5 w-5 text-blue-400" />
-                            <div className="ml-3">
-                              <h3 className="text-sm font-medium text-blue-800">
-                                Información importante
-                              </h3>
-                              <div className="mt-2 text-sm text-blue-700">
-                                <p>
-                                  Al enviar esta solicitud, confirma que tiene
-                                  la autoridad para representar a la institución
-                                  educativa y que la información proporcionada
-                                  es verídica.
-                                </p>
-                              </div>
+                      <div>
+                        <label htmlFor="ciudad" className="block text-sm font-medium text-gray-700 mb-1">
+                          Ciudad *
+                        </label>
+                        <input
+                          id="ciudad"
+                          type="text"
+                          required
+                          value={formData.ciudad}
+                          onChange={(e) => handleInputChange("ciudad", e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.ciudad ? "border-red-500" : "border-gray-300"
+                          }`}
+                          placeholder="Ej: Guadalajara"
+                          aria-describedby={errors.ciudad ? "ciudad-error" : undefined}
+                        />
+                        {errors.ciudad && (
+                          <p id="ciudad-error" className="mt-1 text-sm text-red-600" role="alert">
+                            {errors.ciudad}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label htmlFor="codigoPostal" className="block text-sm font-medium text-gray-700 mb-1">
+                          Código Postal
+                        </label>
+                        <input
+                          id="codigoPostal"
+                          type="text"
+                          value={formData.codigoPostal}
+                          onChange={(e) => handleInputChange("codigoPostal", e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.codigoPostal ? "border-red-500" : "border-gray-300"
+                          }`}
+                          placeholder="44100"
+                          maxLength="5"
+                          aria-describedby={errors.codigoPostal ? "codigoPostal-error" : undefined}
+                        />
+                        {errors.codigoPostal && (
+                          <p id="codigoPostal-error" className="mt-1 text-sm text-red-600" role="alert">
+                            {errors.codigoPostal}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label htmlFor="claveInstitucional" className="block text-sm font-medium text-gray-700 mb-1">
+                          Clave Institucional *
+                        </label>
+                        <input
+                          id="claveInstitucional"
+                          type="text"
+                          required
+                          value={formData.claveInstitucional}
+                          onChange={(e) => handleInputChange("claveInstitucional", e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.claveInstitucional ? "border-red-500" : "border-gray-300"
+                          }`}
+                          placeholder="Ej: UTG2024"
+                          aria-describedby={errors.claveInstitucional ? "claveInstitucional-error" : undefined}
+                        />
+                        {errors.claveInstitucional && (
+                          <p id="claveInstitucional-error" className="mt-1 text-sm text-red-600" role="alert">
+                            {errors.claveInstitucional}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label htmlFor="telefonoInstitucion" className="block text-sm font-medium text-gray-700 mb-1">
+                          Teléfono Institucional *
+                        </label>
+                        <input
+                          id="telefonoInstitucion"
+                          type="tel"
+                          required
+                          value={formData.telefonoInstitucion}
+                          onChange={(e) => handleInputChange("telefonoInstitucion", e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.telefonoInstitucion ? "border-red-500" : "border-gray-300"
+                          }`}
+                          placeholder="3331234567"
+                          aria-describedby={errors.telefonoInstitucion ? "telefonoInstitucion-error" : undefined}
+                        />
+                        {errors.telefonoInstitucion && (
+                          <p id="telefonoInstitucion-error" className="mt-1 text-sm text-red-600" role="alert">
+                            {errors.telefonoInstitucion}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label htmlFor="extension" className="block text-sm font-medium text-gray-700 mb-1">
+                          Extensión
+                        </label>
+                        <input
+                          id="extension"
+                          type="text"
+                          value={formData.extension}
+                          onChange={(e) => handleInputChange("extension", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="101"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="nombreDirector" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre del Director *
+                      </label>
+                      <input
+                        id="nombreDirector"
+                        type="text"
+                        required
+                        value={formData.nombreDirector}
+                        onChange={(e) => handleInputChange("nombreDirector", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.nombreDirector ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Dr. Juan Pérez García"
+                        aria-describedby={errors.nombreDirector ? "nombreDirector-error" : undefined}
+                      />
+                      {errors.nombreDirector && (
+                        <p id="nombreDirector-error" className="mt-1 text-sm text-red-600" role="alert">
+                          {errors.nombreDirector}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="correoInstitucional" className="block text-sm font-medium text-gray-700 mb-1">
+                        Correo Institucional *
+                      </label>
+                      <input
+                        id="correoInstitucional"
+                        type="email"
+                        required
+                        value={formData.correoInstitucional}
+                        onChange={(e) => handleInputChange("correoInstitucional", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.correoInstitucional ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="contacto@universidad.edu.mx"
+                        aria-describedby={errors.correoInstitucional ? "correoInstitucional-error" : undefined}
+                      />
+                      {errors.correoInstitucional && (
+                        <p id="correoInstitucional-error" className="mt-1 text-sm text-red-600" role="alert">
+                          {errors.correoInstitucional}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <div>
+                      <label htmlFor="responsableNombre" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre Completo *
+                      </label>
+                      <input
+                        id="responsableNombre"
+                        type="text"
+                        required
+                        value={formData.responsableNombre}
+                        onChange={(e) => handleInputChange("responsableNombre", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.responsableNombre ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="María Elena González Martínez"
+                        aria-describedby={errors.responsableNombre ? "responsableNombre-error" : undefined}
+                      />
+                      {errors.responsableNombre && (
+                        <p id="responsableNombre-error" className="mt-1 text-sm text-red-600" role="alert">
+                          {errors.responsableNombre}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="responsableCargo" className="block text-sm font-medium text-gray-700 mb-1">
+                        Cargo *
+                      </label>
+                      <input
+                        id="responsableCargo"
+                        type="text"
+                        required
+                        value={formData.responsableCargo}
+                        onChange={(e) => handleInputChange("responsableCargo", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.responsableCargo ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Coordinadora de Bienestar Estudiantil"
+                        aria-describedby={errors.responsableCargo ? "responsableCargo-error" : undefined}
+                      />
+                      {errors.responsableCargo && (
+                        <p id="responsableCargo-error" className="mt-1 text-sm text-red-600" role="alert">
+                          {errors.responsableCargo}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="responsableTelefonoPersonal" className="block text-sm font-medium text-gray-700 mb-1">
+                        Teléfono Personal *
+                      </label>
+                      <input
+                        id="responsableTelefonoPersonal"
+                        type="tel"
+                        required
+                        value={formData.responsableTelefonoPersonal}
+                        onChange={(e) => handleInputChange("responsableTelefonoPersonal", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.responsableTelefonoPersonal ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="3339876543"
+                        aria-describedby={errors.responsableTelefonoPersonal ? "responsableTelefonoPersonal-error" : undefined}
+                      />
+                      {errors.responsableTelefonoPersonal && (
+                        <p id="responsableTelefonoPersonal-error" className="mt-1 text-sm text-red-600" role="alert">
+                          {errors.responsableTelefonoPersonal}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="responsableCorreoInstitucional" className="block text-sm font-medium text-gray-700 mb-1">
+                        Correo Institucional *
+                      </label>
+                      <input
+                        id="responsableCorreoInstitucional"
+                        type="email"
+                        required
+                        value={formData.responsableCorreoInstitucional}
+                        onChange={(e) => handleInputChange("responsableCorreoInstitucional", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.responsableCorreoInstitucional ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="maria.gonzalez@universidad.edu.mx"
+                        aria-describedby={errors.responsableCorreoInstitucional ? "responsableCorreoInstitucional-error" : undefined}
+                      />
+                      {errors.responsableCorreoInstitucional && (
+                        <p id="responsableCorreoInstitucional-error" className="mt-1 text-sm text-red-600" role="alert">
+                          {errors.responsableCorreoInstitucional}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="responsableCorreoPersonal" className="block text-sm font-medium text-gray-700 mb-1">
+                        Correo Personal *
+                      </label>
+                      <input
+                        id="responsableCorreoPersonal"
+                        type="email"
+                        required
+                        value={formData.responsableCorreoPersonal}
+                        onChange={(e) => handleInputChange("responsableCorreoPersonal", e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.responsableCorreoPersonal ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="maria.personal@gmail.com"
+                        aria-describedby={errors.responsableCorreoPersonal ? "responsableCorreoPersonal-error" : undefined}
+                      />
+                      {errors.responsableCorreoPersonal && (
+                        <p id="responsableCorreoPersonal-error" className="mt-1 text-sm text-red-600" role="alert">
+                          {errors.responsableCorreoPersonal}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label htmlFor="comentarios" className="block text-sm font-medium text-gray-700 mb-1">
+                        Comentarios Adicionales
+                      </label>
+                      <textarea
+                        id="comentarios"
+                        value={formData.comentarios}
+                        onChange={(e) => handleInputChange("comentarios", e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Información adicional relevante para la solicitud..."
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 3 && (
+                  <div className="space-y-6">
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-4">
+                        Resumen de la solicitud:
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-2">
+                          <p>
+                            <span className="font-medium text-gray-700">Campus:</span>{" "}
+                            <span className="text-gray-900">{formData.nombreCampus}</span>
+                          </p>
+                          <p>
+                            <span className="font-medium text-gray-700">Ubicación:</span>{" "}
+                            <span className="text-gray-900">{formData.ciudad}, {formData.estado}</span>
+                          </p>
+                          <p>
+                            <span className="font-medium text-gray-700">Clave:</span>{" "}
+                            <span className="text-gray-900">{formData.claveInstitucional}</span>
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <p>
+                            <span className="font-medium text-gray-700">Responsable:</span>{" "}
+                            <span className="text-gray-900">{formData.responsableNombre}</span>
+                          </p>
+                          <p>
+                            <span className="font-medium text-gray-700">Cargo:</span>{" "}
+                            <span className="text-gray-900">{formData.responsableCargo}</span>
+                          </p>
+                          <p>
+                            <span className="font-medium text-gray-700">Contacto:</span>{" "}
+                            <span className="text-gray-900">{formData.responsableCorreoInstitucional}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start">
+                        <input
+                          id="autorizacionConfirmada"
+                          type="checkbox"
+                          checked={formData.autorizacionConfirmada}
+                          onChange={(e) => handleInputChange("autorizacionConfirmada", e.target.checked)}
+                          className={`mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
+                            errors.autorizacionConfirmada ? "border-red-500" : ""
+                          }`}
+                          aria-describedby={errors.autorizacionConfirmada ? "autorizacion-error" : "autorizacion-desc"}
+                        />
+                        <label htmlFor="autorizacionConfirmada" className="ml-3 text-sm text-gray-700">
+                          <strong>
+                            Confirmo que cuento con autorización institucional
+                            para solicitar el alta
+                          </strong>
+                        </label>
+                      </div>
+
+                      {errors.autorizacionConfirmada && (
+                        <p id="autorizacion-error" className="text-sm text-red-600 flex items-center" role="alert">
+                          <ExclamationTriangleIcon className="w-4 h-4 mr-1" />
+                          {errors.autorizacionConfirmada}
+                        </p>
+                      )}
+
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex">
+                          <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 mt-0.5" />
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-blue-900">
+                              Información importante
+                            </h3>
+                            <div className="mt-2 text-sm text-blue-800">
+                              <p id="autorizacion-desc">
+                                Al enviar esta solicitud, confirma que tiene
+                                la autoridad para representar a la institución
+                                educativa y que la información proporcionada
+                                es verídica.
+                              </p>
                             </div>
                           </div>
                         </div>
                       </div>
-
-                      {errors.general && (
-                        <div className="mt-4 p-4 bg-red-50 rounded-lg">
-                          <p className="text-sm text-red-600 flex items-center">
-                            <ExclamationTriangleIcon className="w-4 h-4 mr-1" />
-                            {errors.general}
-                          </p>
-                        </div>
-                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* Buttons */}
-                <div className="mt-5 flex items-center justify-between">
+                    {errors.general && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-sm text-red-600 flex items-center" role="alert">
+                          <ExclamationTriangleIcon className="w-4 h-4 mr-1" />
+                          {errors.general}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Navigation Buttons */}
+                <div className="flex items-center justify-between pt-8">
                   <button
                     type="button"
                     onClick={prevStep}
                     disabled={currentStep === 1}
-                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                    className={`px-4 py-2 text-sm font-medium rounded-md border ${
                       currentStep === 1
-                        ? "cursor-not-allowed bg-[#f0f0f0] text-[#7c777a]"
-                        : "bg-white text-[#21252d] shadow-sm ring-1 ring-[#2b333c]/10 hover:bg-[#f7f7f7]"
+                        ? "cursor-not-allowed bg-gray-50 text-gray-400 border-gray-200"
+                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     }`}
                   >
-                    Back
+                    Anterior
                   </button>
 
                   {currentStep < 3 ? (
                     <button
                       type="button"
                       onClick={nextStep}
-                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#527ceb] to-[#6762b3] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 focus:outline-none focus:ring-4 focus:ring-[#48b0f7]/25"
+                      className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                     >
-                      Next
-                      <ChevronRightIcon className="h-4 w-4" />
+                      Siguiente
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={handleSubmit}
                       disabled={isLoading}
-                      className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#10cfbd] to-[#019fd2] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-95 focus:outline-none focus:ring-4 focus:ring-[#10cfbd]/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      {isLoading ? "Enviando..." : "Submit"}
+                      {isLoading ? "Enviando..." : "Enviar Solicitud"}
                     </button>
                   )}
                 </div>
               </div>
-
-              {/* Right sidebar */}
-              <div className="lg:col-span-4">
-                <div className="rounded-[18px] bg-[#21252d] p-[1px] shadow-sm">
-                  <div className="rounded-[18px] bg-gradient-to-b from-[#2b333c] to-[#21252d] p-5 text-white">
-                    <h3 className="text-sm font-bold">Recomendaciones</h3>
-                    <p className="mt-2 text-xs text-white/70">
-                      Usa correos institucionales válidos y verifica la clave
-                      del campus para evitar rechazos.
-                    </p>
-
-                    <div className="mt-4 space-y-3">
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-xs font-semibold">Privacidad</p>
-                        <p className="mt-1 text-xs text-white/70">
-                          Datos protegidos y usados solo para validación.
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-xs font-semibold">Qué sigue</p>
-                        <ul className="mt-2 space-y-2 text-xs text-white/70">
-                          <li className="flex gap-2">
-                            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/60" />
-                            Validación institucional
-                          </li>
-                          <li className="flex gap-2">
-                            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/60" />
-                            Notificación por correo
-                          </li>
-                          <li className="flex gap-2">
-                            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/60" />
-                            Alta y activación
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-xs font-semibold">Soporte</p>
-                        <p className="mt-1 text-xs text-white/70">
-                          Si algo falla, vuelve a intentar o contacta al equipo
-                          de soporte.
-                        </p>
-                      </div>
-                    </div>
-
-                    {errors.general && (
-                      <div className="mt-5 rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
-                        <p className="text-xs text-red-200 flex items-center gap-2">
-                          <ExclamationTriangleIcon className="h-4 w-4" />
-                          {errors.general}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="mt-5 rounded-2xl bg-white/5 p-4">
-                      <p className="text-xs text-white/70">
-                        Tip: Mantén el teléfono institucional con lada (ej.
-                        287xxxxxxx).
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 rounded-[18px] border border-[#2b333c]/10 bg-white p-5 shadow-sm">
-                  <p className="text-xs font-bold text-[#21252d]">Status</p>
-                  <p className="mt-1 text-xs text-[#7c777a]">
-                    Completa el paso actual para continuar.
-                  </p>
-                  <div className="mt-3 h-2 w-full rounded-full bg-[#f0f0f0]">
-                    <div
-                      className="h-2 rounded-full bg-gradient-to-r from-[#527ceb] to-[#6762b3]"
-                      style={{ width: `${(currentStep / 3) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
 
-            {/* Footer note */}
-            <div className="border-t border-[#2b333c]/10 px-6 py-4 text-xs text-[#7c777a]">
-              Al enviar, confirmas que tienes autorización para representar a la
-              institución y que la información es verídica.
+            {/* Footer */}
+            <div className="border-t border-gray-200 px-6 py-4">
+              <p className="text-xs text-gray-500 text-center">
+                Al enviar, confirma que tiene autorización para representar a la
+                institución y que la información proporcionada es verídica.
+              </p>
+            </div>
+          </div>
+
+          {/* Help Section */}
+          <div className="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Proceso de Registro
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-sm font-bold">
+                  1
+                </div>
+                <h4 className="font-medium text-gray-900 mb-1">Validación</h4>
+                <p className="text-sm text-gray-600">
+                  Revisamos su información institucional
+                </p>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-sm font-bold">
+                  2
+                </div>
+                <h4 className="font-medium text-gray-900 mb-1">Notificación</h4>
+                <p className="text-sm text-gray-600">
+                  Le enviamos un correo con el resultado
+                </p>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-sm font-bold">
+                  3
+                </div>
+                <h4 className="font-medium text-gray-900 mb-1">Activación</h4>
+                <p className="text-sm text-gray-600">
+                  Complete el registro y comience a usar la plataforma
+                </p>
+              </div>
             </div>
           </div>
         </div>

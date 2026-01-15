@@ -89,12 +89,12 @@ const validateSolicitudInstitucion = [
     })
 ];
 
-// Rutas públicas
-router.post(
-  "/solicitar-institucion",
-  validateSolicitudInstitucion,
-  solicitudesController.crearSolicitudInstitucion
-);
+  // Rutas públicas
+  router.post(
+    "/solicitar-institucion",
+    validateSolicitudInstitucion,
+    solicitudesController.crearSolicitudInstitucion
+  );
 
 // Ruta para obtener estados/ciudades (opcional, para autocompletado)
 router.get("/estados", solicitudesController.obtenerEstados);
