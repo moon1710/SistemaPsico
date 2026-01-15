@@ -9,22 +9,37 @@ const { v4: uuidv4 } = require('uuid');
 
 // Middleware to ensure admin roles for institution
 const ensureInstitucionAdmin = (req, res, next) => {
-  const userRoles = (req.user?.instituciones || []).map(inst => inst.rol);
-  const adminRoles = ['ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL'];
+  // 1) Rol global (usuarios.rol)
+  const globalRole = req.user?.rol;
 
-  if (!userRoles.some(role => adminRoles.includes(role))) {
+  // Super Admin Nacional pasa siempre
+  if (globalRole === "SUPER_ADMIN_NACIONAL") {
+    return next();
+  }
+
+  // 2) Roles por institución (usuario_institucion)
+  const userRoles = (req.user?.instituciones || []).map(
+    (inst) => inst.rol || inst.rolInstitucion
+  );
+  const adminRoles = ["ADMIN_INSTITUCION", "SUPER_ADMIN_INSTITUCION"];
+
+  if (!userRoles.some((role) => adminRoles.includes(role))) {
     return res.status(403).json({
       success: false,
-      message: "Acceso denegado. Requiere permisos de administrador."
+      message: "Acceso denegado. Requiere permisos de administrador.",
     });
   }
+
   next();
 };
 
+
 // Get current user's institution
 const getCurrentInstitution = (req) => {
+  // si viene en query, úsalo
+  if (req.query?.institucionId) return req.query.institucionId;
+
   const instituciones = req.user?.instituciones || [];
-  // Try to find the first institution (for now, since users typically belong to one institution)
   return instituciones[0]?.institucionId || null;
 };
 
@@ -58,48 +73,71 @@ const upload = multer({
 // GET /users - Get all users for the institution
 router.get("/", authenticateToken, ensureInstitucionAdmin, async (req, res) => {
   try {
-    const institucionId = getCurrentInstitution(req);
-    if (!institucionId) {
-      return res.status(400).json({
-        success: false,
-        message: "No se pudo determinar la institución"
-      });
-    }
-
+    const isSuperAdmin = req.user?.rol === "SUPER_ADMIN_NACIONAL";
     const { role, status, search, page = 1, limit = 10 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    let whereConditions = ["ui.institucionId = ?"];
-    let params = [institucionId];
+    let whereConditions = [];
+    let params = [];
 
-    if (role) {
+    // Para Super Admin Nacional: solo mostrar roles específicos de todas las instituciones
+    if (isSuperAdmin) {
+      // Roles permitidos para Super Admin Nacional
+      const allowedRoles = ["ADMIN_INSTITUCION", "PSICOLOGO", "ORIENTADOR"];
+
+      // Filtro por rol (por defecto ADMIN_INSTITUCION)
+      const targetRole = role && allowedRoles.includes(role) ? role : "ADMIN_INSTITUCION";
       whereConditions.push("ui.rolInstitucion = ?");
-      params.push(role);
+      params.push(targetRole);
+
+      // Solo usuarios activos en la relación institución
+      whereConditions.push("ui.activo = true");
+    } else {
+      // Para admin de institución: requiere institucionId como antes
+      const institucionId = getTargetInstitutionId(req);
+
+      if (!institucionId) {
+        return res.status(400).json({
+          success: false,
+          message: "No se pudo determinar la institución",
+          code: "INSTITUTION_REQUIRED",
+        });
+      }
+
+      whereConditions.push("ui.institucionId = ?");
+      params.push(institucionId);
+
+      if (role) {
+        whereConditions.push("ui.rolInstitucion = ?");
+        params.push(role);
+      }
     }
 
+    // Filtros comunes
     if (status) {
       whereConditions.push("u.status = ?");
       params.push(status);
     }
 
     if (search) {
-      whereConditions.push("(u.nombreCompleto LIKE ? OR u.email LIKE ? OR u.matricula LIKE ?)");
+      whereConditions.push(
+        "(u.nombreCompleto LIKE ? OR u.email LIKE ? OR u.matricula LIKE ? OR i.nombre LIKE ?)"
+      );
       const searchTerm = `%${search}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm);
     }
 
-    const whereClause = whereConditions.join(" AND ");
+    const whereClause = whereConditions.length > 0 ? "WHERE " + whereConditions.join(" AND ") : "";
 
-    // Get total count
     const [countResult] = await pool.execute(
       `SELECT COUNT(*) as total
        FROM usuario_institucion ui
        JOIN usuarios u ON ui.usuarioId = u.id
-       WHERE ${whereClause}`,
+       JOIN instituciones i ON ui.institucionId = i.id
+       ${whereClause}`,
       params
     );
 
-    // Get users with pagination
     const [users] = await pool.execute(
       `SELECT
          u.id,
@@ -116,15 +154,40 @@ router.get("/", authenticateToken, ensureInstitucionAdmin, async (req, res) => {
          u.lastLogin,
          ui.rolInstitucion as rol,
          ui.activo as membershipActiva,
+         ui.institucionId,
+         i.nombre as institucionNombre,
+         i.codigo as institucionCodigo,
+         i.ciudad as institucionCiudad,
+         i.estado as institucionEstado,
          c.nombre as carreraNombre
        FROM usuario_institucion ui
        JOIN usuarios u ON ui.usuarioId = u.id
+       JOIN instituciones i ON ui.institucionId = i.id
        LEFT JOIN carreras c ON u.carreraId = c.id
-       WHERE ${whereClause}
-       ORDER BY u.createdAt DESC
+       ${whereClause}
+       ORDER BY ${isSuperAdmin ? "i.nombre, u.createdAt DESC" : "u.createdAt DESC"}
        LIMIT ? OFFSET ?`,
       [...params, parseInt(limit), offset]
     );
+
+    // Estadísticas específicas para Super Admin
+    let stats = null;
+    if (isSuperAdmin) {
+      const [statsResult] = await pool.execute(`
+        SELECT
+          COUNT(*) as total,
+          COUNT(CASE WHEN ui.rolInstitucion = 'ADMIN_INSTITUCION' THEN 1 END) as adminInstitucionales,
+          COUNT(CASE WHEN ui.rolInstitucion = 'PSICOLOGO' THEN 1 END) as psicologos,
+          COUNT(CASE WHEN ui.rolInstitucion = 'ORIENTADOR' THEN 1 END) as orientadores,
+          COUNT(CASE WHEN u.status = 'ACTIVO' THEN 1 END) as activos,
+          COUNT(CASE WHEN u.status = 'INACTIVO' THEN 1 END) as inactivos
+        FROM usuario_institucion ui
+        JOIN usuarios u ON ui.usuarioId = u.id
+        WHERE ui.rolInstitucion IN ('ADMIN_INSTITUCION', 'PSICOLOGO', 'ORIENTADOR')
+        AND ui.activo = true
+      `);
+      stats = statsResult[0];
+    }
 
     res.json({
       success: true,
@@ -134,18 +197,23 @@ router.get("/", authenticateToken, ensureInstitucionAdmin, async (req, res) => {
           total: countResult[0].total,
           page: parseInt(page),
           limit: parseInt(limit),
-          totalPages: Math.ceil(countResult[0].total / parseInt(limit))
-        }
-      }
+          totalPages: Math.ceil(countResult[0].total / parseInt(limit)),
+        },
+        stats,
+        isSuperAdmin,
+        currentRole: isSuperAdmin ? (role || "ADMIN_INSTITUCION") : null
+      },
     });
   } catch (error) {
     console.error("Error getting users:", error);
     res.status(500).json({
       success: false,
-      message: "Error interno del servidor"
+      message: "Error interno del servidor",
+      code: "INTERNAL_ERROR",
     });
   }
 });
+
 
 // GET /users/:id - Get specific user
 router.get("/:id", authenticateToken, ensureInstitucionAdmin, async (req, res) => {
@@ -564,12 +632,27 @@ router.post("/upload-photo", authenticateToken, upload.single('photo'), async (r
 });
 
 // GET /users/stats - Get user statistics for the institution
-router.get("/stats/overview", authenticateToken, ensureInstitucionAdmin, async (req, res) => {
-  try {
-    const institucionId = getCurrentInstitution(req);
+router.get(
+  "/stats/overview",
+  authenticateToken,
+  ensureInstitucionAdmin,
+  async (req, res) => {
+    try {
+      const isSuperAdmin = req.user?.rol === "SUPER_ADMIN_NACIONAL";
+      const institucionId = getTargetInstitutionId(req);
 
-    const [stats] = await pool.execute(
-      `SELECT
+      if (!institucionId) {
+        return res.status(400).json({
+          success: false,
+          message: isSuperAdmin
+            ? "Como SUPER_ADMIN_NACIONAL debes indicar institucionId (query o header). Ej: /users/stats/overview?institucionId=UUID"
+            : "No se pudo determinar la institución",
+          code: "INSTITUTION_REQUIRED",
+        });
+      }
+
+      const [stats] = await pool.execute(
+        `SELECT
          COUNT(*) as total,
          COUNT(CASE WHEN ui.rolInstitucion = 'ESTUDIANTE' THEN 1 END) as estudiantes,
          COUNT(CASE WHEN ui.rolInstitucion = 'PSICOLOGO' THEN 1 END) as psicologos,
@@ -581,20 +664,23 @@ router.get("/stats/overview", authenticateToken, ensureInstitucionAdmin, async (
        FROM usuario_institucion ui
        JOIN usuarios u ON ui.usuarioId = u.id
        WHERE ui.institucionId = ?`,
-      [institucionId]
-    );
+        [institucionId]
+      );
 
-    res.json({
-      success: true,
-      data: stats[0]
-    });
-  } catch (error) {
-    console.error("Error getting user stats:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error interno del servidor"
-    });
+      res.json({
+        success: true,
+        data: stats[0],
+      });
+    } catch (error) {
+      console.error("Error getting user stats:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error interno del servidor",
+        code: "INTERNAL_ERROR",
+      });
+    }
   }
-});
+);
+
 
 module.exports = router;

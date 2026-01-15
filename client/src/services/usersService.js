@@ -57,6 +57,13 @@ export const usersService = {
     { value: 'ADMIN_INSTITUCION', label: 'Administrador de Institución' }
   ],
 
+  // User roles for Super Admin Nacional (only these 3 roles)
+  getSuperAdminRoles: () => [
+    { value: 'ADMIN_INSTITUCION', label: 'Administradores Institucionales' },
+    { value: 'PSICOLOGO', label: 'Psicólogos' },
+    { value: 'ORIENTADOR', label: 'Orientadores/Tutores' }
+  ],
+
   // User statuses
   getUserStatuses: () => [
     { value: 'ACTIVO', label: 'Activo' },

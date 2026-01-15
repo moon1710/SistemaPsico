@@ -333,7 +333,6 @@ const approveInstitution = async (req, res) => {
       SET
         status = 'APROBADA',
         notasAdmin = ?,
-        procesadoPor = ?,
         procesadoAt = NOW(),
         updatedAt = NOW()
       WHERE institucionNombre LIKE ? OR institucionId = ?

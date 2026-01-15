@@ -9,6 +9,7 @@ import {
   Clock,
   Shield,
   MessageCircle,
+  ClipboardList,
 } from "lucide-react";
 import { ROUTES } from "../../../utils/constants";
 
@@ -25,6 +26,16 @@ export const roleSpecificItems = [
     roles: [
       "ADMIN_INSTITUCION",
       "SUPER_ADMIN_INSTITUCION",
+      "SUPER_ADMIN_NACIONAL",
+    ],
+  },
+
+  // ===== Super Admin Nacional =====
+  {
+    href: ROUTES.SOLICITUDES_INSTITUCIONES,
+    icon: ClipboardList,
+    label: "Solicitudes de Instituciones",
+    roles: [
       "SUPER_ADMIN_NACIONAL",
     ],
   },

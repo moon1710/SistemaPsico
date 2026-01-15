@@ -312,14 +312,32 @@ const obtenerSolicitudes = async (req, res) => {
   const conn = await pool.getConnection();
 
   try {
-    const {
-      page = 1,
-      limit = 10,
-      status = '',
-      search = '',
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
-    } = req.query;
+    const pageNum = Math.max(
+      parseInt(String(req.query.page || "1"), 10) || 1,
+      1
+    );
+    const limitNum = Math.min(
+      Math.max(parseInt(String(req.query.limit || "10"), 10) || 10, 1),
+      100
+    );
+    const offsetNum = (pageNum - 1) * limitNum;
+
+    const status = String(req.query.status || "").trim();
+    const search = String(req.query.search || "").trim();
+
+    const allowedSortBy = new Set([
+      "createdAt",
+      "status",
+      "institucionNombre",
+      "email",
+    ]);
+    const sortBy = allowedSortBy.has(String(req.query.sortBy || "createdAt"))
+      ? String(req.query.sortBy)
+      : "createdAt";
+    const sortOrder =
+      String(req.query.sortOrder || "desc").toLowerCase() === "asc"
+        ? "asc"
+        : "desc";
 
     let baseQuery = `
       FROM solicitudes_acceso s
@@ -328,13 +346,11 @@ const obtenerSolicitudes = async (req, res) => {
 
     const queryParams = [];
 
-    // Filtro por status
     if (status) {
       baseQuery += ` AND s.status = ?`;
       queryParams.push(status);
     }
 
-    // Filtro de búsqueda
     if (search) {
       baseQuery += ` AND (
         s.institucionNombre LIKE ? OR
@@ -343,21 +359,18 @@ const obtenerSolicitudes = async (req, res) => {
         s.institucionCiudad LIKE ? OR
         s.institucionEstado LIKE ?
       )`;
-      const searchTerm = `%${search}%`;
-      queryParams.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+      const t = `%${search}%`;
+      queryParams.push(t, t, t, t, t);
     }
 
-    // Obtener total de registros
-    const countQuery = `SELECT COUNT(*) as total ${baseQuery}`;
-    const [totalResult] = await conn.execute(countQuery, queryParams);
-    const total = totalResult[0].total;
+    const [totalResult] = await conn.execute(
+      `SELECT COUNT(*) as total ${baseQuery}`,
+      queryParams
+    );
+    const total = Number(totalResult?.[0]?.total || 0);
 
-    // Calcular offset
-    const offset = (page - 1) * limit;
-
-    // Orden
-    let orderClause = '';
-    if (sortBy === 'status') {
+    let orderClause = "";
+    if (sortBy === "status") {
       orderClause = ` ORDER BY
         CASE s.status
           WHEN 'PENDIENTE' THEN 1
@@ -369,10 +382,10 @@ const obtenerSolicitudes = async (req, res) => {
         s.createdAt DESC
       `;
     } else {
+      // sortBy viene de whitelist, seguro interpolar
       orderClause = ` ORDER BY s.${sortBy} ${sortOrder}`;
     }
 
-    // Consulta principal
     const dataQuery = `
       SELECT
         s.id,
@@ -392,19 +405,16 @@ const obtenerSolicitudes = async (req, res) => {
         s.status,
         s.notasAdmin,
         s.motivoRechazo,
-        s.procesadoPor,
         s.procesadoAt,
         s.createdAt,
         s.updatedAt
       ${baseQuery}
       ${orderClause}
-      LIMIT ? OFFSET ?
+      LIMIT ${limitNum} OFFSET ${offsetNum}
     `;
 
-    const dataQueryParams = [...queryParams, parseInt(limit), offset];
-    const [solicitudes] = await conn.execute(dataQuery, dataQueryParams);
+    const [solicitudes] = await conn.execute(dataQuery, queryParams);
 
-    // Estadísticas
     const [statsResult] = await conn.execute(`
       SELECT
         COUNT(*) as total,
@@ -416,30 +426,28 @@ const obtenerSolicitudes = async (req, res) => {
       WHERE rolSolicitado = 'ADMIN_INSTITUCION'
     `);
 
-    const stats = statsResult[0];
-
     res.json({
       success: true,
       data: {
         solicitudes,
         pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
+          page: pageNum,
+          limit: limitNum,
           total,
-          totalPages: Math.ceil(total / limit)
+          totalPages: Math.ceil(total / limitNum),
         },
-        stats
-      }
+        stats: statsResult?.[0] || {},
+      },
     });
-
   } catch (error) {
-    console.error("Error obteniendo solicitudes:", error.message);
+    console.error("Error obteniendo solicitudes:", error);
     res.status(500).json({
       success: false,
-      message: "Error obteniendo solicitudes"
+      message: "Error obteniendo solicitudes",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   } finally {
-    if (conn) conn.release();
+    conn.release();
   }
 };
 
@@ -572,7 +580,6 @@ const aprobarSolicitud = async (req, res) => {
       SET
         status = 'APROBADA',
         notasAdmin = ?,
-        procesadoPor = ?,
         procesadoAt = NOW(),
         institucionId = ?,
         updatedAt = NOW()
@@ -636,7 +643,6 @@ const rechazarSolicitud = async (req, res) => {
         status = 'RECHAZADA',
         motivoRechazo = ?,
         notasAdmin = ?,
-        procesadoPor = ?,
         procesadoAt = NOW(),
         updatedAt = NOW()
       WHERE id = ? AND status IN ('PENDIENTE', 'EN_REVISION')
@@ -686,7 +692,6 @@ const ponerEnRevision = async (req, res) => {
       SET
         status = 'EN_REVISION',
         notasAdmin = ?,
-        procesadoPor = ?,
         procesadoAt = NOW(),
         updatedAt = NOW()
       WHERE id = ? AND status = 'PENDIENTE'

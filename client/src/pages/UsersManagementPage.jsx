@@ -23,9 +23,10 @@ const UsersManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
-    role: '',
+    role: 'ADMIN_INSTITUCION', // Default para Super Admin
     status: ''
   });
   const [pagination, setPagination] = useState({
@@ -58,19 +59,24 @@ const UsersManagementPage = () => {
           total: response.data.pagination.total,
           totalPages: response.data.pagination.totalPages
         }));
+        // Detectar si es Super Admin
+        setIsSuperAdmin(response.data.isSuperAdmin || false);
+        // Actualizar stats si es Super Admin
+        if (response.data.stats) {
+          setStats(response.data.stats);
+        }
         setError(null); // Clear any previous errors
       } else {
         setError(response.message || 'Error al cargar usuarios');
       }
-    } catch (err) {
-      console.error('Error loading users:', err);
-      if (err.status === 401) {
-        setError('Sesión expirada. Por favor, inicia sesión nuevamente.');
-      } else if (err.status === 403) {
-        setError('No tienes permisos para ver esta sección.');
-      } else {
-        setError(err.message || 'Error de conexión al cargar usuarios');
-      }
+} catch (err) {
+  console.error('Error loading users:', err);
+  const status = err?.response?.status;
+  const msg = err?.response?.data?.message || err.message;
+
+  if (status === 401) setError('Sesión expirada. Por favor, inicia sesión nuevamente.');
+  else if (status === 403) setError(msg || 'No tienes permisos para ver esta sección.');
+  else setError(msg || 'Error de conexión al cargar usuarios');
     } finally {
       setLoading(false);
     }
@@ -203,48 +209,92 @@ const UsersManagementPage = () => {
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5 text-blue-600" />
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Usuarios</p>
+                  <p className="text-sm font-medium text-gray-600">Total {isSuperAdmin ? 'Personal' : 'Usuarios'}</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.total || 0}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <GraduationCap className="w-5 h-5 text-green-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Estudiantes</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.estudiantes || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {isSuperAdmin ? (
+            // Stats específicas para Super Admin Nacional
+            <>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Settings className="w-5 h-5 text-orange-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Admins Institucionales</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.adminInstitucionales || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Brain className="w-5 h-5 text-purple-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Psicólogos</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.psicologos || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Brain className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Psicólogos</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.psicologos || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <UserCheck className="w-5 h-5 text-emerald-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Activos</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.activos || 0}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <GraduationCap className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Orientadores</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.orientadores || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            // Stats para Admin de Institución
+            <>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <GraduationCap className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Estudiantes</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.estudiantes || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <Brain className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Psicólogos</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.psicologos || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2">
+                    <UserCheck className="w-5 h-5 text-emerald-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Activos</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.activos || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       )}
 
@@ -269,10 +319,20 @@ const UsersManagementPage = () => {
               onChange={(e) => handleFilterChange('role', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Todos los roles</option>
-              {usersService.getUserRoles().map(role => (
-                <option key={role.value} value={role.value}>{role.label}</option>
-              ))}
+              {isSuperAdmin ? (
+                // Para Super Admin: solo mostrar los 3 roles permitidos
+                usersService.getSuperAdminRoles().map(role => (
+                  <option key={role.value} value={role.value}>{role.label}</option>
+                ))
+              ) : (
+                // Para Admin de Institución: todos los roles + opción vacía
+                <>
+                  <option value="">Todos los roles</option>
+                  {usersService.getUserRoles().map(role => (
+                    <option key={role.value} value={role.value}>{role.label}</option>
+                  ))}
+                </>
+              )}
             </select>
 
             <select
@@ -308,6 +368,11 @@ const UsersManagementPage = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Rol
                   </th>
+                  {isSuperAdmin && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Institución
+                    </th>
+                  )}
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
@@ -339,6 +404,23 @@ const UsersManagementPage = () => {
                         <span className="text-sm text-gray-900">{getRoleLabel(user.rol)}</span>
                       </div>
                     </td>
+                    {isSuperAdmin && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.institucionNombre}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {user.institucionCiudad}, {user.institucionEstado}
+                          </div>
+                          {user.institucionCodigo && (
+                            <div className="text-xs text-gray-400">
+                              {user.institucionCodigo}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(user.status, user.membershipActiva)}
                     </td>

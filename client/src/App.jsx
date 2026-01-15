@@ -61,6 +61,7 @@ import AvailabilityPage from "./pages/citas/AvailabilityPage";
 import AppointmentDetailPage from "./pages/citas/AppointmentDetailPage";
 import AdminAppointmentsPage from "./pages/citas/AdminAppointmentsPage";
 import UsersManagementPage from "./pages/UsersManagementPage";
+import SolicitudesManagement from "./components/admin/SolicitudesManagement";
 import CanalizacionesPage from "./pages/CanalizacionesPage";
 
 //Chat
@@ -311,6 +312,18 @@ function App() {
           <ProtectedRoute requiredRoles={['ADMIN_INSTITUCION', 'SUPER_ADMIN_INSTITUCION', 'SUPER_ADMIN_NACIONAL']}>
             <Layout>
               <UsersManagementPage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Super Admin Nacional - Institution Requests */}
+      <Route
+        path={ROUTES.SOLICITUDES_INSTITUCIONES}
+        element={
+          <ProtectedRoute requiredRoles={['SUPER_ADMIN_NACIONAL']}>
+            <Layout>
+              <SolicitudesManagement />
             </Layout>
           </ProtectedRoute>
         }

@@ -103,6 +103,7 @@ export const ROUTES = {
 
   // Super Admin Nacional
   INSTITUCIONES: "/instituciones",
+  SOLICITUDES_INSTITUCIONES: "/solicitudes-instituciones",
   ESTADISTICAS_GLOBALES: "/estadisticas-globales",
 
   // Super Admin Institución
