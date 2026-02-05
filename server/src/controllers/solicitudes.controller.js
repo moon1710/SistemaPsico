@@ -527,25 +527,28 @@ const aprobarSolicitud = async (req, res) => {
 
     await conn.beginTransaction();
 
-    // Obtener la solicitud
-    const [solicitudResult] = await conn.execute(`
-      SELECT * FROM solicitudes_acceso WHERE id = ? AND status IN ('PENDIENTE', 'EN_REVISION')
-    `, [id]);
+    const [solicitudResult] = await conn.execute(
+      `
+      SELECT * FROM solicitudes_acceso
+      WHERE id = ? AND status IN ('PENDIENTE', 'EN_REVISION')
+    `,
+      [id]
+    );
 
     if (solicitudResult.length === 0) {
       await conn.rollback();
       return res.status(404).json({
         success: false,
-        message: "Solicitud no encontrada o ya procesada"
+        message: "Solicitud no encontrada o ya procesada",
       });
     }
 
     const solicitud = solicitudResult[0];
 
-    // Crear la institución
     const institucionId = crypto.randomUUID();
 
-    await conn.execute(`
+    await conn.execute(
+      `
       INSERT INTO instituciones (
         id, codigo, nombre, nombreCorto, tipoInstitucion, nivelEducativo,
         direccion, ciudad, estado, codigoPostal, telefono, emailInstitucional,
@@ -555,64 +558,59 @@ const aprobarSolicitud = async (req, res) => {
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         'ACTIVA', NOW(), 100, NOW(), NOW()
       )
-    `, [
-      institucionId,
-      solicitud.cedulaProfesional, // Se usó para clave institucional
-      solicitud.institucionNombre,
-      solicitud.institucionNombre.substring(0, 50), // nombreCorto
-      solicitud.institucionTipo || 'UNIVERSIDAD',
-      solicitud.institucionNivel || 'SUPERIOR',
-      solicitud.institucionDireccion,
-      solicitud.institucionCiudad,
-      solicitud.institucionEstado,
-      null, // codigoPostal se extraerá después
-      solicitud.institucionTelefono,
-      solicitud.institucionEmail,
-      solicitud.nombre + ' ' + (solicitud.apellidoPaterno || ''),
-      solicitud.email,
-      solicitud.telefono,
-      solicitud.cargoInstitucion,
-    ]);
+    `,
+      [
+        institucionId,
+        solicitud.cedulaProfesional,
+        solicitud.institucionNombre,
+        (solicitud.institucionNombre || "").substring(0, 50),
+        solicitud.institucionTipo || "UNIVERSIDAD",
+        solicitud.institucionNivel || "SUPERIOR",
+        solicitud.institucionDireccion,
+        solicitud.institucionCiudad,
+        solicitud.institucionEstado,
+        null,
+        solicitud.institucionTelefono,
+        solicitud.institucionEmail,
+        `${solicitud.nombre} ${solicitud.apellidoPaterno || ""}`.trim(),
+        solicitud.email,
+        solicitud.telefono,
+        solicitud.cargoInstitucion,
+      ]
+    );
 
-    // Actualizar la solicitud
-    await conn.execute(`
+    // ✅ AQUI EL UPDATE CORRECTO (institucionId va en institucionId, adminId en procesadoPor)
+    await conn.execute(
+      `
       UPDATE solicitudes_acceso
       SET
         status = 'APROBADA',
         notasAdmin = ?,
+        procesadoPor = ?,
         procesadoAt = NOW(),
         institucionId = ?,
         updatedAt = NOW()
       WHERE id = ?
-    `, [notasAdmin, adminId, institucionId, id]);
+    `,
+      [notasAdmin ?? null, adminId, institucionId, id]
+    );
 
     await conn.commit();
-
-    // TODO: Enviar email de aprobación
-
-    console.log(`✅ Solicitud aprobada: ${solicitud.institucionNombre} por admin ${adminId}`);
 
     res.json({
       success: true,
       message: "Solicitud aprobada e institución creada exitosamente",
-      data: {
-        solicitudId: id,
-        institucionId,
-        status: 'APROBADA'
-      }
+      data: { solicitudId: id, institucionId, status: "APROBADA" },
     });
-
   } catch (error) {
     try {
       await conn.rollback();
-    } catch (rollbackError) {
-      console.error('Error en rollback:', rollbackError.message);
-    }
-
+    } catch (_) {}
     console.error("Error aprobando solicitud:", error.message);
     res.status(500).json({
       success: false,
-      message: "Error aprobando solicitud: " + error.message
+      message: "Error aprobando solicitud",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   } finally {
     if (conn) conn.release();
@@ -633,43 +631,43 @@ const rechazarSolicitud = async (req, res) => {
     if (!motivoRechazo || motivoRechazo.trim().length < 10) {
       return res.status(400).json({
         success: false,
-        message: "El motivo de rechazo debe tener al menos 10 caracteres"
+        message: "El motivo de rechazo debe tener al menos 10 caracteres",
       });
     }
 
-    const [result] = await conn.execute(`
+    const [result] = await conn.execute(
+      `
       UPDATE solicitudes_acceso
       SET
         status = 'RECHAZADA',
         motivoRechazo = ?,
         notasAdmin = ?,
+        procesadoPor = ?,
         procesadoAt = NOW(),
         updatedAt = NOW()
       WHERE id = ? AND status IN ('PENDIENTE', 'EN_REVISION')
-    `, [motivoRechazo, notasAdmin, adminId, id]);
+    `,
+      [motivoRechazo, notasAdmin ?? null, adminId, id]
+    );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: "Solicitud no encontrada o ya procesada"
+        message: "Solicitud no encontrada o ya procesada",
       });
     }
-
-    // TODO: Enviar email de rechazo
-
-    console.log(`❌ Solicitud rechazada: ID ${id} por admin ${adminId}`);
 
     res.json({
       success: true,
       message: "Solicitud rechazada exitosamente",
-      data: { solicitudId: id, status: 'RECHAZADA' }
+      data: { solicitudId: id, status: "RECHAZADA" },
     });
-
   } catch (error) {
     console.error("Error rechazando solicitud:", error.message);
     res.status(500).json({
       success: false,
-      message: "Error rechazando solicitud"
+      message: "Error rechazando solicitud",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   } finally {
     if (conn) conn.release();
@@ -687,34 +685,38 @@ const ponerEnRevision = async (req, res) => {
     const { notasAdmin } = req.body;
     const adminId = req.user.id;
 
-    const [result] = await conn.execute(`
+    const [result] = await conn.execute(
+      `
       UPDATE solicitudes_acceso
       SET
         status = 'EN_REVISION',
         notasAdmin = ?,
+        procesadoPor = ?,
         procesadoAt = NOW(),
         updatedAt = NOW()
       WHERE id = ? AND status = 'PENDIENTE'
-    `, [notasAdmin, adminId, id]);
+    `,
+      [notasAdmin ?? null, adminId, id]
+    );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: "Solicitud no encontrada o no está pendiente"
+        message: "Solicitud no encontrada o no está pendiente",
       });
     }
 
     res.json({
       success: true,
       message: "Solicitud puesta en revisión",
-      data: { solicitudId: id, status: 'EN_REVISION' }
+      data: { solicitudId: id, status: "EN_REVISION" },
     });
-
   } catch (error) {
     console.error("Error poniendo solicitud en revisión:", error.message);
     res.status(500).json({
       success: false,
-      message: "Error poniendo solicitud en revisión"
+      message: "Error poniendo solicitud en revisión",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   } finally {
     if (conn) conn.release();

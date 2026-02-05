@@ -214,10 +214,18 @@ const SolicitudesManagement = () => {
 
       alert(msg);
     } catch (err) {
-      console.error(err);
-      alert(`Error: ${err.message}`);
-    } finally {
-      setActionLoading(null);
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      console.error("Solicitud action error:", { status, data, err });
+
+      const serverMsg =
+        data?.message ||
+        data?.error ||
+        (typeof data === "string" ? data : null) ||
+        err?.message ||
+        "Error desconocido";
+
+      throw new Error(`(${status ?? "NO_STATUS"}) ${serverMsg}`);
     }
   };
 
