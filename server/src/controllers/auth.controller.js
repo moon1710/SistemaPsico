@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { validationResult } = require("express-validator");
 const { pool } = require("../db");
+const enviarCorreo = require("../../services/mailer"); 
 
 const isInstitutionActive = (s) => ["ACTIVO", "ACTIVA", "ACTIVE"].includes(s);
 
@@ -208,6 +209,21 @@ const register = async (req, res) => {
     }
 
     await conn.commit();
+    // --- INICIO BLOQUE CORREO ---
+    // Enviamos el correo de bienvenida (sin await para no hacer esperar al usuario)
+    const mensajeBienvenida = `
+      <h1>¡Hola ${nombre}!</h1>
+      <p>Bienvenido a <b>Neuroflora</b>. Tu cuenta ha sido creada exitosamente.</p>
+      <p>Ya puedes iniciar sesión con tu correo: <b>${email}</b></p>
+      <br>
+      <small>Atte. El equipo de Neuroflora</small>
+    `;
+    
+    // No usamos 'await' para que la respuesta JSON sea rápida
+    enviarCorreo(email, "¡Bienvenido a Neuroflora!", mensajeBienvenida)
+      .then(ok => ok ? console.log("📧 Correo de bienvenida enviado") : console.error("⚠️ Falló envío de correo"))
+      .catch(err => console.error("❌ Error enviando correo:", err));
+    // --- FIN BLOQUE CORREO ---
 
     const user = {
       id,
