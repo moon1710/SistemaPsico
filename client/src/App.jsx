@@ -17,6 +17,7 @@ import ProtectedRoute, {
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import SetupInstitucionPage from "./pages/SetupInstitucionPage";
 
 //Paginas de Info
 import AboutUsPage from "./pages/AboutUsPage";
@@ -88,6 +89,8 @@ function App() {
           </PublicOnlyRoute>
         }
       />
+      {/* AGREGA ESTA LÍNEA AQUÍ: */}
+      <Route path="/setup" element={<SetupInstitucionPage />} />
 
       {/* Públicas ABIERTAS */}
       <Route

@@ -1,16 +1,21 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Mail, KeyRound, Building } from "lucide-react";
+import { Mail, KeyRound, Building, CheckCircle } from "lucide-react";
 import { ROUTES } from "../utils/constants";
 
-// Asegúrate de que la ruta sea correcta:
 import backgroundImage from "../assets/bgLogin.png";
-import "../styles/login.css"
-import "../index.css"
+import "../styles/login.css";
+import "../index.css";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
+  // 1. Obtener parámetros de la URL (setup exitoso y email)
+  const [searchParams] = useSearchParams();
+  const setupSuccess = searchParams.get("setup") === "success";
+  const emailParam = searchParams.get("email");
+
+  // 2. Inicializar el estado del email con el valor de la URL si existe
+  const [email, setEmail] = useState(emailParam || "");
   const [password, setPassword] = useState("");
   const [institucionId, setInstitucionId] = useState("");
   const [error, setError] = useState("");
@@ -56,13 +61,6 @@ const LoginPage = () => {
     }
   };
 
-  // Función para llenar usuario de prueba (solo en desarrollo)
-  const fillTestUser = (userEmail, userInstitucionId = "1") => {
-    setEmail(userEmail);
-    setPassword("Password123!");
-    setInstitucionId(userInstitucionId);
-  };
-
   return (
     <main className="login-main">
       {/* Sección izquierda - Login */}
@@ -74,6 +72,32 @@ const LoginPage = () => {
           <p className="login-desc">
             Ingresa tus credenciales para acceder al sistema psicológico.
           </p>
+
+          {/* 3. MENSAJE DE ÉXITO (Solo aparece si vienes del Setup) */}
+          {setupSuccess && (
+            <div
+              style={{
+                backgroundColor: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                borderRadius: "8px",
+                padding: "12px",
+                marginBottom: "20px",
+                display: "flex",
+                alignItems: "center",
+                color: "#166534",
+              }}
+            >
+              <CheckCircle size={20} style={{ marginRight: "10px", color: "#22c55e" }} />
+              <div>
+                <h3 style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600" }}>
+                  ¡Cuenta activada!
+                </h3>
+                <p style={{ margin: "4px 0 0", fontSize: "0.85rem" }}>
+                  Ya puedes iniciar sesión con tu nueva contraseña.
+                </p>
+              </div>
+            </div>
+          )}
 
           {error && <p className="login-error">{error}</p>}
 

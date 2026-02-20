@@ -1,4 +1,5 @@
-// Modernized onboarding config (no emojis). Uses icon names to be rendered with lucide-react.
+// client/src/components/onboarding/onboardingConfig.js
+
 export const onboardingSteps = [
   {
     id: "welcome",
@@ -14,8 +15,8 @@ export const onboardingSteps = [
       "Recursos educativos",
     ],
     media: {
-      // replace with your asset path if available
-      image: "/illustrations/onboarding-welcome.svg",
+      // Imagen de bienvenida: Manos unidas / apoyo / naturaleza
+      image: "https://images.unsplash.com/photo-1544027993-37dbfe43562a?q=80&w=800&auto=format&fit=crop",
       description: "Interfaz principal del sistema",
     },
   },
@@ -33,7 +34,8 @@ export const onboardingSteps = [
       "Estadísticas personales",
     ],
     media: {
-      image: "/illustrations/onboarding-dashboard.svg",
+      // Imagen Dashboard: Tecnología limpia / Tablet
+      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop",
       description: "Vista del panel principal",
     },
   },
@@ -51,7 +53,8 @@ export const onboardingSteps = [
       "Resultados con recomendaciones",
     ],
     media: {
-      image: "/illustrations/onboarding-quizzes.svg",
+      // Imagen Tests: Persona escribiendo / pensando
+      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=800&auto=format&fit=crop",
       description: "Ejemplo de evaluación",
     },
   },
@@ -69,7 +72,8 @@ export const onboardingSteps = [
       "Exportación de reportes",
     ],
     media: {
-      image: "/illustrations/onboarding-results.svg",
+      // Imagen Resultados: Gráficas / Análisis
+      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop",
       description: "Resultados y análisis",
     },
   },
@@ -87,7 +91,8 @@ export const onboardingSteps = [
       "Comunidad y acompañamiento",
     ],
     media: {
-      image: "/illustrations/onboarding-support.svg",
+      // Imagen Soporte: Grupo de personas / ayuda
+      image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=800&auto=format&fit=crop",
       description: "Red de apoyo y recursos",
     },
   },
